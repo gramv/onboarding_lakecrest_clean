@@ -1,0 +1,342 @@
+{
+  "company_code": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 190.0,
+    "y": 69.5,
+    "width": 34.296905517578125,
+    "height": 6.5546875,
+    "value": "",
+    "flags": 0
+  },
+  "company_name": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 290.0,
+    "y": 66.27911376953125,
+    "width": 101.35171508789062,
+    "height": 9.93060302734375,
+    "value": "",
+    "flags": 0
+  },
+  "employee_file_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 488.8721008300781,
+    "y": 66.209716796875,
+    "width": 59.999969482421875,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "payroll_mgr_name": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 203.12789916992188,
+    "y": 81.41168212890625,
+    "width": 115.840087890625,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "payroll_mgr_signature": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 406.8721008300781,
+    "y": 81.41168212890625,
+    "width": 120.96218872070312,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "employee_name": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 107.5,
+    "y": 377.16070556640625,
+    "width": 242.38839721679688,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "social_security_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 440.0,
+    "y": 378.5,
+    "width": 150.0,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "employee_signature": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 134.28269958496094,
+    "y": 400.66070556640625,
+    "width": 120.0,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "employee_date": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 391.0714111328125,
+    "y": 402.0,
+    "width": 121.12860107421875,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "employee_email": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 170.95950317382812,
+    "y": 419.15948486328125,
+    "width": 349.9999694824219,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank1_name": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 149.75999450683594,
+    "y": 508.0,
+    "width": 340.3199920654297,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank1_routing_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 132.42999267578125,
+    "y": 525.3499755859375,
+    "width": 115.0,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank1_account_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 326.8800048828125,
+    "y": 525.3499755859375,
+    "width": 165.1199951171875,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank1_deposit_amount": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 362.1300048828125,
+    "y": 543.530029296875,
+    "width": 67.0,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank1_checking": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 60.5,
+    "y": 543.030029296875,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Yes",
+    "flags": 0
+  },
+  "bank1_savings": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 121.81900024414062,
+    "y": 543.030029296875,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank1_other": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 178.81900024414062,
+    "y": 543.030029296875,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank1_entire_net_amount": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 447.1357116699219,
+    "y": 542.7000122070312,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank2_name": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 149.75999450683594,
+    "y": 573.0,
+    "width": 340.3199920654297,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank2_routing_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 132.42999267578125,
+    "y": 590.030029296875,
+    "width": 115.0,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank2_account_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 326.8800048828125,
+    "y": 590.030029296875,
+    "width": 165.1199951171875,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank2_deposit_amount": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 374.0797119140625,
+    "y": 608.2100219726562,
+    "width": 55.05029296875,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank2_checking": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 60.5,
+    "y": 607.7100219726562,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank2_savings": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 121.81900024414062,
+    "y": 607.7100219726562,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank2_other": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 178.81900024414062,
+    "y": 607.7100219726562,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank2_entire_net_amount": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 447.1357116699219,
+    "y": 607.7100219726562,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank3_name": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 149.75999450683594,
+    "y": 644.0,
+    "width": 340.3199920654297,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank3_routing_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 132.42999267578125,
+    "y": 660.7100219726562,
+    "width": 115.0,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank3_account_number": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 326.8800048828125,
+    "y": 660.7100219726562,
+    "width": 165.1199951171875,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank3_deposit_amount": {
+    "type": "Signature",
+    "type_code": 7,
+    "x": 373.15948486328125,
+    "y": 678.8300170898438,
+    "width": 55.97052001953125,
+    "height": 10.0,
+    "value": "",
+    "flags": 0
+  },
+  "bank3_checking": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 60.5,
+    "y": 678.3300170898438,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank3_savings": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 121.81900024414062,
+    "y": 679.3300170898438,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank3_other": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 178.81900024414062,
+    "y": 678.3300170898438,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  },
+  "bank3_entire_net_amount": {
+    "type": "RadioButton",
+    "type_code": 2,
+    "x": 447.1357116699219,
+    "y": 678.3300170898438,
+    "width": 9.0,
+    "height": 9.0,
+    "value": "Off",
+    "flags": 0
+  }
+}

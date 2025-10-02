@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "total": 7,
+    "passed": 3,
+    "failed": 4,
+    "success_rate": 42.857142857142854,
+    "total_time": 0.44303011894226074,
+    "timestamp": "2025-09-09T10:30:41.071344"
+  },
+  "results": [
+    {
+      "test": "Main Onboarding Flow Access",
+      "success": false,
+      "message": "Main onboarding flow not accessible: HTTPConnectionPool(host='localhost', port=3004): Max retries exceeded with url: /onboard (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105cf2e40>: Failed to establish a new connection: [Errno 61] Connection refused'))",
+      "duration": 0.012948036193847656,
+      "timestamp": "2025-09-09T10:30:40.640325"
+    },
+    {
+      "test": "Enhanced Health Insurance Integration",
+      "success": false,
+      "message": "Enhanced health insurance integration failed: HTTPConnectionPool(host='localhost', port=3004): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105cbf610>: Failed to establish a new connection: [Errno 61] Connection refused'))",
+      "duration": 0.0022690296173095703,
+      "timestamp": "2025-09-09T10:30:40.642648"
+    },
+    {
+      "test": "Global Error Boundary Integration",
+      "success": false,
+      "message": "Error boundary integration test failed: HTTPConnectionPool(host='localhost', port=3004): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105cbf250>: Failed to establish a new connection: [Errno 61] Connection refused'))",
+      "duration": 0.002357006072998047,
+      "timestamp": "2025-09-09T10:30:40.645024"
+    },
+    {
+      "test": "Feature Flag Functionality",
+      "success": true,
+      "message": "Feature flag functionality working (enhanced components enabled)",
+      "duration": 1.9073486328125e-06,
+      "timestamp": "2025-09-09T10:30:40.645054"
+    },
+    {
+      "test": "Backend API Compatibility",
+      "success": true,
+      "message": "Enhanced backend API compatible with main flow",
+      "duration": 0.41538095474243164,
+      "timestamp": "2025-09-09T10:30:41.060452"
+    },
+    {
+      "test": "Error Handling in Main Flow",
+      "success": true,
+      "message": "Error handling working in main flow (HTTP 200)",
+      "duration": 0.007117033004760742,
+      "timestamp": "2025-09-09T10:30:41.067731"
+    },
+    {
+      "test": "Mobile Responsiveness Integration",
+      "success": false,
+      "message": "Mobile responsiveness test failed: HTTPConnectionPool(host='localhost', port=3004): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105f19b50>: Failed to establish a new connection: [Errno 61] Connection refused'))",
+      "duration": 0.0025069713592529297,
+      "timestamp": "2025-09-09T10:30:41.070364"
+    }
+  ]
+}

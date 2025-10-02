@@ -1,0 +1,911 @@
+{
+  "summary": {
+    "total": 99,
+    "passed": 74,
+    "failed": 21,
+    "timeout": 4,
+    "error": 0
+  },
+  "categories": {
+    "passed": [
+      "test_and_fix_email_system.py",
+      "test_api_response_structure.py",
+      "test_application_email.py",
+      "test_approval_and_name.py",
+      "test_certificate_system.py",
+      "test_clickwise_deployment.py",
+      "test_cross_property_isolation.py",
+      "test_direct_deposit_comprehensive.py",
+      "test_direct_deposit_endpoint.py",
+      "test_direct_deposit_final.py",
+      "test_direct_deposit_form.py",
+      "test_direct_deposit_generation.py",
+      "test_direct_deposit_local.py",
+      "test_direct_deposit_multi_account.py",
+      "test_direct_deposit_overlay.py",
+      "test_direct_deposit_pdf.py",
+      "test_direct_onboarding.py",
+      "test_email_fix.py",
+      "test_email_notifications_simple.py",
+      "test_email_preferences.py",
+      "test_email_scenarios.py",
+      "test_fill_form_fields.py",
+      "test_fixed_ocr.py",
+      "test_frontend_login.py",
+      "test_frontend_pdf_preview.py",
+      "test_frontend_simulation.py",
+      "test_google_ocr.py",
+      "test_groq_api.py",
+      "test_health_insurance_api.py",
+      "test_health_insurance_complete_final.py",
+      "test_health_insurance_complete_flow.py",
+      "test_health_insurance_flow.py",
+      "test_health_insurance_pdf.py",
+      "test_health_insurance_pdf_preview.py",
+      "test_health_insurance_personal_info.py",
+      "test_health_insurance_update.py",
+      "test_health_pdf_debug.py",
+      "test_hi_family_ui_integration.py",
+      "test_hi_pdf_complete.py",
+      "test_hi_signature.py",
+      "test_hi_ui_integration.py",
+      "test_hr_applications_endpoint.py",
+      "test_hr_dashboard_complete.py",
+      "test_hr_dashboard_overview.py",
+      "test_hr_endpoints.py",
+      "test_hr_manager_employee.py",
+      "test_i9_ocr_complete_flow.py",
+      "test_i9_signed_pdf.py",
+      "test_job_application_flow.py",
+      "test_login_simple.py",
+      "test_manager_endpoints.py",
+      "test_manager_login.py",
+      "test_manager_login_detailed.py",
+      "test_manager_login_flow.py",
+      "test_ocr_with_token.py",
+      "test_onboarding_portal_access.py",
+      "test_password_reset.py",
+      "test_pdf_generation_fix.py",
+      "test_preview_state_transition.py",
+      "test_production_i9_ocr.py",
+      "test_routing_validation.py",
+      "test_signature_date.py",
+      "test_simple_application.py",
+      "test_simple_onboarding_token.py",
+      "test_state_transition_fix.py",
+      "test_tn_license_extraction.py",
+      "test_trafficking_signature.py",
+      "test_url_fix_verification.py",
+      "test_voided_check_ocr.py",
+      "test_weapons_invitation.py",
+      "test_weapons_policy.py",
+      "test_weapons_policy_signature.py",
+      "test_websocket_application_events.py",
+      "test_websocket_connection.py"
+    ],
+    "failed": [
+      "test_application_flow.py",
+      "test_approval_and_name_fix.py",
+      "test_auth_direct.py",
+      "test_check_applications.py",
+      "test_company_policies_pdf.py",
+      "test_document_endpoints.py",
+      "test_email_notifications.py",
+      "test_email_reuse.py",
+      "test_field_mappings.py",
+      "test_google_ocr_working.py",
+      "test_health_insurance_enhanced.py",
+      "test_hr_endpoint_security.py",
+      "test_i9_complete_autosave.py",
+      "test_integration_complete.py",
+      "test_manager_dashboard_api.py",
+      "test_pdf_preview_after_signing.py",
+      "test_performance_final.py",
+      "test_phase1_complete.py",
+      "test_websocket_broadcasting.py",
+      "test_websocket_comprehensive.py",
+      "test_websocket_dashboard_updates.py"
+    ],
+    "timeout": [
+      "test_baseline_runner.py",
+      "test_health_insurance_comprehensive.py",
+      "test_hr_invitations.py",
+      "test_production_fixes.py"
+    ],
+    "error": []
+  },
+  "details": [
+    {
+      "file": "test_and_fix_email_system.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_api_response_structure.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_application_email.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_application_flow.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_approval_and_name.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_approval_and_name_fix.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": true,
+      "error_snippet": "Traceback (most recent call last):\n  File \"/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_approval_and_name_fix.py\", line 197, in <module>\n    main()\n    ~~~~^^\n  File "
+    },
+    {
+      "file": "test_auth_direct.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": true,
+      "error_snippet": "Traceback (most recent call last):\n  File \"/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_auth_direct.py\", line 170, in <module>\n    asyncio.run(main())\n    ~~~~~~~~~~~"
+    },
+    {
+      "file": "test_baseline_runner.py",
+      "status": "timeout",
+      "return_code": -1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Test timed out after 10 seconds"
+    },
+    {
+      "file": "test_certificate_system.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_check_applications.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Traceback (most recent call last):\n  File \"/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_check_applications.py\", line 43, in <module>\n    asyncio.run(check_application"
+    },
+    {
+      "file": "test_clickwise_deployment.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_company_policies_pdf.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_cross_property_isolation.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_comprehensive.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_endpoint.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_final.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_form.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_generation.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_local.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_multi_account.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_overlay.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_deposit_pdf.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_direct_onboarding.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_document_endpoints.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": true,
+      "error_snippet": "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_document_endpoints.py:24: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a fut"
+    },
+    {
+      "file": "test_email_fix.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_email_notifications.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Traceback (most recent call last):\n  File \"/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_email_notifications.py\", line 13, in <module>\n    from colorama import init, F"
+    },
+    {
+      "file": "test_email_notifications_simple.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_email_preferences.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_email_reuse.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Traceback (most recent call last):\n  File \"/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_email_reuse.py\", line 16, in <module>\n    supabase = create_client(SUPABASE_UR"
+    },
+    {
+      "file": "test_email_scenarios.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_field_mappings.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_fill_form_fields.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_fixed_ocr.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_frontend_login.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_frontend_pdf_preview.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_frontend_simulation.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_google_ocr.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_google_ocr_working.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_groq_api.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_api.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_complete_final.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_complete_flow.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_comprehensive.py",
+      "status": "timeout",
+      "return_code": -1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Test timed out after 10 seconds"
+    },
+    {
+      "file": "test_health_insurance_enhanced.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_flow.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_pdf.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_pdf_preview.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_personal_info.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_insurance_update.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_health_pdf_debug.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hi_family_ui_integration.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hi_pdf_complete.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hi_signature.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hi_ui_integration.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hr_applications_endpoint.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hr_dashboard_complete.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hr_dashboard_overview.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hr_endpoint_security.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hr_endpoints.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_hr_invitations.py",
+      "status": "timeout",
+      "return_code": -1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Test timed out after 10 seconds"
+    },
+    {
+      "file": "test_hr_manager_employee.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_i9_complete_autosave.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_i9_ocr_complete_flow.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_i9_signed_pdf.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_integration_complete.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_job_application_flow.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_login_simple.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_manager_dashboard_api.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "/opt/homebrew/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:\n* 'schema_extra' has been renamed to 'json_schema_extra'\n  warnings.war"
+    },
+    {
+      "file": "test_manager_endpoints.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_manager_login.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_manager_login_detailed.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_manager_login_flow.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_ocr_with_token.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_onboarding_portal_access.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_password_reset.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_pdf_generation_fix.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_pdf_preview_after_signing.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_performance_final.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_phase1_complete.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_preview_state_transition.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_production_fixes.py",
+      "status": "timeout",
+      "return_code": -1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "Test timed out after 10 seconds"
+    },
+    {
+      "file": "test_production_i9_ocr.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_routing_validation.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_signature_date.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_simple_application.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_simple_onboarding_token.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_state_transition_fix.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_tn_license_extraction.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_trafficking_signature.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_url_fix_verification.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_voided_check_ocr.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_weapons_invitation.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_weapons_policy.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_weapons_policy_signature.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_websocket_application_events.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_websocket_broadcasting.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "2025-09-09 10:31:55,262 - INFO - ============================================================\n2025-09-09 10:31:55,262 - INFO - WEBSOCKET BROADCASTING TEST SUITE\n2025-09-09 10:31:55,262 - INFO - ======"
+    },
+    {
+      "file": "test_websocket_comprehensive.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": false,
+      "error_snippet": null
+    },
+    {
+      "file": "test_websocket_connection.py",
+      "status": "passed",
+      "return_code": 0,
+      "has_output": false,
+      "has_errors": true,
+      "error_snippet": "2025-09-09 10:31:58,285 - INFO - ============================================================\n2025-09-09 10:31:58,285 - INFO - WEBSOCKET CONNECTION TEST SUITE\n2025-09-09 10:31:58,285 - INFO - ========"
+    },
+    {
+      "file": "test_websocket_dashboard_updates.py",
+      "status": "failed",
+      "return_code": 1,
+      "has_output": true,
+      "has_errors": true,
+      "error_snippet": "Traceback (most recent call last):\n  File \"/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/test_websocket_dashboard_updates.py\", line 20, in test_dashboard_updates\n    async "
+    }
+  ]
+}

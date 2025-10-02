@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "success_rate": 100.0,
+    "total_time": 1.5532472133636475,
+    "timestamp": "2025-09-01T01:31:16.875286"
+  },
+  "results": [
+    {
+      "test": "Form Validation and Auto-Save",
+      "success": true,
+      "message": "Form validation working correctly (3/3 scenarios passed)",
+      "duration": 0.31363511085510254,
+      "timestamp": "2025-09-01T01:31:15.635580"
+    },
+    {
+      "test": "PDF Generation and Signature Capture",
+      "success": true,
+      "message": "PDF with signature generated successfully (414996 chars, metadata: True)",
+      "duration": 0.27405595779418945,
+      "timestamp": "2025-09-01T01:31:15.909693"
+    },
+    {
+      "test": "Mobile Responsiveness",
+      "success": true,
+      "message": "Mobile responsiveness working (3/3 user agents)",
+      "duration": 0.011486053466796875,
+      "timestamp": "2025-09-01T01:31:15.921233"
+    },
+    {
+      "test": "Error Boundary Behavior",
+      "success": true,
+      "message": "Error boundary working (main app: True, test page: True)",
+      "duration": 0.005036830902099609,
+      "timestamp": "2025-09-01T01:31:15.926307"
+    },
+    {
+      "test": "Multi-Language Support",
+      "success": true,
+      "message": "Multi-language error handling working correctly",
+      "duration": 0.0029571056365966797,
+      "timestamp": "2025-09-01T01:31:15.929326"
+    },
+    {
+      "test": "Performance Verification",
+      "success": true,
+      "message": "Performance verified: 5/5 success, avg: 0.790s, max: 0.939s",
+      "duration": 0.9395709037780762,
+      "timestamp": "2025-09-01T01:31:16.868936"
+    },
+    {
+      "test": "Complete Onboarding Flow Integration",
+      "success": true,
+      "message": "Onboarding flow integration verified (main: True, test page: True)",
+      "duration": 0.006163358688354492,
+      "timestamp": "2025-09-01T01:31:16.875120"
+    }
+  ]
+}

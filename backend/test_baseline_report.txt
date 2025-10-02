@@ -1,0 +1,43 @@
+INFO:app.main_enhanced:✅ I9 OCR service imported successfully
+INFO:app.main_enhanced:✅ Using production Google OCR service with enhanced credential handling
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+ERROR:app.main_enhanced:❌ Google Document AI is REQUIRED for government ID processing
+ERROR:app.main_enhanced:   For security and compliance, only Google Document AI is authorized for government documents
+ERROR:app.main_enhanced:   Please configure GOOGLE_CREDENTIALS_BASE64 or GOOGLE_APPLICATION_CREDENTIALS
+INFO:app.main_enhanced:============================================================
+INFO:app.main_enhanced:SERVICE STATUS SUMMARY:
+INFO:app.main_enhanced:  ✓ Database (Supabase): Connected
+INFO:app.main_enhanced:  ✓ OCR Service: Not available
+INFO:app.main_enhanced:  ✓ Email Service: Configured
+INFO:app.main_enhanced:  ✓ Frontend URL: http://localhost:3000
+INFO:app.main_enhanced:============================================================
+ImportError while loading conftest '/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/tests/conftest.py'.
+tests/conftest.py:12: in <module>
+    from app.supabase_service_enhanced import SupabaseService
+E   ImportError: cannot import name 'SupabaseService' from 'app.supabase_service_enhanced' (/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py)
+✅ Official I9 template found: /Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/static/i9-form-template.pdf
+✅ Official W4 template found: /Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/static/w4-form-template.pdf
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

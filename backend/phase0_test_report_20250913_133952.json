@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-09-13T13:39:52.630938",
+  "summary": {
+    "total": 8,
+    "passed": 1,
+    "failed": 7,
+    "success_rate": "12.5%"
+  },
+  "onboarding_token": null,
+  "employee_id": null,
+  "test_results": [
+    {
+      "test": "Get Properties",
+      "success": false,
+      "details": "No properties found",
+      "timestamp": "2025-09-13T13:39:52.234980"
+    },
+    {
+      "test": "Submit Application",
+      "success": false,
+      "details": "No property ID available",
+      "timestamp": "2025-09-13T13:39:52.234991"
+    },
+    {
+      "test": "Manager Login",
+      "success": true,
+      "details": "Logged in as goutamramv@gmail.com",
+      "timestamp": "2025-09-13T13:39:52.630700",
+      "data": {
+        "user_type": null,
+        "property": null
+      }
+    },
+    {
+      "test": "Approve Application",
+      "success": false,
+      "details": "Missing prerequisites",
+      "timestamp": "2025-09-13T13:39:52.630709"
+    },
+    {
+      "test": "Token Validation",
+      "success": false,
+      "details": "No token available",
+      "timestamp": "2025-09-13T13:39:52.630712"
+    },
+    {
+      "test": "Token Refresh",
+      "success": false,
+      "details": "No token available",
+      "timestamp": "2025-09-13T13:39:52.630714"
+    },
+    {
+      "test": "Session Locking",
+      "success": false,
+      "details": "No token available",
+      "timestamp": "2025-09-13T13:39:52.630716"
+    },
+    {
+      "test": "Unsaved Data Protection",
+      "success": false,
+      "details": "No token available",
+      "timestamp": "2025-09-13T13:39:52.630718"
+    }
+  ]
+}

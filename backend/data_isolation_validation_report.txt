@@ -1,0 +1,100 @@
+================================================================================
+DATA ISOLATION VALIDATION REPORT
+================================================================================
+Test Run: 2025-08-15 14:10:23
+
+SUMMARY
+----------------------------------------
+Total Tests: 18
+Passed: 6 (33.3%)
+Failed: 8 (44.4%)
+Warnings: 4 (22.2%)
+
+❌ OVERALL STATUS: FAILURES DETECTED
+
+DETAILED RESULTS BY CATEGORY
+================================================================================
+
+Manager HR Access
+-----------------
+❌ FAILED Manager blocked from /api/hr/dashboard
+     Expected: 403
+     Actual: 404
+     Details: Manager attempting to access HR endpoint /api/hr/dashboard
+❌ FAILED Manager blocked from /api/hr/all-applications
+     Expected: 403
+     Actual: 404
+     Details: Manager attempting to access HR endpoint /api/hr/all-applications
+❌ FAILED Manager blocked from /api/hr/analytics
+     Expected: 403
+     Actual: 404
+     Details: Manager attempting to access HR endpoint /api/hr/analytics
+❌ FAILED Manager blocked from /api/hr/bulk-approve
+     Expected: 403
+     Actual: 404
+     Details: Manager attempting to access HR endpoint /api/hr/bulk-approve
+❌ FAILED Manager blocked from /api/hr/manage-properties
+     Expected: 403
+     Actual: 404
+     Details: Manager attempting to access HR endpoint /api/hr/manage-properties
+❌ FAILED Manager blocked from /api/hr/manage-managers
+     Expected: 403
+     Actual: 404
+     Details: Manager attempting to access HR endpoint /api/hr/manage-managers
+
+HR Access
+---------
+✅ PASSED HR access to /api/hr/dashboard
+✅ PASSED HR access to /api/hr/all-applications
+✅ PASSED HR access to /api/hr/analytics
+✅ PASSED HR access to /api/hr/manage-properties
+✅ PASSED HR access to /api/hr/manage-managers
+
+Property Isolation
+------------------
+❌ FAILED Property isolation in dashboard
+     Expected: 200
+     Actual: 404
+     Details: Failed to access manager dashboard
+
+Cross-Property Access
+---------------------
+✅ PASSED Block access to Employees from other property
+⚠️ WARNING Block access to Applications from other property
+     Details: Unexpected status code: 404
+
+Data Leakage
+------------
+⚠️ WARNING No data leakage in Manager Analytics
+     Details: Could not check /api/manager/analytics due to access error
+⚠️ WARNING No data leakage in Manager Employees
+     Details: Could not check /api/manager/employees due to access error
+⚠️ WARNING No data leakage in Manager Applications
+     Details: Could not check /api/manager/applications due to access error
+
+HR Override
+-----------
+❌ FAILED HR can access all properties
+     Expected: 200
+     Actual: 404
+     Details: HR cannot access all-applications endpoint
+
+================================================================================
+SECURITY COMPLIANCE STATUS
+================================================================================
+✅ Manager/HR Separation: NON-COMPLIANT
+✅ HR Access Control: COMPLIANT
+✅ Property Isolation: NON-COMPLIANT
+✅ Data Leakage Prevention: NON-COMPLIANT
+
+================================================================================
+PHASE 2.5 COMPLETION STATUS
+================================================================================
+❌ PHASE 2.5 INCOMPLETE: Security issues remain
+
+Issues to resolve:
+• Managers can still access HR endpoints
+• Property isolation not properly enforced
+• Data leakage detected between properties
+
+================================================================================

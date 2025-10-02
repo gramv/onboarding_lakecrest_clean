@@ -1,0 +1,197 @@
+{
+  "scenarios": {
+    "Scenario 1": [
+      {
+        "test": "human-trafficking returns PDF base64",
+        "success": false,
+        "details": "No PDF in response",
+        "timestamp": "2025-09-30T00:03:24.658654"
+      },
+      {
+        "test": "human-trafficking no storage in preview",
+        "success": true,
+        "details": "Storage found: False",
+        "timestamp": "2025-09-30T00:03:24.658672"
+      },
+      {
+        "test": "health-insurance returns PDF base64",
+        "success": false,
+        "details": "No PDF in response",
+        "timestamp": "2025-09-30T00:03:26.140798"
+      },
+      {
+        "test": "health-insurance no storage in preview",
+        "success": true,
+        "details": "Storage found: False",
+        "timestamp": "2025-09-30T00:03:26.140813"
+      },
+      {
+        "test": "weapons-policy returns PDF base64",
+        "success": false,
+        "details": "No PDF in response",
+        "timestamp": "2025-09-30T00:03:26.344206"
+      },
+      {
+        "test": "weapons-policy no storage in preview",
+        "success": true,
+        "details": "Storage found: False",
+        "timestamp": "2025-09-30T00:03:26.344219"
+      },
+      {
+        "test": "company-policies returns PDF base64",
+        "success": false,
+        "details": "No PDF in response",
+        "timestamp": "2025-09-30T00:03:26.631294"
+      },
+      {
+        "test": "company-policies no storage in preview",
+        "success": true,
+        "details": "Storage found: False",
+        "timestamp": "2025-09-30T00:03:26.631307"
+      }
+    ],
+    "Scenario 2": [
+      {
+        "test": "human-trafficking returns signed PDF",
+        "success": false,
+        "details": "PDF field present: False",
+        "timestamp": "2025-09-30T00:03:26.827238"
+      },
+      {
+        "test": "human-trafficking storage path",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:03:26.827248"
+      },
+      {
+        "test": "human-trafficking signed URL generated",
+        "success": false,
+        "details": "No URL in response",
+        "timestamp": "2025-09-30T00:03:26.827251"
+      },
+      {
+        "test": "health-insurance returns signed PDF",
+        "success": false,
+        "details": "PDF field present: False",
+        "timestamp": "2025-09-30T00:03:27.740128"
+      },
+      {
+        "test": "health-insurance storage path",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:03:27.740151"
+      },
+      {
+        "test": "health-insurance signed URL generated",
+        "success": false,
+        "details": "No URL in response",
+        "timestamp": "2025-09-30T00:03:27.740155"
+      },
+      {
+        "test": "weapons-policy returns signed PDF",
+        "success": false,
+        "details": "PDF field present: False",
+        "timestamp": "2025-09-30T00:03:27.923624"
+      },
+      {
+        "test": "weapons-policy storage path",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:03:27.923639"
+      },
+      {
+        "test": "weapons-policy signed URL generated",
+        "success": false,
+        "details": "No URL in response",
+        "timestamp": "2025-09-30T00:03:27.923644"
+      },
+      {
+        "test": "company-policies returns signed PDF",
+        "success": false,
+        "details": "PDF field present: False",
+        "timestamp": "2025-09-30T00:03:28.200057"
+      },
+      {
+        "test": "company-policies storage path",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:03:28.200065"
+      },
+      {
+        "test": "company-policies signed URL generated",
+        "success": false,
+        "details": "No URL in response",
+        "timestamp": "2025-09-30T00:03:28.200068"
+      }
+    ],
+    "Scenario 3": [
+      {
+        "test": "MCI document generation",
+        "success": false,
+        "details": "No storage_path for MCI",
+        "timestamp": "2025-09-30T00:03:28.419658"
+      }
+    ],
+    "Scenario 4": [
+      {
+        "test": "All 4 forms created",
+        "success": false,
+        "details": "Created 0/4 forms",
+        "timestamp": "2025-09-30T00:03:29.406842"
+      }
+    ],
+    "Scenario 5": [
+      {
+        "test": "human-trafficking accepts temp ID",
+        "success": true,
+        "details": "Temp ID temp_1759205009_ht accepted",
+        "timestamp": "2025-09-30T00:03:29.582297"
+      },
+      {
+        "test": "human-trafficking generates PDF for temp ID",
+        "success": false,
+        "details": "PDF generated: False",
+        "timestamp": "2025-09-30T00:03:29.582307"
+      },
+      {
+        "test": "health-insurance accepts temp ID",
+        "success": true,
+        "details": "Temp ID temp_1759205009_hi accepted",
+        "timestamp": "2025-09-30T00:03:29.681769"
+      },
+      {
+        "test": "health-insurance generates PDF for temp ID",
+        "success": false,
+        "details": "PDF generated: False",
+        "timestamp": "2025-09-30T00:03:29.681781"
+      }
+    ]
+  },
+  "summary": {
+    "total": 26,
+    "passed": 6,
+    "failed": 20,
+    "errors": [
+      "Scenario 1 - human-trafficking returns PDF base64: No PDF in response",
+      "Scenario 1 - health-insurance returns PDF base64: No PDF in response",
+      "Scenario 1 - weapons-policy returns PDF base64: No PDF in response",
+      "Scenario 1 - company-policies returns PDF base64: No PDF in response",
+      "Scenario 2 - human-trafficking returns signed PDF: PDF field present: False",
+      "Scenario 2 - human-trafficking storage path: No storage_path in response",
+      "Scenario 2 - human-trafficking signed URL generated: No URL in response",
+      "Scenario 2 - health-insurance returns signed PDF: PDF field present: False",
+      "Scenario 2 - health-insurance storage path: No storage_path in response",
+      "Scenario 2 - health-insurance signed URL generated: No URL in response",
+      "Scenario 2 - weapons-policy returns signed PDF: PDF field present: False",
+      "Scenario 2 - weapons-policy storage path: No storage_path in response",
+      "Scenario 2 - weapons-policy signed URL generated: No URL in response",
+      "Scenario 2 - company-policies returns signed PDF: PDF field present: False",
+      "Scenario 2 - company-policies storage path: No storage_path in response",
+      "Scenario 2 - company-policies signed URL generated: No URL in response",
+      "Scenario 3 - MCI document generation: No storage_path for MCI",
+      "Scenario 4 - All 4 forms created: Created 0/4 forms",
+      "Scenario 5 - human-trafficking generates PDF for temp ID: PDF generated: False",
+      "Scenario 5 - health-insurance generates PDF for temp ID: PDF generated: False"
+    ]
+  }
+}

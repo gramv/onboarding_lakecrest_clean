@@ -1,0 +1,397 @@
+{
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "submit": "Submit",
+    "next": "Next",
+    "previous": "Previous",
+    "back": "Back",
+    "continue": "Continue",
+    "getStarted": "Get Started",
+    "save": "Save",
+    "saveDraft": "Save Draft",
+    "loading": "Loading...",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "jobApplication": {
+    "title": "Employment Application",
+    "equalOpportunity": {
+      "title": "Welcome to Our Employment Application",
+      "subtitle": "Equal Opportunity Employer Statement",
+      "statement": "This hotel is an Equal Opportunity/Affirmative Action Employer committed to excellence through diversity. Employment offers are made on the basis of qualifications, and without regard to race, color, religion, gender, sexual orientation, national origin, age, disability, genetic information, marital status, amnesty, or status as a covered veteran in accordance with applicable federal, state and local laws. This hotel will make reasonable efforts to accommodate persons with disabilities. This hotel is a Violence and Drug Free workplace.",
+      "instructions": {
+        "title": "Important Application Instructions:",
+        "item1": "Please complete the application as thoroughly and accurately as possible",
+        "item2": "Type your responses or use blue/black ink if printing",
+        "item3": "You may submit a resume for additional information",
+        "item4": "Do not write 'SEE RESUME' - complete all fields"
+      },
+      "proceedButton": "Proceed to Application",
+      "acknowledgment": "By clicking \"Proceed\", you acknowledge that you have read and understood this information."
+    },
+    "steps": {
+      "personalInfo": {
+        "title": "Personal Information",
+        "description": "Your contact details and basic information",
+        "fields": {
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "middleName": "Middle Name",
+          "address": "Address",
+          "unit": "Unit/Apartment #",
+          "city": "City",
+          "state": "State/Province",
+          "zipCode": "ZIP/Postal Code",
+          "phone": "Telephone Number",
+          "phoneType": {
+            "cell": "Cell",
+            "home": "Home"
+          },
+          "email": "E-mail Address",
+          "eligibility": {
+            "workAuth": "Are you legally eligible to be employed in the United States?",
+            "sponsorship": "Will you now, or in the future, require {{propertyName}} to assist in maintaining your employment eligibility?",
+            "ageVerification": "Are you at least 18 years of age?",
+            "transportation": "Do you have a reliable means of transportation to get to and from work?"
+          },
+          "transportationMethod": "How do you plan to get to work?",
+          "transportationOptions": {
+            "publicTransport": "Public Transportation",
+            "ownVehicle": "Own Vehicle",
+            "familyFriend": "Friend or Family Drops Me",
+            "rideshare": "Ride Share (Uber/Lyft)",
+            "other": "Other"
+          },
+          "transportationOther": "Please specify your transportation method"
+        },
+        "validation": {
+          "transportationMethodRequired": "Please select how you plan to get to work",
+          "transportationOtherRequired": "Please specify your transportation method"
+        },
+        "placeholders": {
+          "transportationOther": "Please describe how you will commute to work"
+        }
+      },
+      "positionAvailability": {
+        "title": "Position & Availability",
+        "description": "Position details and work availability",
+        "positionDetails": "Position Details",
+        "availability": "Availability",
+        "previousEmployment": "Previous Employment",
+        "currentEmployment": "Current Employment Status",
+        "fields": {
+          "department": "Department of Interest",
+          "position": "Position Applying For",
+          "employmentType": "Employment Type Desired",
+          "hourlyRate": "Hourly Rate",
+          "startDate": "Date Available to Start",
+          "currentlyEmployed": "Are you currently employed?",
+          "contactEmployer": "If 'Yes', may we contact your current employer?",
+          "weekends": "Available to Work Weekends?",
+          "holidays": "Available to Work Holidays?",
+          "previouslyEmployed": "Have you ever been employed by this hotel or any of its affiliated properties?",
+          "previousDetails": "Please provide details (dates, position, location)",
+          "relatives": "List any relatives employed by this hotel",
+          "referralSource": "How did you hear about this employment opportunity?",
+          "employeeReferralName": "Employee Name",
+          "referralSourceOther": "Please specify",
+          "shiftPreference": "Shift Preference",
+          "referralOptions": {
+            "employee": "Employee",
+            "indeed": "Indeed",
+            "newspaper": "Newspaper Ad",
+            "craigslist": "Craigslist Ad",
+            "walkin": "Walk-in",
+            "dol": "Department of Labor",
+            "other": "Other"
+          }
+        },
+        "placeholders": {
+          "selectDepartment": "Select department",
+          "selectPosition": "Select position",
+          "selectDepartmentFirst": "Select department first",
+          "selectEmploymentType": "Select employment type",
+          "selectShift": "Select preferred shift",
+          "previousDetails": "Example: Front Desk Agent at Downtown Location, Jan 2020 - March 2021",
+          "relatives": "Name and relationship (e.g., John Doe - Uncle)",
+          "employeeName": "Enter employee name",
+          "referralOther": "How did you hear about this position?"
+        },
+        "employmentTypes": {
+          "fullTime": "Full-time",
+          "partTime": "Part-time",
+          "temporary": "Temporary/Seasonal",
+          "contract": "Contract"
+        },
+        "options": {
+          "sometimes": "Sometimes"
+        },
+        "shiftOptions": {
+          "morning": "Morning (6 AM - 2 PM)",
+          "afternoon": "Afternoon (2 PM - 10 PM)",
+          "evening": "Evening (10 PM - 6 AM)",
+          "night": "Night/Overnight",
+          "rotating": "Rotating Shifts",
+          "any": "Any Shift"
+        },
+        "hints": {
+          "hourlyRate": "Optional - Enter your desired hourly rate",
+          "relatives": "Leave blank if none"
+        },
+        "validation": {
+          "startDatePast": "Start date cannot be in the past",
+          "previousEmploymentDetails": "Please provide details about your previous employment",
+          "employeeReferralName": "Please provide the employee name",
+          "referralSourceOther": "Please specify how you heard about us",
+          "contactEmployerRequired": "Please indicate if we may contact your current employer"
+        },
+        "note": {
+          "title": "Note",
+          "text": "Please be honest about your availability. We value work-life balance and will work with you to find a schedule that meets both your needs and our business requirements."
+        }
+      },
+      "employmentHistory": {
+        "title": "Employment History",
+        "description": "Your work experience",
+        "noExperience": "I have no previous work experience",
+        "instruction": "List your work experience starting with your most recent employer. Include all employment within the last 10 years.",
+        "employment": "Employment",
+        "current": "Current",
+        "fields": {
+          "companyName": "Company Name",
+          "companyPhone": "Company Phone",
+          "companyAddress": "Company Address",
+          "startingJobTitle": "Starting Job Title",
+          "finalJobTitle": "Final Job Title",
+          "currentlyWork": "Currently work here",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "startingSalary": "Starting Salary",
+          "endingSalary": "Ending Salary",
+          "responsibilities": "Job Responsibilities",
+          "reasonForLeaving": "Reason for Leaving",
+          "supervisorName": "Supervisor Name",
+          "supervisorPhone": "Supervisor Phone",
+          "mayContact": "May we contact this employer?",
+          "employmentGaps": "Gaps in Employment",
+          "gapsExplanation": "Please explain any gaps in employment longer than 3 months"
+        },
+        "placeholders": {
+          "companyName": "ABC Hotel Group",
+          "companyAddress": "123 Main Street, City, State ZIP",
+          "jobTitle": "Front Desk Agent",
+          "finalJobTitle": "Senior Front Desk Agent",
+          "salary": "$15/hour or $30,000/year",
+          "endingSalary": "$18/hour or $36,000/year",
+          "responsibilities": "Describe your main duties and responsibilities...",
+          "reasonForLeaving": "Career advancement, relocation, etc.",
+          "supervisorName": "John Smith",
+          "employmentGaps": "Education, family responsibilities, travel, etc."
+        },
+        "validation": {
+          "employerNameRequired": "Employer name is required",
+          "startingJobTitleRequired": "Starting job title is required",
+          "endingJobTitleRequired": "Ending job title is required for past positions",
+          "startingSalaryRequired": "Starting salary is required",
+          "endingSalaryRequired": "Ending salary is required for past positions",
+          "startDateRequired": "Start date is required",
+          "endDateRequired": "End date is required for past positions",
+          "endDateBeforeStart": "End date must be after start date",
+          "reasonForLeavingRequired": "Reason for leaving is required"
+        },
+        "note": {
+          "title": "Note",
+          "noExperienceText": "Having no previous work experience is perfectly fine! We value enthusiasm, willingness to learn, and a positive attitude just as much as experience."
+        },
+        "addAnother": "Add Another Employment"
+      },
+      "education": {
+        "title": "Education, Specialized Training & Certifications",
+        "description": "Your educational background",
+        "instruction": "Please list all educational institutions attended, starting with high school. Leave fields blank if not applicable.",
+        "collegeSection": "College/University Education",
+        "addCollege": "Add College",
+        "noCollege": "No college education added",
+        "addFirstCollege": "Add your first college",
+        "schools": {
+          "highSchool": "High School",
+          "college": "College or University",
+          "technical": "Technical/Vocational/Business School",
+          "other": "Other School"
+        },
+        "fields": {
+          "schoolName": "Name of School",
+          "location": "Location (City/State)",
+          "yearsAttended": "# of Years Attended",
+          "graduated": "Graduated?",
+          "degreeReceived": "Degree Received",
+          "major": "Major/Minor",
+          "skills": "Skills & Certifications",
+          "skillsDescription": "List any skills (such as software knowledge), foreign language(s), professional memberships, licenses, specialized training or certifications that you feel pertain to the job for which you are applying and may be helpful to us when evaluating your application.",
+          "skillsNote": "Omit any organization which reflects your race, color, religion, age, sex, sexual orientation, marital status or disabilities."
+        },
+        "placeholders": {
+          "schoolName": "Enter school name",
+          "location": "City, State",
+          "diploma": "Diploma",
+          "degree": "Certificate, Diploma, etc.",
+          "major": "Major field of study",
+          "universityName": "Enter university name",
+          "collegeDegree": "BA, BS, MA, etc.",
+          "collegeMajor": "Major field of study / Minor (if applicable)",
+          "skills": "Example: Fluent in Spanish, Microsoft Office Suite, CPR Certified, Food Handler's License..."
+        },
+        "noTechnicalEducation": "I have not attended technical/vocational school",
+        "noOtherEducation": "I have no other education to report",
+        "noSkillsCertifications": "I have no special skills or certifications to report"
+      },
+      "additionalInfo": {
+        "title": "Additional Information",
+        "description": "References and additional details",
+        "conviction": {
+          "title": "Conviction & Driving (MVR) Record",
+          "notice": "A CONVICTION AND/OR MOVING VIOLATION(S) ON YOUR DRIVING AND/OR CRIMINAL RECORD, WILL NOT NECESSARILY RESULT IN THE DENIAL OF EMPLOYMENT",
+          "applicantNoticeTitle": "NOTICE TO APPLICANTS",
+          "applicantNotice": "All employment offers are contingent upon the results of specified background checks, including criminal records. A conviction will not necessarily result in a denial of employment as the details of the conviction(s) will be considered as it relates to the job for which you have applied. You will be notified if the information obtained from a criminal records check (conviction) will result in an adverse employment action. Background checks will be conducted according to federal, state and local guidelines.",
+          "doNotList": "Do not list arrests that did not result in a conviction. Do not list convictions that are sealed, annulled, expunged and/or pardoned.",
+          "convictionQuestion": "Have you been convicted of any violation of law, including but not limited to a moving traffic violations?",
+          "convictionExplain": "If 'Yes', please provide the following information: Date of ruling, location (state, county), type of offense, and the court required rehabilitation. Use a blank page, if needed:",
+          "driverSection": "FOR ALL DRIVER POSITIONS OR POSITIONS WHICH DUTIES INCLUDE THE TRANSPORTATION OF PASSENGERS OR USE OF COMPANY VEHICLE:",
+          "licenseDenied": "Have you ever been denied a license, permit or privilege to operate a motor vehicle?",
+          "licenseSuspended": "Has any license, permit or privilege ever been suspended or revoked?",
+          "explainBelow": "If yes, please explain below",
+          "additionalPages": "Check if additional information is being submitted with this application on separate page(s)"
+        },
+        "personalReference": {
+          "title": "Personal Reference",
+          "name": "Name",
+          "yearsKnown": "Years Known",
+          "phone": "Phone Number",
+          "relationship": "Relationship",
+          "noReference": "I do not have a personal reference to provide"
+        },
+        "military": {
+          "title": "Military Service",
+          "branch": "Branch",
+          "fromTo": "From - To",
+          "rankDuties": "Rank & Duties",
+          "dischargeDate": "Date Discharged",
+          "noService": "I have not served in the military"
+        },
+        "validation": {
+          "convictionRequired": "Please answer the conviction question",
+          "convictionExplanationRequired": "Please provide an explanation",
+          "drivingExplanationRequired": "Please provide an explanation"
+        },
+        "placeholders": {
+          "convictionDetails": "Date of ruling, location (state, county), type of offense, and the court required rehabilitation",
+          "drivingDetails": "Provide details about license denial/suspension/revocation",
+          "referenceName": "John Smith",
+          "referenceRelationship": "Friend, Neighbor, etc.",
+          "militaryBranch": "Army, Navy, Air Force, etc.",
+          "militaryRankDuties": "Your rank and primary duties/responsibilities"
+        }
+      },
+      "voluntaryIdentification": {
+        "title": "Voluntary Self-Identification",
+        "description": "Optional demographic information",
+        "header": "{{propertyName}} and its affiliates is an Equal Opportunity Employer. As required by law, we must record certain information to be made a part of our Affirmative Action Program.",
+        "invitation": "Applicants for employment are also invited to participate in the Affirmative Action Program by reporting their status as disabled, disabled veteran, veteran of the Vietnam era or other minority.",
+        "notice": "In extending this invitation you are also advised that: (a) workers (applicants) are under no obligation to respond, but may do so in the future if they choose; (b) responses will remain confidential within the Human Resources Department; and (c) responses will be used only for the necessary information to include in our Affirmative Action Program. We are a company that values diversity. We actively encourage women and minorities to apply.",
+        "refusal": "REFUSAL TO PROVIDE THIS INFORMATION WILL HAVE NO BEARING ON YOUR APPLICATION AND WILL NOT SUBJECT YOU TO ANY ADVERSE TREATMENT.",
+        "instruction": "Please complete the information requested below. Thank you for your cooperation.",
+        "declineToIdentify": "I do not wish to Self-Identify",
+        "raceEthnicity": {
+          "title": "Race or Ethnic Identity (Please check all that apply)",
+          "hispanicLatino": {
+            "label": "Hispanic or Latino",
+            "description": "A person of Cuban, Mexican, Puerto Rican, South or Central American, or other Spanish culture or origin regardless of race."
+          },
+          "white": {
+            "label": "White (Not Hispanic or Latino)",
+            "description": "A person having origins in any of the original peoples of Europe, the Middle East, or North Africa."
+          },
+          "blackAfricanAmerican": {
+            "label": "Black or African American (Not Hispanic or Latino)",
+            "description": "A person having origins in any of the black racial groups of Africa."
+          },
+          "nativeHawaiianPacificIslander": {
+            "label": "Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)",
+            "description": "A person having origins in any of the peoples of Hawaii, Guam, Samoa, or other Pacific Islands."
+          },
+          "asian": {
+            "label": "Asian (Not Hispanic or Latino)",
+            "description": "A person having origins in any of the original peoples of the Far East, Southeast Asia, or the Indian Subcontinent, including, for example, Cambodia, China, India, Japan, Korea, Malaysia, Pakistan, the Philippine Islands, Thailand, and Vietnam."
+          },
+          "americanIndianAlaskaNative": {
+            "label": "American Indian or Alaska Native (Not Hispanic or Latino)",
+            "description": "A person having origins in any of the original peoples of North and South America (including Central America), and who maintain tribal affiliation or community attachment."
+          },
+          "twoOrMore": {
+            "label": "Two or More Races (Not Hispanic or Latino)",
+            "description": "All persons who identify with more than one of the above five races."
+          }
+        },
+        "gender": {
+          "title": "Gender",
+          "male": "Male",
+          "female": "Female",
+          "decline": "I do not wish to disclose this information"
+        },
+        "referralSource": "How did you hear about our job opening?",
+        "referralOptions": {
+          "employee": "Employee Referral",
+          "indeed": "Indeed",
+          "linkedin": "LinkedIn",
+          "companyWebsite": "Company Website",
+          "jobFair": "Job Fair",
+          "recruitmentAgency": "Recruitment Agency",
+          "socialMedia": "Social Media",
+          "other": "Other"
+        },
+        "placeholders": {
+          "referralSource": "Select referral source"
+        }
+      },
+      "reviewConsent": {
+        "title": "Review & Consent",
+        "description": "Review your application and provide consent",
+        "applicantCertification": "Applicant Certification",
+        "readAndInitial": "READ AND INITIAL THE STATEMENTS BELOW ACKNOWLEDGING THAT YOU UNDERSTAND",
+        "certification1": "I hereby certify that the facts set forth in the above employment application, and any attachments, are true and complete to the best of my knowledge and authorize <strong>{{propertyName}}</strong> to verify their accuracy and to obtain reference information on my work performance and education. I hereby release <strong>{{propertyName}}</strong> from any/all liability of whatever kind and nature which, at any time, could result from obtaining and having an employment decision based on such information. I understand that, if employed, falsified statements of any kind or omissions of facts called for on this application shall be considered sufficient basis for dismissal",
+        "certification2": "I understand that should an employment offer be extended to me and accepted that I will fully adhere to the policies, rules and regulations of employment of the Employer. However, I further understand that neither the policies, rules, regulations of employment, or anything said during the interview process shall be deemed to constitute the terms of an implied employment contract. I understand that any employment offered is for an indefinite duration and 'At Will' and that either I or the Employer may terminate my employment at any time with or without notice or cause.",
+        "certification3": "I am aware that this hotel may require a post-offer drug and alcohol screening, and background investigation including criminal record and credit history (for specific positions), all in accordance with applicable federal, state, & local laws. I agree to undergo the required investigation and screening, if requested. Also, I am aware that future screening & investigations may be required.",
+        "signatureSection": {
+          "instruction": "My signature below certifies that I have read each of the above statements or have them read to me and I understand them fully.",
+          "applicantSignature": "Applicant's Signature",
+          "date": "Date",
+          "typeOrDraw": "Type your name or draw your signature above",
+          "initialError": "Please initial the {{statement}} statement",
+          "signatureError": "Please sign the application",
+          "dateError": "Date is required"
+        },
+        "readInstructions": "Please read the consent statement below and provide your signature to complete your application.",
+        "clear": "Clear",
+        "placeholders": {
+          "initial": "INITIAL",
+          "typeFullName": "Type your full name"
+        }
+      }
+    },
+    "messages": {
+      "submitSuccess": "Application Submitted Successfully!",
+      "submitMessage": "Thank you for applying to {{propertyName}}!",
+      "reviewMessage": "Our hiring team will review your application and contact you within 3-5 business days.",
+      "confirmationEmail": "You should receive a confirmation email shortly at {{email}}",
+      "returnHome": "Return to Home",
+      "saveDraftSuccess": "Application saved successfully",
+      "loadDraftSuccess": "Draft application loaded",
+      "submitError": "Failed to submit application. Please try again.",
+      "propertyLoadError": "Failed to load property information. Please try again.",
+      "completeRequired": "Please complete all required fields in \"{{stepTitle}}\" before proceeding.",
+      "phoneTypeRequired": "Please select at least one phone type",
+      "nextSteps": "Next Steps"
+    }
+  }
+}

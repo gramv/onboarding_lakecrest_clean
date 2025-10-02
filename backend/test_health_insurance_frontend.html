@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insurance PDF Preview Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .form-section {
+            flex: 1;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .preview-section {
+            flex: 2;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        #pdfViewer {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .status {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <h1>Health Insurance PDF Preview Test</h1>
+    <p>This page tests the health insurance PDF generation and preview functionality.</p>
+    
+    <div class="container">
+        <div class="form-section">
+            <h2>Employee Information</h2>
+            <form id="healthInsuranceForm">
+                <div class="form-group">
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" value="John" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" value="Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ssn">SSN:</label>
+                    <input type="text" id="ssn" value="123-45-6789" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" value="john.doe@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="medicalPlan">Medical Plan:</label>
+                    <select id="medicalPlan" required>
+                        <option value="hra6k">HRA $6K</option>
+                        <option value="hra4k">HRA $4K</option>
+                        <option value="hra2k">HRA $2K</option>
+                        <option value="minimum_essential">Minimum Essential</option>
+                        <option value="indemnity">Indemnity</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="medicalTier">Medical Tier:</label>
+                    <select id="medicalTier" required>
+                        <option value="employee">Employee Only</option>
+                        <option value="employee_spouse">Employee + Spouse</option>
+                        <option value="employee_children">Employee + Children</option>
+                        <option value="family">Family</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="dentalCoverage" checked> Dental Coverage
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="visionCoverage" checked> Vision Coverage
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="section125Acknowledged" checked required> 
+                        Section 125 Acknowledged
+                    </label>
+                </div>
+                
+                <button type="button" onclick="generatePDF()">Generate PDF Preview</button>
+                <button type="button" onclick="clearPreview()">Clear Preview</button>
+            </form>
+        </div>
+        
+        <div class="preview-section">
+            <h2>PDF Preview</h2>
+            <div id="status" class="status">Ready to generate PDF...</div>
+            <div id="pdfContainer">
+                <iframe id="pdfViewer" style="display: none;"></iframe>
+                <div id="placeholder" style="text-align: center; padding: 50px; color: #666;">
+                    Click "Generate PDF Preview" to see the health insurance form
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+        
+        function showError(message) {
+            updateStatus('Error: ' + message, 'error');
+        }
+        
+        function showSuccess(message) {
+            updateStatus('Success: ' + message, 'success');
+        }
+        
+        function showLoading(message) {
+            updateStatus('Loading: ' + message, 'loading');
+        }
+        
+        async function generatePDF() {
+            try {
+                showLoading('Generating PDF...');
+                
+                // Collect form data
+                const formData = {
+                    employee_data: {
+                        personalInfo: {
+                            firstName: document.getElementById('firstName').value,
+                            lastName: document.getElementById('lastName').value,
+                            ssn: document.getElementById('ssn').value,
+                            email: document.getElementById('email').value,
+                            dateOfBirth: '1990-01-15',
+                            address: '123 Test St',
+                            city: 'Test City',
+                            state: 'NY',
+                            zipCode: '10001',
+                            phone: '(555) 123-4567',
+                            gender: 'M'
+                        },
+                        medicalPlan: document.getElementById('medicalPlan').value,
+                        medicalTier: document.getElementById('medicalTier').value,
+                        dentalCoverage: document.getElementById('dentalCoverage').checked,
+                        dentalEnrolled: document.getElementById('dentalCoverage').checked,
+                        dentalTier: document.getElementById('medicalTier').value,
+                        visionCoverage: document.getElementById('visionCoverage').checked,
+                        visionEnrolled: document.getElementById('visionCoverage').checked,
+                        visionTier: document.getElementById('medicalTier').value,
+                        section125Acknowledged: document.getElementById('section125Acknowledged').checked,
+                        dependents: [],
+                        effectiveDate: '2025-01-01'
+                    }
+                };
+                
+                console.log('Sending request with data:', formData);
+                
+                // Make API request
+                const response = await fetch(`${API_BASE}/api/onboarding/test-employee/health-insurance/generate-pdf`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                if (result.success && result.data && result.data.pdf) {
+                    // Create data URL for PDF
+                    const pdfDataUrl = `data:application/pdf;base64,${result.data.pdf}`;
+                    
+                    // Show PDF in iframe
+                    const pdfViewer = document.getElementById('pdfViewer');
+                    const placeholder = document.getElementById('placeholder');
+                    
+                    pdfViewer.src = pdfDataUrl;
+                    pdfViewer.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    
+                    showSuccess('PDF generated and displayed successfully!');
+                    
+                    // Log some stats
+                    console.log(`PDF data length: ${result.data.pdf.length} characters`);
+                    console.log(`PDF filename: ${result.data.filename}`);
+                    
+                } else {
+                    throw new Error('Invalid response format or missing PDF data');
+                }
+                
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                showError(error.message);
+            }
+        }
+        
+        function clearPreview() {
+            const pdfViewer = document.getElementById('pdfViewer');
+            const placeholder = document.getElementById('placeholder');
+            
+            pdfViewer.src = '';
+            pdfViewer.style.display = 'none';
+            placeholder.style.display = 'block';
+            
+            updateStatus('Preview cleared. Ready to generate PDF...');
+        }
+        
+        // Test connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/onboarding/test-employee/health-insurance/generate-pdf`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employee_data: {
+                            personalInfo: { firstName: 'Test', lastName: 'Connection' },
+                            medicalPlan: 'hra6k',
+                            medicalTier: 'employee',
+                            section125Acknowledged: true
+                        }
+                    })
+                });
+                
+                if (response.ok) {
+                    updateStatus('✅ Backend connection successful. Ready to generate PDF.');
+                } else {
+                    updateStatus('⚠️ Backend connection issues. Check console for details.');
+                }
+            } catch (error) {
+                updateStatus('❌ Cannot connect to backend. Make sure it\'s running on port 8000.');
+                console.error('Connection test failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+
+> hotel-onboarding-frontend@0.0.0 dev
+> NODE_OPTIONS='--max-old-space-size=8192' vite --port 3000 --host --host 127.0.0.1 --port 5173
+
+error when starting dev server:
+Error: listen EPERM: operation not permitted 127.0.0.1:5173
+    at Server.setupListenHandle [as _listen2] (node:net:1881:21)
+    at listenInCluster (node:net:1946:12)
+    at doListen (node:net:2116:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)

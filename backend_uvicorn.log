@@ -1,0 +1,43 @@
+/Users/gouthamvemula/onbfinaldev/backend/venv/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'schema_extra' has been renamed to 'json_schema_extra'
+  warnings.warn(message, UserWarning)
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.main_enhanced:✅ I9 OCR service imported successfully
+INFO:app.main_enhanced:✅ Using production Google OCR service with enhanced credential handling
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.google_ocr_service_production:✅ Loaded credentials from GOOGLE_CREDENTIALS_BASE64
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1758411267.033948 1748238 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+INFO:app.google_ocr_service_production:✅ Using explicit Google credentials
+INFO:app.google_ocr_service_production:Initialized Google Document AI with processor: projects/933544811759/locations/us/processors/50c628033c5d5dde
+INFO:app.main_enhanced:✅ Using Google Document AI for OCR processing
+INFO:app.main_enhanced:   Project: 933544811759
+INFO:app.main_enhanced:   Processor: 50c628033c5d5dde
+INFO:app.main_enhanced:   Using base64-encoded credentials (production mode)
+INFO:app.main_enhanced:============================================================
+INFO:app.main_enhanced:SERVICE STATUS SUMMARY:
+INFO:app.main_enhanced:  ✓ Database (Supabase): Connected
+INFO:app.main_enhanced:  ✓ OCR Service: Available
+INFO:app.main_enhanced:  ✓ Email Service: Configured
+INFO:app.main_enhanced:  ✓ Frontend URL: https://clickwise.in
+INFO:app.main_enhanced:============================================================
+INFO:app.main_enhanced:✅ Auth router loaded successfully
+INFO:app.main_enhanced:✅ Session lock router loaded successfully
+/Users/gouthamvemula/onbfinaldev/backend/venv/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'schema_extra' has been renamed to 'json_schema_extra'
+  warnings.warn(message, UserWarning)
+INFO:     Started server process [27569]
+INFO:     Waiting for application startup.
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/step_invitations?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:✅ Step invitations table exists
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)

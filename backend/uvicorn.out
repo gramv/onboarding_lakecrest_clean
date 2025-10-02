@@ -1,0 +1,1041 @@
+/opt/homebrew/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'schema_extra' has been renamed to 'json_schema_extra'
+  warnings.warn(message, UserWarning)
+INFO:app.main_enhanced:✅ I9 OCR service imported successfully
+INFO:app.main_enhanced:✅ Using production Google OCR service with enhanced credential handling
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+ERROR:app.main_enhanced:❌ Google Document AI is REQUIRED for government ID processing
+ERROR:app.main_enhanced:   For security and compliance, only Google Document AI is authorized for government documents
+ERROR:app.main_enhanced:   Please configure GOOGLE_CREDENTIALS_BASE64 or GOOGLE_APPLICATION_CREDENTIALS
+INFO:app.main_enhanced:============================================================
+INFO:app.main_enhanced:SERVICE STATUS SUMMARY:
+INFO:app.main_enhanced:  ✓ Database (Supabase): Connected
+INFO:app.main_enhanced:  ✓ OCR Service: Not available
+INFO:app.main_enhanced:  ✓ Email Service: Configured
+INFO:app.main_enhanced:  ✓ Frontend URL: http://localhost:3000
+INFO:app.main_enhanced:============================================================
+INFO:     Started server process [69819]
+INFO:     Waiting for application startup.
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A "HTTP/2 200 OK"
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+INFO:httpx:HTTP Request: POST https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees "HTTP/2 400 Bad Request"
+WARNING:app.main_enhanced:Failed to create session for test employee: {'message': "Could not find the 'email' column of 'employees' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+✅ Official I9 template found: /Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/static/i9-form-template.pdf
+✅ Official W4 template found: /Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/static/w4-form-template.pdf
+⚠️ Scheduler disabled - missing apscheduler module
+✅ Supabase-enabled backend started successfully
+INFO:     127.0.0.1:63812 - "POST /api/test/generate-onboarding-token HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63893 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63894 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:63895 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:63898 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64044 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64174 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:64186 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64301 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64441 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-3abe3ca5 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-3abe3ca5"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-3abe3ca5"', 'code': '22P02', 'hint': None, 'details': None}
+
+INFO:httpx:HTTP Request: POST https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees "HTTP/2 400 Bad Request"
+WARNING:app.main_enhanced:Failed to create session for test employee: {'message': "Could not find the 'email' column of 'employees' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+INFO:     127.0.0.1:64561 - "POST /api/test/generate-onboarding-token HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64574 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64703 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64828 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:65077 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:65328 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-3abe3ca5', 'application_id': None, 'token_id': 'JM-jE1ySIm6ZmmlJH-zgWw', 'issued_at': datetime.datetime(2025, 9, 7, 23, 15, 33, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 15, 33, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-3abe3ca5 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-3abe3ca5"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-3abe3ca5"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-3abe3ca5: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:65353 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLTNhYmUzY2E1IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2OTMzLCJleHAiOjE3NTc4OTE3MzMsImp0aSI6IkpNLWpFMXlTSW02Wm1tbEpILXpnV3cifQ.Mn6HJt-JatO2Tve-GqYi-k36vGNolQ3qwFqc1wFpGVQ HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49204 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49492 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49760 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50009 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50259 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50507 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50776 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51031 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:51273 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51274 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51275 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51413 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51422 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51563 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51571 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51725 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51727 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51850 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51851 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52008 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52009 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52270 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52278 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52534 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52535 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52782 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52786 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53031 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53035 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53277 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53279 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53529 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53532 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53786 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53789 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54037 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54041 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54282 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54285 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54532 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54536 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54790 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54791 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55047 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55051 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55292 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55295 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55541 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55544 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55791 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55794 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56051 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56054 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56365 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56368 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56614 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56618 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56863 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56867 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:57137 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:57141 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:57390 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:57393 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:57688 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57690 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58031 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58035 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58300 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58303 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58548 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58552 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58797 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:58799 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59068 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59071 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59313 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59316 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59587 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59590 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59913 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:59917 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60225 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60229 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60486 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60488 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60731 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60733 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60982 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:60985 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:61281 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:61283 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:61531 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61533 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:61779 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:61783 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62027 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62029 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62270 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62272 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62529 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62556 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62559 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&email=eq.hr%40hoteltest.com "HTTP/2 200 OK"
+INFO:     127.0.0.1:62581 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:62632 - "POST /api/secret/create-hr HTTP/1.1" 422 Unprocessable Content
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62872 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:62875 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63162 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63164 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63460 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63463 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63678 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63679 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63688 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63689 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:63690 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:63692 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63737 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63738 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:63742 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63744 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63745 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:63751 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63919 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63920 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63976 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63978 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:63979 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63980 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:63982 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:63990 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:64095 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64096 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64097 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:     127.0.0.1:64169 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64171 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64172 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64221 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:app.main_enhanced:Token verification result: {'valid': True, 'employee_id': 'test-emp-8ad54dd6', 'application_id': None, 'token_id': 'fDfg2MDvP2PiIRzyWpC3sQ', 'issued_at': datetime.datetime(2025, 9, 7, 23, 12, 50, tzinfo=datetime.timezone.utc), 'expires_at': datetime.datetime(2025, 9, 14, 23, 12, 50, tzinfo=datetime.timezone.utc)}
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&id=eq.test-emp-8ad54dd6 "HTTP/2 400 Bad Request"
+ERROR:app.supabase_service_enhanced:Error getting employee by ID: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+ERROR:app.supabase_service_enhanced:Full traceback: Traceback (most recent call last):
+  File "/Users/gouthamvemula/onbclaude/onbdev-production/hotel-onboarding-backend/app/supabase_service_enhanced.py", line 1840, in get_employee_by_id
+    response = self.client.table('employees').select('*').eq('id', employee_id).execute()
+  File "/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 78, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-emp-8ad54dd6"', 'code': '22P02', 'hint': None, 'details': None}
+
+WARNING:app.main_enhanced:Failed to seed test employee for token test-emp-8ad54dd6: cannot access local variable 'app' where it is not associated with a value
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64223 - "GET /api/onboarding/welcome/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLThhZDU0ZGQ2IiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3Mjg2NzcwLCJleHAiOjE3NTc4OTE1NzAsImp0aSI6ImZEZmcyTUR2UDJQaUlSenlXcEMzc1EifQ.WAwLgetoftFnrhKBtZgHIi4ye6V4WvRMYgy6jbB1l9k HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64225 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64373 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64375 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64501 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64503 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64652 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64654 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64781 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64783 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64908 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:64910 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:65259 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:65263 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:65519 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:65522 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&email=eq.hr%40demo.com "HTTP/2 200 OK"
+INFO:     127.0.0.1:49185 - "POST /api/auth/login HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=id&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.pending "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.approved "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&onboarding_status=in.%28in_progress%2Cemployee_completed%2Cmanager_review%29 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49194 - "GET /api/hr/dashboard-stats HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=id&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.pending "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.approved "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&onboarding_status=in.%28in_progress%2Cemployee_completed%2Cmanager_review%29 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49202 - "GET /api/hr/dashboard-stats HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49451 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49455 - "GET /api/healthz HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=id&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.pending "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.approved "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&onboarding_status=in.%28in_progress%2Cemployee_completed%2Cmanager_review%29 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49703 - "GET /api/hr/dashboard-stats HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49739 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49743 - "GET /api/healthz HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.f4a11b71-ff8f-4a10-a234-ddb3d98c34b8 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.2de90123-57db-440b-98b8-ff04297f74ae "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.5bf87ae9-4055-4879-abde-fcf97eda8a56 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.7a4836e0-7f4d-41c0-b6fc-934076cf2c86 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.a4d4da98-9a69-4e11-83a5-fc9dbc3ed1d7 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.2cee4c64-64d1-4daf-bd81-70c9f442df42 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.23e3e040-e192-47d6-aeee-68471198e4aa "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.2e686050-cd48-487a-a30c-11838c917fa9 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49778 - "GET /api/hr/managers HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49776 - "GET /api/hr/properties HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49791 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.f4a11b71-ff8f-4a10-a234-ddb3d98c34b8 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.2de90123-57db-440b-98b8-ff04297f74ae "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.5bf87ae9-4055-4879-abde-fcf97eda8a56 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.7a4836e0-7f4d-41c0-b6fc-934076cf2c86 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.a4d4da98-9a69-4e11-83a5-fc9dbc3ed1d7 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.2cee4c64-64d1-4daf-bd81-70c9f442df42 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.23e3e040-e192-47d6-aeee-68471198e4aa "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=properties%28%2A%29&manager_id=eq.2e686050-cd48-487a-a30c-11838c917fa9 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49788 - "GET /api/hr/managers HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+ERROR:app.supabase_service_enhanced:Error getting applications by property ae926aac-eb0f-4616-8629-87898e8b0d70: 1 validation error for JobApplication
+applicant_data
+  Value error, Missing required field: work_authorized [type=value_error, input_value={'city': 'Dallas', 'email...tification at 09:30 PM'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/value_error
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49809 - "GET /api/hr/properties/ae926aac-eb0f-4616-8629-87898e8b0d70/stats HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49815 - "GET /api/hr/properties/c90e3ccc-8ede-48ef-b919-274e139e483f/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49806 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49812 - "GET /api/hr/properties/7e38b8ef-dd1c-44d9-be2a-f795864695e5/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49808 - "GET /api/hr/properties/5cf12190-242a-4ac2-91dc-b43035b7aa2e/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49811 - "GET /api/hr/properties/43020963-58d4-4ce8-9a84-139d60a2a5c1/stats HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:     127.0.0.1:49837 - "GET /api/hr/properties/bddf3176-33d9-460e-88a3-4e3503d86dc5/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49828 - "GET /api/hr/properties/f31f99d6-02ba-4c76-9ec9-1ebafe54612f/stats HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49838 - "GET /api/hr/properties HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:     127.0.0.1:49861 - "GET /api/hr/properties/c90e3ccc-8ede-48ef-b919-274e139e483f/stats HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+ERROR:app.supabase_service_enhanced:Error getting applications by property ae926aac-eb0f-4616-8629-87898e8b0d70: 1 validation error for JobApplication
+applicant_data
+  Value error, Missing required field: work_authorized [type=value_error, input_value={'city': 'Dallas', 'email...tification at 09:30 PM'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.11/v/value_error
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49859 - "GET /api/hr/properties/43020963-58d4-4ce8-9a84-139d60a2a5c1/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49860 - "GET /api/hr/properties/7e38b8ef-dd1c-44d9-be2a-f795864695e5/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49857 - "GET /api/hr/properties/5cf12190-242a-4ac2-91dc-b43035b7aa2e/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49863 - "GET /api/hr/properties/f31f99d6-02ba-4c76-9ec9-1ebafe54612f/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49858 - "GET /api/hr/properties/ae926aac-eb0f-4616-8629-87898e8b0d70/stats HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A&id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=%2A&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=%2A&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49872 - "GET /api/hr/properties/bddf3176-33d9-460e-88a3-4e3503d86dc5/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49887 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49890 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49886 - "GET /api/hr/properties HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:49895 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49999 - "POST /api/hr/send-step-invitation HTTP/1.1" 405 Method Not Allowed
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50090 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50091 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50377 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50379 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50642 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50646 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50942 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:50946 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51091 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51090 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51116 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51115 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51277 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51279 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51328 - "POST /api/hr/send-step-invitation HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:51356 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51359 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51353 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=id&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.pending "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.approved "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&onboarding_status=in.%28in_progress%2Cemployee_completed%2Cmanager_review%29 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51357 - "GET /api/hr/dashboard-stats HTTP/1.1" 200 OK
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+WARNING:app.supabase_service_enhanced:SUPABASE_SERVICE_KEY not set, using anon key for admin operations
+WARNING:app.supabase_service_enhanced:ENCRYPTION_KEY not set, sensitive data will not be encrypted
+INFO:app.supabase_service_enhanced:✅ Enhanced Supabase service initialized
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=%2A&id=eq.daeede3f-ffb8-4cf6-bfbb-0993ce0fa048 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=%2A "HTTP/2 200 OK"
+INFO:app.supabase_service_enhanced:Raw properties from DB: 7 properties found
+INFO:app.supabase_service_enhanced:Returning 7 properties
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.5cf12190-242a-4ac2-91dc-b43035b7aa2e "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.ae926aac-eb0f-4616-8629-87898e8b0d70 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.43020963-58d4-4ce8-9a84-139d60a2a5c1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.7e38b8ef-dd1c-44d9-be2a-f795864695e5 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.c90e3ccc-8ede-48ef-b919-274e139e483f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.f31f99d6-02ba-4c76-9ec9-1ebafe54612f "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/property_managers?select=manager_id&property_id=eq.bddf3176-33d9-460e-88a3-4e3503d86dc5 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51369 - "GET /api/hr/properties HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/properties?select=id&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&role=eq.manager&is_active=eq.True "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.pending "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id&status=eq.approved "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/job_applications?select=id "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&employment_status=eq.active "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/employees?select=id&onboarding_status=in.%28in_progress%2Cemployee_completed%2Cmanager_review%29 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51371 - "GET /api/hr/dashboard-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51440 - "POST /api/hr/send-step-invitation HTTP/1.1" 405 Method Not Allowed
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51586 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51588 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51629 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51735 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51847 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:51863 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52092 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52094 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52341 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52343 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52589 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52591 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52836 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:52840 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53088 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53089 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53334 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53336 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53584 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53586 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53831 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:53834 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54082 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54084 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54328 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54332 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54573 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54575 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:54827 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54829 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55074 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55077 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55322 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55325 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55581 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55583 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55871 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:55874 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55896 - "HEAD /api/hr/step-invitations HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:55984 - "GET /api/hr/step-invitations HTTP/1.1" 404 Not Found
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56191 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56194 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56440 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET https://kzommszdhapvqpekpvnt.supabase.co/rest/v1/users?select=id&limit=1 "HTTP/2 200 OK"
+INFO:     127.0.0.1:56444 - "GET /api/healthz HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:app.websocket_manager:Shutting down WebSocket manager...
+INFO:app.websocket_manager:WebSocket manager shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [69819]

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Field Mapper - Click to Map Fields</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f0f0; }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .pdf-section {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        .controls-section {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .field-input {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .field-input input, .field-input select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        
+        .field-input label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        #pdfCanvas {
+            border: 2px solid #3498db;
+            cursor: crosshair;
+            background: white;
+            position: relative;
+        }
+        
+        .field-rect {
+            position: absolute;
+            border: 2px solid;
+            pointer-events: none;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .field-rect.text { border-color: #3498db; }
+        .field-rect.checkbox { border-color: #27ae60; }
+        .field-rect.signature { border-color: #9b59b6; }
+        
+        .field-label {
+            position: absolute;
+            background: white;
+            padding: 2px 5px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 3px;
+            top: -20px;
+            left: 0;
+            white-space: nowrap;
+        }
+        
+        .field-list {
+            margin-top: 20px;
+        }
+        
+        .field-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            position: relative;
+        }
+        
+        .field-item.checkbox { border-left-color: #27ae60; }
+        .field-item.signature { border-left-color: #9b59b6; }
+        
+        .delete-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        
+        .export-btn:hover { background: #229954; }
+        
+        .instructions {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        #fieldOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .status.success { background: #d4edda; color: #155724; display: block; }
+        .status.error { background: #f8d7da; color: #721c24; display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="pdf-section">
+            <div class="header">
+                <h2>📄 Direct Deposit Form - Click to Map Fields</h2>
+                <p style="margin-top: 10px;">Click and drag on the PDF to mark where fields should be placed</p>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="pdfCanvas"></canvas>
+                <div id="fieldOverlay"></div>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <div class="header">
+                <h3>🎯 Field Mapping Controls</h3>
+            </div>
+            
+            <div class="instructions">
+                <strong>Instructions:</strong>
+                <ol style="margin-left: 20px; margin-top: 10px;">
+                    <li>Enter field name below</li>
+                    <li>Select field type</li>
+                    <li>Click and drag on PDF to mark field area</li>
+                    <li>Export when all fields are mapped</li>
+                </ol>
+            </div>
+            
+            <div class="field-input">
+                <label>Field Name:</label>
+                <input type="text" id="fieldName" placeholder="e.g., employee_name">
+                
+                <label style="margin-top: 10px;">Field Type:</label>
+                <select id="fieldType">
+                    <option value="text">Text Field</option>
+                    <option value="checkbox">Checkbox</option>
+                    <option value="signature">Signature</option>
+                </select>
+            </div>
+            
+            <div id="status" class="status"></div>
+            
+            <button class="export-btn" onclick="exportFields()">📥 Export Field Mapping</button>
+            
+            <div class="field-list">
+                <h3 style="margin-bottom: 10px;">Mapped Fields:</h3>
+                <div id="fieldsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let canvas = document.getElementById('pdfCanvas');
+        let ctx = canvas.getContext('2d');
+        let fields = {};
+        let isDrawing = false;
+        let startX, startY;
+        let currentRect = null;
+        
+        // Load PDF from your Python server
+        async function loadPDF() {
+            // You'll need to serve the PDF through a web server
+            // For now, use a data URL or modify this path
+            const url = '/official-forms/Direct  deposit form.pdf';
+            
+            try {
+                // For testing, you can convert your PDF to base64 and use a data URL
+                // Or serve it through Python's http.server
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('status').textContent = `PDF loaded: ${pdfDoc.numPages} pages`;
+                renderPage(pageNum);
+            } catch (error) {
+                // Fallback: instructions for manual setup
+                showStatus('To use this tool: 1) Start a web server: python3 -m http.server 8000, 2) Open http://localhost:8000/pdf_field_mapper_web.html', 'error');
+            }
+        }
+        
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({scale: scale});
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                
+                const renderTask = page.render(renderContext);
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    redrawFields();
+                });
+            });
+        }
+        
+        canvas.addEventListener('mousedown', (e) => {
+            const fieldName = document.getElementById('fieldName').value.trim();
+            if (!fieldName) {
+                showStatus('Please enter a field name first!', 'error');
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            startX = (e.clientX - rect.left) / scale;
+            startY = (e.clientY - rect.top) / scale;
+            isDrawing = true;
+            
+            // Create temporary rectangle
+            if (currentRect) {
+                currentRect.remove();
+            }
+            currentRect = document.createElement('div');
+            currentRect.className = 'field-rect ' + document.getElementById('fieldType').value;
+            currentRect.style.left = (e.clientX - rect.left) + 'px';
+            currentRect.style.top = (e.clientY - rect.top) + 'px';
+            currentRect.style.width = '0px';
+            currentRect.style.height = '0px';
+            document.getElementById('fieldOverlay').appendChild(currentRect);
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || !currentRect) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            const x = Math.min(startX * scale, currentX);
+            const y = Math.min(startY * scale, currentY);
+            const width = Math.abs(currentX - startX * scale);
+            const height = Math.abs(currentY - startY * scale);
+            
+            currentRect.style.left = x + 'px';
+            currentRect.style.top = y + 'px';
+            currentRect.style.width = width + 'px';
+            currentRect.style.height = height + 'px';
+        });
+        
+        canvas.addEventListener('mouseup', (e) => {
+            if (!isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const endX = (e.clientX - rect.left) / scale;
+            const endY = (e.clientY - rect.top) / scale;
+            
+            const fieldName = document.getElementById('fieldName').value.trim();
+            const fieldType = document.getElementById('fieldType').value;
+            
+            // Calculate field rectangle
+            const x1 = Math.min(startX, endX);
+            const y1 = Math.min(startY, endY);
+            const x2 = Math.max(startX, endX);
+            const y2 = Math.max(startY, endY);
+            
+            // Minimum size check
+            if (Math.abs(x2 - x1) < 10 || Math.abs(y2 - y1) < 5) {
+                if (currentRect) currentRect.remove();
+                showStatus('Field too small, please drag a larger area', 'error');
+                isDrawing = false;
+                return;
+            }
+            
+            // Save field
+            fields[fieldName] = {
+                rect: [x1, y1, x2, y2],
+                type: fieldType,
+                page: 0
+            };
+            
+            // Clear for next field
+            document.getElementById('fieldName').value = '';
+            isDrawing = false;
+            currentRect = null;
+            
+            showStatus(`Added field: ${fieldName}`, 'success');
+            updateFieldsList();
+            redrawFields();
+        });
+        
+        function redrawFields() {
+            const overlay = document.getElementById('fieldOverlay');
+            overlay.innerHTML = '';
+            
+            for (const [name, field] of Object.entries(fields)) {
+                const rect = document.createElement('div');
+                rect.className = 'field-rect ' + field.type;
+                rect.style.left = (field.rect[0] * scale) + 'px';
+                rect.style.top = (field.rect[1] * scale) + 'px';
+                rect.style.width = ((field.rect[2] - field.rect[0]) * scale) + 'px';
+                rect.style.height = ((field.rect[3] - field.rect[1]) * scale) + 'px';
+                
+                const label = document.createElement('div');
+                label.className = 'field-label';
+                label.textContent = name;
+                rect.appendChild(label);
+                
+                overlay.appendChild(rect);
+            }
+        }
+        
+        function updateFieldsList() {
+            const list = document.getElementById('fieldsList');
+            list.innerHTML = '';
+            
+            for (const [name, field] of Object.entries(fields)) {
+                const item = document.createElement('div');
+                item.className = 'field-item ' + field.type;
+                item.innerHTML = `
+                    <strong>${name}</strong><br>
+                    Type: ${field.type}<br>
+                    Position: [${field.rect.map(n => n.toFixed(0)).join(', ')}]
+                    <button class="delete-btn" onclick="deleteField('${name}')">Delete</button>
+                `;
+                list.appendChild(item);
+            }
+        }
+        
+        function deleteField(name) {
+            delete fields[name];
+            updateFieldsList();
+            redrawFields();
+            showStatus(`Deleted field: ${name}`, 'success');
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            setTimeout(() => {
+                status.className = 'status';
+            }, 3000);
+        }
+        
+        function exportFields() {
+            if (Object.keys(fields).length === 0) {
+                showStatus('No fields to export!', 'error');
+                return;
+            }
+            
+            // Generate Python code
+            const pythonCode = generatePythonCode();
+            
+            // Download JSON mapping
+            const jsonBlob = new Blob([JSON.stringify(fields, null, 2)], {type: 'application/json'});
+            const jsonUrl = URL.createObjectURL(jsonBlob);
+            const jsonLink = document.createElement('a');
+            jsonLink.href = jsonUrl;
+            jsonLink.download = 'direct_deposit_field_mapping.json';
+            jsonLink.click();
+            
+            // Download Python script
+            const pyBlob = new Blob([pythonCode], {type: 'text/plain'});
+            const pyUrl = URL.createObjectURL(pyBlob);
+            const pyLink = document.createElement('a');
+            pyLink.href = pyUrl;
+            pyLink.download = 'create_direct_deposit_acroform.py';
+            pyLink.click();
+            
+            showStatus(`Exported ${Object.keys(fields).length} fields!`, 'success');
+        }
+        
+        function generatePythonCode() {
+            return `#!/usr/bin/env python3
+"""
+Create Direct Deposit AcroForm with precisely mapped fields
+Generated by PDF Field Mapper Web Tool
+"""
+
+import fitz
+from pathlib import Path
+
+def create_acroform():
+    input_pdf = "/Users/gouthamvemula/onbclaude/onbdev-demo/official-forms/Direct  deposit form.pdf"
+    output_pdf = "/Users/gouthamvemula/onbclaude/onbdev-demo/direct_deposit_acroform_precise.pdf"
+    
+    doc = fitz.open(input_pdf)
+    page = doc[0]
+    
+    # Field mappings from visual tool
+    fields = ${JSON.stringify(fields, null, 8)}
+    
+    for field_name, field_info in fields.items():
+        rect = fitz.Rect(field_info["rect"])
+        
+        widget = fitz.Widget()
+        if field_info["type"] == "checkbox":
+            widget.field_type = fitz.PDF_WIDGET_TYPE_CHECKBOX
+        else:
+            widget.field_type = fitz.PDF_WIDGET_TYPE_TEXT
+        
+        widget.field_name = field_name
+        widget.rect = rect
+        widget.border_width = 0
+        widget.fill_color = None
+        
+        if field_info["type"] != "checkbox":
+            widget.text_fontsize = 10
+            
+        page.add_widget(widget)
+    
+    doc.save(output_pdf)
+    doc.close()
+    print(f"✅ Created AcroForm with {len(fields)} precisely mapped fields")
+    print(f"📄 Output: {output_pdf}")
+
+if __name__ == "__main__":
+    create_acroform()
+`;
+        }
+        
+        // Load PDF on page load
+        // loadPDF();
+    </script>
+    
+    <div style="position: fixed; bottom: 20px; left: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); max-width: 400px;">
+        <h3>📝 To use this tool:</h3>
+        <ol style="margin-left: 20px; margin-top: 10px;">
+            <li>Save this HTML file</li>
+            <li>Run: <code style="background: #f0f0f0; padding: 2px 5px;">python3 -m http.server 8000</code></li>
+            <li>Open: <a href="http://localhost:8000/pdf_field_mapper_web.html" target="_blank">http://localhost:8000/pdf_field_mapper_web.html</a></li>
+            <li>Upload your PDF or modify the path in the code</li>
+        </ol>
+    </div>
+</body>
+</html>

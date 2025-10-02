@@ -1,0 +1,9 @@
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLWMxNjk4NGQwIiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3ODExMjg4LCJleHAiOjE3NTg0MTYwODgsImp0aSI6Im83UklXUnZ3WjkxMkxhUFZ1UUVfMGcifQ.GQIceyLR5VzU36woGtjX7Ck66HJoBIGkGWzy9LDm3wc
+Frontend URL: http://localhost:3000/onboard?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6InRlc3QtZW1wLWMxNjk4NGQwIiwiYXBwbGljYXRpb25faWQiOm51bGwsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiaWF0IjoxNzU3ODExMjg4LCJleHAiOjE3NTg0MTYwODgsImp0aSI6Im83UklXUnZ3WjkxMkxhUFZ1UUVfMGcifQ.GQIceyLR5VzU36woGtjX7Ck66HJoBIGkGWzy9LDm3wc
+Generated: 2025-09-13T20:54:48.437311
+
+Phase 0 Features to Test:
+1. Token auto-refresh (wait 23+ hours)
+2. Session locking (open in 2 tabs)
+3. Unsaved data warning (fill form, try to leave)
+4. Audit logging (check audit_logs table)

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Cache and Login</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .success {
+            color: #22c55e;
+            font-weight: bold;
+            padding: 10px;
+            background: #dcfce7;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .code {
+            font-family: 'Courier New', monospace;
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        #status {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>✅ Final Fix Complete - Clear Cache & Login</h1>
+
+        <div class="success">
+            All issues fixed including:
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Backend /api/auth/me endpoint fixed</li>
+                <li>Frontend auto-refresh for missing property_id</li>
+                <li>Token ordering issue resolved</li>
+            </ul>
+            Now just clear your browser cache and login!
+        </div>
+
+        <h2>Step 1: Open Console</h2>
+        <div class="step">
+            <p>Press <strong>F12</strong> (or Cmd+Option+I on Mac) to open DevTools, then go to the Console tab.</p>
+        </div>
+
+        <h2>Step 2: Clear Everything</h2>
+        <div class="step">
+            <p>Copy and paste this command in the console:</p>
+            <div class="code">
+localStorage.clear();
+sessionStorage.clear();
+console.log('✅ All storage cleared! Now refresh the page.');
+            </div>
+            <button onclick="clearStorage()">Or Click Here to Clear</button>
+            <div id="status"></div>
+        </div>
+
+        <h2>Step 3: Go to Login</h2>
+        <div class="step">
+            <button onclick="window.location.href='http://localhost:3000/login'">Go to Login Page</button>
+            <p>Login with:</p>
+            <ul>
+                <li>Email: <strong>gvemula@mail.yu.edu</strong></li>
+                <li>Password: <strong>Gouthi321@</strong></li>
+            </ul>
+        </div>
+
+        <h2>Expected Result</h2>
+        <div class="step">
+            <p>After login, you should see the Manager Dashboard with:</p>
+            <ul>
+                <li>✅ Property name displayed (m6)</li>
+                <li>✅ No "Property Not Assigned" error</li>
+                <li>✅ Full access to manager features</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function clearStorage() {
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // Also clear IndexedDB if it exists
+                if ('indexedDB' in window) {
+                    indexedDB.databases().then(dbs => {
+                        dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+                    });
+                }
+
+                // Clear caches
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+
+                document.getElementById('status').innerHTML = '<div class="success">✅ All cache cleared! Now go to the login page.</div>';
+            } catch (error) {
+                document.getElementById('status').innerHTML = '<div style="color: red;">Error: ' + error.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

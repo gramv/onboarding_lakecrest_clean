@@ -1,0 +1,54 @@
+{
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "success_rate": 100.0,
+    "total_time": 2.1377499103546143,
+    "timestamp": "2025-09-01T10:11:27.135012"
+  },
+  "results": [
+    {
+      "test": "Backend Error Handling Fixed",
+      "success": true,
+      "message": "Error handling fixed - Returns structured validation error (HTTP 200)",
+      "duration": 0.013301849365234375,
+      "timestamp": "2025-09-01T10:11:25.010469"
+    },
+    {
+      "test": "Frontend Process.env Error Fixed",
+      "success": true,
+      "message": "Frontend process.env error fixed - Onboarding flow loads successfully",
+      "duration": 0.008032083511352539,
+      "timestamp": "2025-09-01T10:11:25.018548"
+    },
+    {
+      "test": "Enhanced Health Insurance Enabled",
+      "success": true,
+      "message": "Enhanced health insurance working - PDF generated with operation tracking",
+      "duration": 0.34514307975769043,
+      "timestamp": "2025-09-01T10:11:25.363741"
+    },
+    {
+      "test": "Integration Test Suite 100%",
+      "success": true,
+      "message": "Integration test suite achieving 100% pass rate",
+      "duration": 0.3551900386810303,
+      "timestamp": "2025-09-01T10:11:25.718994"
+    },
+    {
+      "test": "Performance Targets Met",
+      "success": true,
+      "message": "Performance targets met - Avg: 282ms, Max: 319ms",
+      "duration": 1.4097840785980225,
+      "timestamp": "2025-09-01T10:11:27.128826"
+    },
+    {
+      "test": "Mobile and Multi-Language Support",
+      "success": true,
+      "message": "Mobile and multi-language support working (Mobile: True, Spanish: True)",
+      "duration": 0.005976200103759766,
+      "timestamp": "2025-09-01T10:11:27.134842"
+    }
+  ]
+}

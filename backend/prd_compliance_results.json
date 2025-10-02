@@ -1,0 +1,31 @@
+{
+  "passed": [
+    "FR-AUTH-001: Email/password authentication",
+    "FR-AUTH-004: JWT token-based sessions",
+    "FR-RBAC-001: Role-based access control",
+    "FR-PROP-002: Properties have unique IDs",
+    "FR-PROP-004: Property soft-delete only",
+    "FR-MGR-005: Property data isolation",
+    "FR-COMP-005: Compliance report generation"
+  ],
+  "failed": [
+    "FR-PROP-001: HR creates properties",
+    "FR-PROP-003: Properties editable by HR only",
+    "FR-MGR-001: HR creates manager accounts",
+    "FR-MGR-002: Managers assigned to properties",
+    "FR-MGR-003: Manager access revocation"
+  ],
+  "not_implemented": [
+    "FR-MGR-004: Manager activity tracking",
+    "FR-MOD-001: Send specific forms to employees",
+    "FR-MOD-002: Unique module access tokens",
+    "FR-MOD-003: 7-day token expiration",
+    "FR-MOD-004: Reminder email system",
+    "FR-MOD-005: Module updates employee records",
+    "FR-MOD-006: Module audit trail",
+    "FR-COMP-001: I-9 completion deadline tracking",
+    "FR-COMP-002: Deadline alert system",
+    "FR-COMP-003: Expired document prevention",
+    "FR-COMP-004: Document retention schedule"
+  ]
+}

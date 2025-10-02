@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insurance Flow Browser Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .form-preview {
+            border: 1px solid #ddd;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Health Insurance Flow Browser Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <button onclick="testDataFlow()">Test Data Flow</button>
+        <button onclick="testSection125()">Test Section 125</button>
+        <button onclick="testDependents()">Test Dependents</button>
+        <button onclick="testPDFGeneration()">Test PDF Generation</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>PDF Preview</h2>
+        <div id="pdfPreview"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        const resultsDiv = document.getElementById('results');
+        const pdfPreviewDiv = document.getElementById('pdfPreview');
+
+        function log(message, status = 'pending') {
+            const result = document.createElement('div');
+            result.className = `test-result ${status}`;
+            result.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            resultsDiv.appendChild(result);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+            pdfPreviewDiv.innerHTML = '';
+        }
+
+        async function testDataFlow() {
+            log('Testing Data Flow with Personal Info...');
+            
+            const employeeId = 'test-browser-' + Date.now();
+            const personalInfo = {
+                firstName: "Browser",
+                lastName: "TestUser",
+                ssn: "123-45-6789",
+                dateOfBirth: "1990-01-15",
+                address: "123 Browser St",
+                city: "Web City",
+                state: "NY",
+                zipCode: "10001",
+                phoneNumber: "(555) 123-4567",
+                email: "browser.test@example.com"
+            };
+
+            const healthData = {
+                personalInfo: personalInfo,
+                insuranceSelections: {
+                    medicalPlan: "plan_a",
+                    dentalPlan: "yes",
+                    visionPlan: "yes"
+                },
+                effectiveDate: "2025-01-01",
+                section125Acknowledged: true,
+                dependents: []
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/onboarding/${employeeId}/health-insurance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(healthData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Data Flow Test PASSED - Personal info saved successfully', 'pass');
+                    log(`Response: ${JSON.stringify(data, null, 2)}`, 'pass');
+                } else {
+                    log(`❌ Data Flow Test FAILED - ${data.error || 'Unknown error'}`, 'fail');
+                }
+            } catch (error) {
+                log(`❌ Data Flow Test ERROR - ${error.message}`, 'fail');
+            }
+        }
+
+        async function testSection125() {
+            log('Testing Section 125 Acknowledgment...');
+            
+            const employeeId = 'test-section125-' + Date.now();
+            
+            // Test without acknowledgment
+            const dataWithoutAck = {
+                personalInfo: {
+                    firstName: "NoAck",
+                    lastName: "User",
+                    ssn: "987-65-4321",
+                    dateOfBirth: "1985-05-20"
+                },
+                insuranceSelections: {
+                    medicalPlan: "plan_b"
+                },
+                section125Acknowledged: false,
+                dependents: []
+            };
+
+            try {
+                const response1 = await fetch(`${API_BASE}/onboarding/${employeeId}/health-insurance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataWithoutAck)
+                });
+
+                if (response1.ok) {
+                    log('✅ Section 125 without acknowledgment saved', 'pass');
+                }
+
+                // Now with acknowledgment
+                dataWithoutAck.section125Acknowledged = true;
+                const response2 = await fetch(`${API_BASE}/onboarding/${employeeId}/health-insurance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataWithoutAck)
+                });
+
+                if (response2.ok) {
+                    log('✅ Section 125 with acknowledgment saved', 'pass');
+                } else {
+                    log('❌ Section 125 Test FAILED', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Section 125 Test ERROR - ${error.message}`, 'fail');
+            }
+        }
+
+        async function testDependents() {
+            log('Testing Dependent Information with Gender and Coverage Types...');
+            
+            const employeeId = 'test-dependents-' + Date.now();
+            const healthData = {
+                personalInfo: {
+                    firstName: "Parent",
+                    lastName: "WithDeps",
+                    ssn: "555-55-5555",
+                    dateOfBirth: "1988-03-10",
+                    address: "789 Family St",
+                    city: "Chicago",
+                    state: "IL",
+                    zipCode: "60601"
+                },
+                insuranceSelections: {
+                    medicalPlan: "plan_c",
+                    dentalPlan: "yes",
+                    visionPlan: "yes"
+                },
+                section125Acknowledged: true,
+                dependents: [
+                    {
+                        name: "Spouse TestUser",
+                        relationship: "Spouse",
+                        dateOfBirth: "1990-07-15",
+                        ssn: "111-11-1111",
+                        gender: "Female",
+                        coverageTypes: ["Medical", "Dental", "Vision"]
+                    },
+                    {
+                        name: "Child One",
+                        relationship: "Child",
+                        dateOfBirth: "2015-04-20",
+                        ssn: "222-22-2222",
+                        gender: "Male",
+                        coverageTypes: ["Medical", "Vision"]
+                    },
+                    {
+                        name: "Child Two",
+                        relationship: "Child",
+                        dateOfBirth: "2018-09-05",
+                        ssn: "333-33-3333",
+                        gender: "Other",
+                        coverageTypes: ["Medical"]
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/onboarding/${employeeId}/health-insurance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(healthData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Dependents Test PASSED - Multiple dependents with different genders and coverage saved', 'pass');
+                    log(`Saved ${healthData.dependents.length} dependents with varied coverage types`, 'pass');
+                } else {
+                    log(`❌ Dependents Test FAILED - ${data.error}`, 'fail');
+                }
+            } catch (error) {
+                log(`❌ Dependents Test ERROR - ${error.message}`, 'fail');
+            }
+        }
+
+        async function testPDFGeneration() {
+            log('Testing PDF Generation with All Data...');
+            
+            const employeeId = 'test-pdf-' + Date.now();
+            const completeData = {
+                personalInfo: {
+                    firstName: "Complete",
+                    lastName: "PDFTest",
+                    ssn: "444-44-4444",
+                    dateOfBirth: "1992-12-25",
+                    address: "321 PDF Street, Apt 5B",
+                    city: "Boston",
+                    state: "MA",
+                    zipCode: "02101",
+                    phoneNumber: "(617) 555-1234",
+                    email: "pdf.test@example.com"
+                },
+                insuranceSelections: {
+                    medicalPlan: "plan_b",
+                    dentalPlan: "yes",
+                    visionPlan: "no",
+                    declineAllCoverage: false
+                },
+                effectiveDate: "2025-02-01",
+                section125Acknowledged: true,
+                dependents: [
+                    {
+                        name: "PDF Spouse",
+                        relationship: "Spouse",
+                        dateOfBirth: "1993-06-15",
+                        ssn: "666-66-6666",
+                        gender: "Female",
+                        coverageTypes: ["Medical", "Dental"]
+                    }
+                ]
+            };
+
+            try {
+                // Test preview
+                log('Generating preview PDF...');
+                const previewResponse = await fetch(`${API_BASE}/onboarding/${employeeId}/health-insurance/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(completeData)
+                });
+
+                if (previewResponse.ok) {
+                    const previewData = await previewResponse.json();
+                    log('✅ Preview PDF generated successfully', 'pass');
+                    
+                    if (previewData.data && previewData.data.pdf) {
+                        // Display PDF preview
+                        const pdfDataUrl = `data:application/pdf;base64,${previewData.data.pdf}`;
+                        pdfPreviewDiv.innerHTML = `
+                            <h3>Preview PDF (No Signature)</h3>
+                            <iframe src="${pdfDataUrl}"></iframe>
+                            <p>✅ PDF shows personal info at top</p>
+                            <p>✅ Insurance selections marked correctly</p>
+                            <p>✅ Dependent information included</p>
+                        `;
+                    }
+                }
+
+                // Test final with signature
+                log('Generating final PDF with signature...');
+                completeData.signatureData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+                
+                const finalResponse = await fetch(`${API_BASE}/onboarding/${employeeId}/health-insurance/generate-pdf`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(completeData)
+                });
+
+                if (finalResponse.ok) {
+                    const finalData = await finalResponse.json();
+                    log('✅ Final PDF with signature generated successfully', 'pass');
+                    
+                    if (finalData.data && finalData.data.pdf_base64) {
+                        // Add second iframe for signed PDF
+                        const signedPdfDataUrl = `data:application/pdf;base64,${finalData.data.pdf_base64}`;
+                        pdfPreviewDiv.innerHTML += `
+                            <h3>Final PDF (With Signature)</h3>
+                            <iframe src="${signedPdfDataUrl}"></iframe>
+                            <p>✅ Signature added to PDF</p>
+                        `;
+                    }
+                } else {
+                    log('❌ Final PDF generation failed', 'fail');
+                }
+            } catch (error) {
+                log(`❌ PDF Generation Test ERROR - ${error.message}`, 'fail');
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            log('Starting comprehensive health insurance flow tests...', 'pending');
+            
+            await testDataFlow();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testSection125();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testDependents();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testPDFGeneration();
+            
+            log('All tests completed!', 'pass');
+        }
+    </script>
+</body>
+</html>

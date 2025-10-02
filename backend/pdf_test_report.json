@@ -1,0 +1,145 @@
+{
+  "scenarios": {
+    "Scenario 1": [
+      {
+        "test": "human-trafficking preview request",
+        "success": false,
+        "details": "Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:39.371916\"}",
+        "timestamp": "2025-09-30T00:00:39.372486"
+      },
+      {
+        "test": "health-insurance returns PDF base64",
+        "success": false,
+        "details": "No PDF in response",
+        "timestamp": "2025-09-30T00:00:39.598994"
+      },
+      {
+        "test": "health-insurance no storage in preview",
+        "success": true,
+        "details": "Storage found: False",
+        "timestamp": "2025-09-30T00:00:39.599007"
+      },
+      {
+        "test": "weapons-policy preview request",
+        "success": false,
+        "details": "Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:39.655198\"}",
+        "timestamp": "2025-09-30T00:00:39.655818"
+      },
+      {
+        "test": "company-policies returns PDF base64",
+        "success": false,
+        "details": "No PDF in response",
+        "timestamp": "2025-09-30T00:00:40.161535"
+      },
+      {
+        "test": "company-policies no storage in preview",
+        "success": true,
+        "details": "Storage found: False",
+        "timestamp": "2025-09-30T00:00:40.161548"
+      }
+    ],
+    "Scenario 2": [
+      {
+        "test": "human-trafficking signed request",
+        "success": false,
+        "details": "Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:40.203101\"}",
+        "timestamp": "2025-09-30T00:00:40.203667"
+      },
+      {
+        "test": "health-insurance returns signed PDF",
+        "success": false,
+        "details": "PDF present: False",
+        "timestamp": "2025-09-30T00:00:40.435312"
+      },
+      {
+        "test": "health-insurance storage path",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:00:40.435336"
+      },
+      {
+        "test": "health-insurance signed URL generated",
+        "success": false,
+        "details": "URL field present: False",
+        "timestamp": "2025-09-30T00:00:40.435346"
+      },
+      {
+        "test": "weapons-policy signed request",
+        "success": false,
+        "details": "Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:40.487316\"}",
+        "timestamp": "2025-09-30T00:00:40.487875"
+      },
+      {
+        "test": "company-policies returns signed PDF",
+        "success": false,
+        "details": "PDF present: False",
+        "timestamp": "2025-09-30T00:00:40.879865"
+      },
+      {
+        "test": "company-policies storage path",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:00:40.879878"
+      },
+      {
+        "test": "company-policies signed URL generated",
+        "success": false,
+        "details": "URL field present: False",
+        "timestamp": "2025-09-30T00:00:40.879880"
+      }
+    ],
+    "Scenario 3": [
+      {
+        "test": "Property isolation test",
+        "success": false,
+        "details": "Failed to create Property A document: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:40.930880\"}",
+        "timestamp": "2025-09-30T00:00:40.931550"
+      }
+    ],
+    "Scenario 4": [
+      {
+        "test": "All 4 forms created",
+        "success": false,
+        "details": "Created 0/4 forms",
+        "timestamp": "2025-09-30T00:00:41.559931"
+      }
+    ],
+    "Scenario 5": [
+      {
+        "test": "human-trafficking temp ID processing",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:00:41.824948"
+      },
+      {
+        "test": "health-insurance temp ID processing",
+        "success": false,
+        "details": "No storage_path in response",
+        "timestamp": "2025-09-30T00:00:41.918807"
+      }
+    ]
+  },
+  "summary": {
+    "total": 18,
+    "passed": 2,
+    "failed": 16,
+    "errors": [
+      "Scenario 1 - human-trafficking preview request: Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:39.371916\"}",
+      "Scenario 1 - health-insurance returns PDF base64: No PDF in response",
+      "Scenario 1 - weapons-policy preview request: Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:39.655198\"}",
+      "Scenario 1 - company-policies returns PDF base64: No PDF in response",
+      "Scenario 2 - human-trafficking signed request: Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:40.203101\"}",
+      "Scenario 2 - health-insurance returns signed PDF: PDF present: False",
+      "Scenario 2 - health-insurance storage path: No storage_path in response",
+      "Scenario 2 - health-insurance signed URL generated: URL field present: False",
+      "Scenario 2 - weapons-policy signed request: Status: 404, Error: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:40.487316\"}",
+      "Scenario 2 - company-policies returns signed PDF: PDF present: False",
+      "Scenario 2 - company-policies storage path: No storage_path in response",
+      "Scenario 2 - company-policies signed URL generated: URL field present: False",
+      "Scenario 3 - Property isolation test: Failed to create Property A document: {\"success\":false,\"error\":\"Employee not found\",\"error_code\":\"RESOURCE_NOT_FOUND\",\"status_code\":404,\"timestamp\":\"2025-09-30T04:00:40.930880\"}",
+      "Scenario 4 - All 4 forms created: Created 0/4 forms",
+      "Scenario 5 - human-trafficking temp ID processing: No storage_path in response",
+      "Scenario 5 - health-insurance temp ID processing: No storage_path in response"
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-09-13T21:21:14.779559",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6IjE5MzEwYTM2LTc5N2MtNDQ2NC05NDViLWE0YTA2YTVlMTdjMiIsImFwcGxpY2F0aW9uX2lkIjpudWxsLCJ0b2tlbl90eXBlIjoib25ib2FyZGluZyIsImlhdCI6MTc1NzgxMjIxNSwiZXhwIjoxNzU4MDcxNDE1LCJqdGkiOiJUZS1NdTBFcVJHRTEzaDd6VlYtVll3In0.gg1XPTd2oTFSd7bVVcXo_Tpd1GISJYb4P51Yj_QVL2c",
+  "employee_id": "19310a36-797c-4464-945b-a4a06a5e17c2",
+  "results": {
+    "welcome_endpoint": {
+      "status": 200,
+      "success": true,
+      "data": {
+        "success": true,
+        "data": {
+          "session": {
+            "id": "284e62e1-aa80-4561-b7f5-6b87e9b5d5c9",
+            "status": "not_started",
+            "phase": "employee",
+            "current_step": "welcome",
+            "completed_steps": [],
+            "total_steps": 18,
+            "expires_at": "2025-09-17T01:10:15.843820+00:00"
+          },
+          "employee": {
+            "id": "19310a36-797c-4464-945b-a4a06a5e17c2",
+            "firstName": "Goutham",
+            "lastName": "Vemula",
+            "email": "vgoutamram@gmail.com",
+            "position": "Front Desk Agent",
+            "department": "Front Desk",
+            "startDate": "2025-09-26",
+            "propertyId": "43020963-58d4-4ce8-9a84-139d60a2a5c1",
+            "employmentType": "part_time",
+            "payRate": 15.0,
+            "payFrequency": "bi-weekly",
+            "startTime": "09:10",
+            "benefitsEligible": "yes",
+            "supervisor": "bab",
+            "specialInstructions": ""
+          },
+          "progress": {
+            "currentStepIndex": 0,
+            "completedSteps": [],
+            "canProceed": true
+          },
+          "property": {
+            "id": "43020963-58d4-4ce8-9a84-139d60a2a5c1",
+            "name": "m6",
+            "address": "5005 34TH ST N",
+            "city": "SAINT PETERSBURG",
+            "state": "FL",
+            "zip_code": "33714-2430"
+          },
+          "manager": {
+            "id": "23e3e040-e192-47d6-aeee-68471198e4aa",
+            "name": "Goutham Vemula",
+            "email": "gvemula@mail.yu.edu"
+          },
+          "savedFormData": {
+            "welcome": {
+              "languagePreference": "en",
+              "welcomeAcknowledged": false
+            }
+          }
+        },
+        "timestamp": "2025-09-14T01:21:14.649581",
+        "message": "Welcome data retrieved successfully"
+      }
+    },
+    "session_endpoint": {
+      "status": 401,
+      "success": false
+    },
+    "validate_token": {
+      "status": 401,
+      "exists": true
+    },
+    "refresh_token": {
+      "status": 401,
+      "exists": true
+    },
+    "session_lock": {
+      "status": 422,
+      "exists": true
+    },
+    "i9_section1": {
+      "status": 200,
+      "has_data": true
+    },
+    "auth_middleware": {
+      "status": 401,
+      "works": true
+    }
+  },
+  "summary": {
+    "working": [
+      "welcome_endpoint",
+      "auth_middleware"
+    ],
+    "missing": [],
+    "broken": [
+      "session_endpoint",
+      "validate_token",
+      "refresh_token",
+      "session_lock",
+      "i9_section1"
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "total": 10,
+  "successful": 1,
+  "failed": 9,
+  "auth_required": 0,
+  "details": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "status": 200,
+      "success": true,
+      "content_type": "text/html; charset=utf-8",
+      "has_json": false
+    },
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "status": 404,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/properties",
+      "method": "GET",
+      "status": 403,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/apply",
+      "method": "POST",
+      "status": 405,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/verify-token",
+      "method": "POST",
+      "status": 405,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/forms/i9/preview",
+      "method": "GET",
+      "status": 404,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/forms/w4/preview",
+      "method": "GET",
+      "status": 404,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/documents/templates",
+      "method": "GET",
+      "status": 403,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/manager/dashboard",
+      "method": "GET",
+      "status": 404,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    },
+    {
+      "path": "/api/manager/applications",
+      "method": "GET",
+      "status": 403,
+      "success": false,
+      "content_type": "application/json",
+      "has_json": true
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "title": "CHECKPOINT Beta - End-to-End Test Report",
+  "timestamp": "2025-08-15T12:26:26.910013",
+  "summary": {
+    "total_tests": 5,
+    "passed": 5,
+    "failed": 0,
+    "success_rate": "100.0%"
+  },
+  "test_results": [
+    {
+      "test": "Manager Login",
+      "success": true,
+      "timestamp": "2025-08-15T12:26:24.246612",
+      "details": "Manager ID: 45b5847b-9de6-49e5-b042-ea9e91b7dea7, Role: manager",
+      "error": ""
+    },
+    {
+      "test": "View Applications",
+      "success": true,
+      "timestamp": "2025-08-15T12:26:24.747476",
+      "details": "Found 5 pending applications. First ID: 83a1ab26-43f0-432e-a82b-f4d9f070e7e1",
+      "error": ""
+    },
+    {
+      "test": "Approve Application",
+      "success": true,
+      "timestamp": "2025-08-15T12:26:26.077034",
+      "details": "Employee ID: 7f4accc4-f6e1-4b86-87ef-104349fb27fc, Token generated: Yes",
+      "error": ""
+    },
+    {
+      "test": "Verify Token",
+      "success": true,
+      "timestamp": "2025-08-15T12:26:26.502128",
+      "details": "Token valid for: None, Property: None",
+      "error": ""
+    },
+    {
+      "test": "Portal Access",
+      "success": true,
+      "timestamp": "2025-08-15T12:26:26.909987",
+      "details": "Token validated successfully - employee can access onboarding",
+      "error": ""
+    }
+  ],
+  "workflow_data": {
+    "manager_id": "45b5847b-9de6-49e5-b042-ea9e91b7dea7",
+    "property_id": "903ed05b-5990-4ecf-b1b2-7592cf2923df",
+    "application_id": "83a1ab26-43f0-432e-a82b-f4d9f070e7e1",
+    "employee_id": "7f4accc4-f6e1-4b86-87ef-104349fb27fc",
+    "onboarding_token": "eyJhbGciOiJIUzI1NiIs...",
+    "onboarding_url": "http://localhost:3000/onboard?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6IjdmNGFjY2M0LWY2ZTEtNGI4Ni04N2VmLTEwNDM0OWZiMjdmYyIsImFwcGxpY2F0aW9uX2lkIjpudWxsLCJ0b2tlbl90eXBlIjoib25ib2FyZGluZyIsImlhdCI6MTc1NTI3NTE4NSwiZXhwIjoxNzU1NTM0Mzg1LCJqdGkiOiJSVlgwN1M5UTlJcVhvUHV1SHJuU2d3In0.J8-mnoiymLKj2N1lwhI59mupfF_LWmsz7DCNg96fOzg"
+  }
+}

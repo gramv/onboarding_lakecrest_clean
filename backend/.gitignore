@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# Environment files
+.env
+.env.*
+*.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+logs/
+*.log.*
+server*.log
+backend*.log
+migration.log
+test*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.old
+temp/
+tmp/
+
+# Archives
+tests/archive/
+
+# Document uploads
+document_storage/
+
+# Poetry
+poetry.lock
+
+# Secrets and keys
+*.key
+*.pem
+*.crt
+*secret*
+.vercel

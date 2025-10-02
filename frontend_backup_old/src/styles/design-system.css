@@ -1,0 +1,452 @@
+/* Professional Design System - Hotel Management Platform */
+
+@layer components {
+  /* ===== CONSISTENT SPACING SYSTEM ===== */
+  
+  .spacing-xs { @apply space-y-1 sm:space-y-2; }
+  .spacing-sm { @apply space-y-2 sm:space-y-3 md:space-y-4; }
+  .spacing-md { @apply space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8; }
+  .spacing-lg { @apply space-y-4 sm:space-y-6 md:space-y-8 lg:space-y-12; }
+  .spacing-xl { @apply space-y-6 sm:space-y-8 md:space-y-12 lg:space-y-16; }
+  
+  .gap-xs { @apply gap-1 sm:gap-2; }
+  .gap-sm { @apply gap-2 sm:gap-3 md:gap-4; }
+  .gap-md { @apply gap-3 sm:gap-4 md:gap-6 lg:gap-8; }
+  .gap-lg { @apply gap-4 sm:gap-6 md:gap-8 lg:gap-12; }
+  .gap-xl { @apply gap-6 sm:gap-8 md:gap-12 lg:gap-16; }
+  
+  .padding-xs { @apply p-2 sm:p-3; }
+  .padding-sm { @apply p-3 sm:p-4 md:p-6; }
+  .padding-md { @apply p-4 sm:p-6 md:p-8; }
+  .padding-lg { @apply p-6 sm:p-8 md:p-12; }
+  .padding-xl { @apply p-8 sm:p-12 md:p-16; }
+  
+  /* ===== TYPOGRAPHY SYSTEM ===== */
+  
+  .text-display-xl { 
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900;
+    line-height: 1.1;
+  }
+  
+  .text-display-lg { 
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-gray-900;
+    line-height: 1.2;
+  }
+  
+  .text-display-md { 
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900;
+    line-height: 1.25;
+  }
+  
+  .text-display-sm { 
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900;
+    line-height: 1.3;
+  }
+  
+  .text-heading-xl { 
+    @apply text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900;
+    line-height: 1.3;
+  }
+  
+  .text-heading-lg { 
+    @apply text-lg sm:text-xl md:text-2xl font-semibold text-gray-900;
+    line-height: 1.4;
+  }
+  
+  .text-heading-md { 
+    @apply text-base sm:text-lg md:text-xl font-semibold text-gray-900;
+    line-height: 1.4;
+  }
+  
+  .text-heading-sm { 
+    @apply text-sm sm:text-base md:text-lg font-semibold text-gray-900;
+    line-height: 1.5;
+  }
+  
+  .text-body-lg { 
+    @apply text-base sm:text-lg font-normal text-gray-700;
+    line-height: 1.6;
+  }
+  
+  .text-body-md { 
+    @apply text-sm sm:text-base font-normal text-gray-700;
+    line-height: 1.6;
+  }
+  
+  .text-body-sm { 
+    @apply text-xs sm:text-sm font-normal text-gray-600;
+    line-height: 1.5;
+  }
+  
+  .text-caption { 
+    @apply text-xs font-medium text-gray-500 uppercase tracking-wide;
+    line-height: 1.4;
+  }
+  
+  /* ===== PROFESSIONAL COLOR SYSTEM ===== */
+  
+  .bg-surface-primary { @apply bg-white; }
+  .bg-surface-secondary { @apply bg-gray-50; }
+  .bg-surface-tertiary { @apply bg-gray-100; }
+  .bg-surface-elevated { @apply bg-white shadow-sm border border-gray-200; }
+  
+  .text-primary { @apply text-gray-900; }
+  .text-secondary { @apply text-gray-700; }
+  .text-tertiary { @apply text-gray-600; }
+  .text-muted { @apply text-gray-500; }
+  .text-disabled { @apply text-gray-400; }
+  
+  .text-brand-primary { @apply text-blue-600; }
+  .text-brand-secondary { @apply text-blue-500; }
+  
+  .bg-brand-primary { @apply bg-blue-600; }
+  .bg-brand-secondary { @apply bg-blue-500; }
+  .bg-brand-light { @apply bg-blue-50; }
+  
+  .border-default { @apply border-gray-200; }
+  .border-muted { @apply border-gray-100; }
+  .border-strong { @apply border-gray-300; }
+  .border-brand { @apply border-blue-600; }
+  
+  /* ===== STATUS COLORS ===== */
+  
+  .text-success { @apply text-green-700; }
+  .text-warning { @apply text-amber-700; }
+  .text-error { @apply text-red-700; }
+  .text-info { @apply text-blue-700; }
+  
+  .bg-success { @apply bg-green-50; }
+  .bg-warning { @apply bg-amber-50; }
+  .bg-error { @apply bg-red-50; }
+  .bg-info { @apply bg-blue-50; }
+  
+  .border-success { @apply border-green-200; }
+  .border-warning { @apply border-amber-200; }
+  .border-error { @apply border-red-200; }
+  .border-info { @apply border-blue-200; }
+  
+  /* ===== CONSISTENT BUTTON SYSTEM ===== */
+  
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+           transform hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  .btn-size-sm { @apply h-9 px-4 py-2 text-sm rounded-lg; }
+  .btn-size-md { @apply h-11 px-6 py-3 text-sm rounded-lg; }
+  .btn-size-lg { @apply h-12 px-8 py-3 text-base rounded-xl; }
+  .btn-size-xl { @apply h-14 px-10 py-4 text-lg rounded-xl; }
+  
+  .btn-primary {
+    @apply btn-base bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md
+           focus:ring-blue-500/25;
+  }
+  
+  .btn-secondary {
+    @apply btn-base bg-white text-gray-700 border border-gray-300 shadow-sm
+           hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus:ring-gray-500/25;
+  }
+  
+  .btn-outline {
+    @apply btn-base bg-transparent text-blue-600 border border-blue-600
+           hover:bg-blue-600 hover:text-white focus:ring-blue-500/25;
+  }
+  
+  .btn-ghost {
+    @apply btn-base bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500/25;
+  }
+  
+  .btn-success {
+    @apply btn-base bg-green-600 text-white shadow-sm hover:bg-green-700 hover:shadow-md
+           focus:ring-green-500/25;
+  }
+  
+  .btn-warning {
+    @apply btn-base bg-amber-600 text-white shadow-sm hover:bg-amber-700 hover:shadow-md
+           focus:ring-amber-500/25;
+  }
+  
+  .btn-error {
+    @apply btn-base bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-md
+           focus:ring-red-500/25;
+  }
+  
+  /* ===== PROFESSIONAL CARD SYSTEM ===== */
+  
+  .card-base {
+    @apply bg-white border border-gray-200 shadow-sm transition-all duration-200 ease-in-out;
+  }
+  
+  .card-elevated {
+    @apply card-base shadow-md hover:shadow-lg transform hover:-translate-y-1;
+  }
+  
+  .card-interactive {
+    @apply card-elevated cursor-pointer hover:border-gray-300;
+  }
+  
+  .card-rounded-sm { @apply rounded-lg; }
+  .card-rounded-md { @apply rounded-xl; }
+  .card-rounded-lg { @apply rounded-2xl; }
+  
+  .card-padding-sm { @apply p-4; }
+  .card-padding-md { @apply p-6; }
+  .card-padding-lg { @apply p-8; }
+  
+  /* ===== FORM SYSTEM ===== */
+  
+  .form-group {
+    @apply space-y-2;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+  
+  .form-label-required::after {
+    content: " *";
+    @apply text-red-500;
+  }
+  
+  .form-input-base {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500
+           focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none
+           transition-all duration-200 ease-in-out;
+  }
+  
+  .form-input-sm { @apply h-9 px-3 py-2 text-sm; }
+  .form-input-md { @apply h-11 px-4 py-3 text-sm; }
+  .form-input-lg { @apply h-12 px-4 py-3 text-base; }
+  
+  .form-input-error {
+    @apply border-red-300 focus:border-red-500 focus:ring-red-500/20 bg-red-50;
+  }
+  
+  .form-input-success {
+    @apply border-green-300 focus:border-green-500 focus:ring-green-500/20 bg-green-50;
+  }
+  
+  .form-error-message {
+    @apply text-sm text-red-600 mt-1;
+  }
+  
+  .form-help-text {
+    @apply text-sm text-gray-500 mt-1;
+  }
+  
+  /* ===== BADGE SYSTEM ===== */
+  
+  .badge-base {
+    @apply inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full;
+  }
+  
+  .badge-sm { @apply px-2 py-0.5 text-xs; }
+  .badge-md { @apply px-3 py-1 text-sm; }
+  .badge-lg { @apply px-4 py-2 text-sm; }
+  
+  .badge-default { @apply badge-base bg-gray-100 text-gray-800; }
+  .badge-primary { @apply badge-base bg-blue-100 text-blue-800; }
+  .badge-success { @apply badge-base bg-green-100 text-green-800; }
+  .badge-warning { @apply badge-base bg-amber-100 text-amber-800; }
+  .badge-error { @apply badge-base bg-red-100 text-red-800; }
+  .badge-info { @apply badge-base bg-blue-100 text-blue-800; }
+  
+  /* ===== TABLE SYSTEM ===== */
+  
+  .table-container {
+    @apply overflow-hidden border border-gray-200 rounded-lg;
+  }
+  
+  .table-base {
+    @apply w-full divide-y divide-gray-200;
+  }
+  
+  .table-header {
+    @apply bg-gray-50;
+  }
+  
+  .table-header-cell {
+    @apply px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+  }
+  
+  .table-body {
+    @apply bg-white divide-y divide-gray-200;
+  }
+  
+  .table-row {
+    @apply hover:bg-gray-50 transition-colors duration-150;
+  }
+  
+  .table-cell {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+  }
+  
+  .table-cell-secondary {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+  }
+  
+  /* ===== MODAL SYSTEM ===== */
+  
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 transition-opacity z-50;
+  }
+  
+  .modal-container {
+    @apply fixed inset-0 z-50 overflow-y-auto;
+  }
+  
+  .modal-content {
+    @apply relative bg-white rounded-xl shadow-xl max-w-lg mx-auto my-8 p-6;
+  }
+  
+  .modal-header {
+    @apply flex items-center justify-between pb-4 border-b border-gray-200;
+  }
+  
+  .modal-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+  
+  .modal-body {
+    @apply py-4;
+  }
+  
+  .modal-footer {
+    @apply flex items-center justify-end gap-3 pt-4 border-t border-gray-200;
+  }
+  
+  /* ===== NAVIGATION SYSTEM ===== */
+  
+  .nav-tabs {
+    @apply flex border-b border-gray-200;
+  }
+  
+  .nav-tab {
+    @apply px-6 py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent
+           hover:text-gray-700 hover:border-gray-300 transition-all duration-200;
+  }
+  
+  .nav-tab-active {
+    @apply text-blue-600 border-blue-600;
+  }
+  
+  /* ===== LOADING STATES ===== */
+  
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+  
+  .skeleton-text { @apply h-4 skeleton; }
+  .skeleton-text-sm { @apply h-3 skeleton; }
+  .skeleton-text-lg { @apply h-6 skeleton; }
+  .skeleton-avatar { @apply w-10 h-10 skeleton rounded-full; }
+  .skeleton-button { @apply h-10 skeleton rounded-lg; }
+  
+  .loading-spinner {
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
+  }
+  
+  .loading-spinner-sm { @apply w-4 h-4; }
+  .loading-spinner-md { @apply w-6 h-6; }
+  .loading-spinner-lg { @apply w-8 h-8; }
+  
+  /* ===== HOVER STATES AND TRANSITIONS ===== */
+  
+  .hover-lift {
+    @apply transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-md;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 ease-in-out hover:scale-105;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-200 ease-in-out hover:shadow-lg hover:shadow-blue-500/25;
+  }
+  
+  .smooth-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  /* ===== RESPONSIVE UTILITIES ===== */
+  
+  .responsive-container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .responsive-grid-1 { @apply grid grid-cols-1; }
+  .responsive-grid-2 { @apply grid grid-cols-1 sm:grid-cols-2; }
+  .responsive-grid-3 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3; }
+  .responsive-grid-4 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4; }
+  .responsive-grid-5 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5; }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl;
+  }
+  
+  /* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+  
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
+  }
+  
+  .skip-link {
+    @apply absolute -top-10 left-4 bg-blue-600 text-white px-4 py-2 rounded-md
+           transform transition-transform focus:top-4 z-50;
+  }
+  
+  /* ===== ANIMATION UTILITIES ===== */
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  @keyframes slideDown {
+    from { 
+      opacity: 0; 
+      transform: translateY(-10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+}

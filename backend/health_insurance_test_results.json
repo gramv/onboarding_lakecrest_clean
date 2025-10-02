@@ -1,0 +1,54 @@
+{
+  "summary": {
+    "total": 6,
+    "passed": 4,
+    "failed": 2,
+    "success_rate": 66.66666666666666,
+    "total_time": 1.4867537021636963,
+    "timestamp": "2025-09-09T10:29:57.010247"
+  },
+  "results": [
+    {
+      "test": "API Health Check",
+      "success": true,
+      "message": "API responded with status 200",
+      "duration": 0.09936165809631348,
+      "timestamp": "2025-09-09T10:29:55.622509"
+    },
+    {
+      "test": "Basic PDF Generation",
+      "success": true,
+      "message": "PDF generated successfully (410460 chars)",
+      "duration": 0.26186394691467285,
+      "timestamp": "2025-09-09T10:29:55.884482"
+    },
+    {
+      "test": "PDF Generation with Dependents",
+      "success": true,
+      "message": "PDF with 2 dependents generated successfully",
+      "duration": 0.33971118927001953,
+      "timestamp": "2025-09-09T10:29:56.224306"
+    },
+    {
+      "test": "PDF Generation Error Handling",
+      "success": false,
+      "message": "Error handling working - PDF generated with fallback data",
+      "duration": 0.00751805305480957,
+      "timestamp": "2025-09-09T10:29:56.232000"
+    },
+    {
+      "test": "Performance Multiple Requests",
+      "success": true,
+      "message": "3/3 requests succeeded, avg time: 0.258s",
+      "duration": 0.7743570804595947,
+      "timestamp": "2025-09-09T10:29:57.006454"
+    },
+    {
+      "test": "Frontend Test Page Accessibility",
+      "success": false,
+      "message": "Frontend test page not accessible: HTTPConnectionPool(host='localhost', port=3003): Max retries exceeded with url: /test-health-insurance (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x106493790>: Failed to establish a new connection: [Errno 61] Connection refused'))",
+      "duration": 0.0033168792724609375,
+      "timestamp": "2025-09-09T10:29:57.009857"
+    }
+  ]
+}

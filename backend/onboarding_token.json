@@ -1,0 +1,14 @@
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6IjgzYTFhYjI2LTQzZjAtNDMyZS1hODJiLWY0ZDlmMDcwZTdlMSIsInByb3BlcnR5X2lkIjoiOTAzZWQwNWItNTk5MC00ZWNmLWIxYjItNzU5MmNmMjkyM2RmIiwiZW1haWwiOiJ2Z291dGFtcmFtQGdtYWlsLmNvbSIsImZpcnN0X25hbWUiOiJHb3V0YW0iLCJsYXN0X25hbWUiOiJWZW11bGEiLCJwb3NpdGlvbiI6Ik5pZ2h0IEF1ZGl0b3IiLCJkZXBhcnRtZW50IjoiRnJvbnQgRGVzayIsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiZXhwIjoxNzU1ODkxNjE1LCJpYXQiOjE3NTUyODY4MTV9.ry5G3Ly3Qa7z7KkvriDlEFOPEeKT0UNqs0SElD5ARpc",
+  "url": "http://localhost:3000/onboard?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZV9pZCI6IjgzYTFhYjI2LTQzZjAtNDMyZS1hODJiLWY0ZDlmMDcwZTdlMSIsInByb3BlcnR5X2lkIjoiOTAzZWQwNWItNTk5MC00ZWNmLWIxYjItNzU5MmNmMjkyM2RmIiwiZW1haWwiOiJ2Z291dGFtcmFtQGdtYWlsLmNvbSIsImZpcnN0X25hbWUiOiJHb3V0YW0iLCJsYXN0X25hbWUiOiJWZW11bGEiLCJwb3NpdGlvbiI6Ik5pZ2h0IEF1ZGl0b3IiLCJkZXBhcnRtZW50IjoiRnJvbnQgRGVzayIsInRva2VuX3R5cGUiOiJvbmJvYXJkaW5nIiwiZXhwIjoxNzU1ODkxNjE1LCJpYXQiOjE3NTUyODY4MTV9.ry5G3Ly3Qa7z7KkvriDlEFOPEeKT0UNqs0SElD5ARpc",
+  "employee": {
+    "id": "83a1ab26-43f0-432e-a82b-f4d9f070e7e1",
+    "property_id": "903ed05b-5990-4ecf-b1b2-7592cf2923df",
+    "first_name": "Goutam",
+    "last_name": "Vemula",
+    "email": "vgoutamram@gmail.com",
+    "position": "Night Auditor",
+    "department": "Front Desk"
+  },
+  "generated_at": "2025-08-15T19:40:15.248326"
+}

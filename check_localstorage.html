@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check LocalStorage</title>
+</head>
+<body>
+    <h1>LocalStorage Debug</h1>
+    <p>Open this file in your browser at <a href="http://localhost:3000">http://localhost:3000</a> then open the browser console to see your localStorage contents.</p>
+
+    <p>Or run this in your browser console while on the application:</p>
+    <pre>
+console.log('Token:', localStorage.getItem('token'));
+console.log('User:', JSON.parse(localStorage.getItem('user') || '{}'));
+    </pre>
+
+    <h2>Fix Instructions:</h2>
+    <ol>
+        <li>Open your browser at <a href="http://localhost:3000">http://localhost:3000</a></li>
+        <li>Click "Logout" if you're logged in</li>
+        <li>Log in again with your credentials (gvemula@mail.yu.edu)</li>
+        <li>The property should now be assigned correctly</li>
+    </ol>
+
+    <p>The issue is that your current session has old user data cached. Logging out and logging back in will refresh this data with the correct property_id.</p>
+</body>
+</html>

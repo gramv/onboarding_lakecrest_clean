@@ -1,0 +1,482 @@
+{
+  "common": {
+    "yes": "Sí",
+    "no": "No",
+    "submit": "Enviar",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "save": "Guardar",
+    "saveDraft": "Guardar Borrador",
+    "loading": "Cargando...",
+    "required": "Requerido",
+    "optional": "Opcional",
+    "note": "Nota"
+  },
+  "jobApplication": {
+    "title": "Solicitud de Empleo",
+    "equalOpportunity": {
+      "title": "Bienvenido a Nuestra Solicitud de Empleo",
+      "subtitle": "Declaración de Empleador con Igualdad de Oportunidades",
+      "statement": "Este hotel es un Empleador de Igualdad de Oportunidades/Acción Afirmativa comprometido con la excelencia a través de la diversidad. Las ofertas de empleo se hacen sobre la base de las calificaciones, y sin importar la raza, color, religión, género, orientación sexual, origen nacional, edad, discapacidad, información genética, estado civil, amnistía o condición de veterano cubierto de acuerdo con las leyes federales, estatales y locales aplicables. Este hotel hará esfuerzos razonables para acomodar a las personas con discapacidades. Este hotel es un lugar de trabajo libre de violencia y drogas.",
+      "instructions": {
+        "title": "Instrucciones Importantes de la Solicitud:",
+        "item1": "Por favor complete la solicitud de manera completa y precisa",
+        "item2": "Escriba sus respuestas o use tinta azul/negra si está imprimiendo",
+        "item3": "Puede enviar un currículum para información adicional",
+        "item4": "No escriba 'VER CURRÍCULUM' - complete todos los campos"
+      },
+      "proceedButton": "Proceder a la Solicitud",
+      "acknowledgment": "Al hacer clic en \"Proceder\", usted reconoce que ha leído y entendido esta información."
+    },
+    "steps": {
+      "personalInfo": {
+        "title": "Información Personal",
+        "description": "Sus datos de contacto e información básica",
+        "fields": {
+          "firstName": "Nombre",
+          "lastName": "Apellido",
+          "middleName": "Segundo Nombre",
+          "address": "Dirección",
+          "unit": "Unidad/Apartamento #",
+          "city": "Ciudad",
+          "state": "Estado/Provincia",
+          "zipCode": "Código Postal",
+          "country": "País",
+          "phone": "Número de Teléfono",
+          "alternatePhone": "Teléfono Alternativo",
+          "phoneType": {
+            "cell": "Celular",
+            "home": "Casa"
+          },
+          "email": "Dirección de Correo Electrónico",
+          "selectState": "Seleccionar estado",
+          "confidentialityNote": "Todos los campos marcados con * son requeridos. Su información personal se mantendrá confidencial y se usará solo para propósitos de empleo.",
+          "eligibility": {
+            "workAuth": "¿Está legalmente elegible para ser empleado en los Estados Unidos?",
+            "sponsorship": "¿Requerirá ahora, o en el futuro, que {{propertyName}} le ayude a mantener su elegibilidad de empleo?",
+            "ageVerification": "¿Tiene al menos 18 años de edad?",
+            "transportation": "¿Tiene un medio de transporte confiable para ir y venir del trabajo?"
+          },
+          "transportationMethod": "¿Cómo planea llegar al trabajo?",
+          "transportationOptions": {
+            "publicTransport": "Transporte Público",
+            "ownVehicle": "Vehículo Propio",
+            "familyFriend": "Un Amigo o Familiar Me Lleva",
+            "rideshare": "Servicio de Transporte Compartido (Uber/Lyft)",
+            "other": "Otro"
+          },
+          "transportationOther": "Por favor especifique su método de transporte"
+        },
+        "validation": {
+          "transportationMethodRequired": "Por favor seleccione cómo planea llegar al trabajo",
+          "transportationOtherRequired": "Por favor especifique su método de transporte"
+        },
+        "placeholders": {
+          "transportationOther": "Por favor describa cómo llegará al trabajo"
+        }
+      },
+      "positionAvailability": {
+        "title": "Posición y Disponibilidad",
+        "description": "Detalles del puesto y disponibilidad laboral",
+        "positionDetails": "Detalles del Puesto",
+        "availability": "Disponibilidad",
+        "previousEmployment": "Empleo Anterior",
+        "currentEmployment": "Estado de Empleo Actual",
+        "fields": {
+          "department": "Departamento de Interés",
+          "position": "Puesto al que Aplica",
+          "employmentType": "Tipo de Empleo Deseado",
+          "hourlyRate": "Tarifa por Hora",
+          "startDate": "Fecha Disponible para Comenzar",
+          "currentlyEmployed": "¿Está actualmente empleado?",
+          "contactEmployer": "Si 'Sí', ¿podemos contactar a su empleador actual?",
+          "weekends": "¿Disponible para Trabajar Fines de Semana?",
+          "holidays": "¿Disponible para Trabajar Días Festivos?",
+          "previouslyEmployed": "¿Ha sido empleado alguna vez por este hotel o alguna de sus propiedades afiliadas?",
+          "previousDetails": "Por favor proporcione detalles (fechas, posición, ubicación)",
+          "relatives": "Liste cualquier familiar empleado por este hotel",
+          "referralSource": "¿Cómo se enteró de esta oportunidad de empleo?",
+          "employeeReferralName": "Nombre del Empleado",
+          "referralSourceOther": "Por favor especifique",
+          "shiftPreference": "Turno Preferido",
+          "referralOptions": {
+            "employee": "Empleado",
+            "indeed": "Indeed",
+            "newspaper": "Anuncio en Periódico",
+            "craigslist": "Anuncio en Craigslist",
+            "walkin": "Visita en Persona",
+            "dol": "Departamento de Trabajo",
+            "other": "Otro"
+          }
+        },
+        "placeholders": {
+          "selectDepartment": "Seleccionar departamento",
+          "selectPosition": "Seleccionar posición",
+          "selectDepartmentFirst": "Seleccione primero el departamento",
+          "selectEmploymentType": "Seleccionar tipo de empleo",
+          "selectShift": "Seleccionar turno preferido",
+          "previousDetails": "Ejemplo: Recepcionista en Ubicación Centro, Ene 2020 - Marzo 2021",
+          "relatives": "Nombre y relación (ej., Juan Pérez - Tío)",
+          "employeeName": "Ingrese el nombre del empleado",
+          "referralOther": "¿Cómo se enteró de esta posición?"
+        },
+        "employmentTypes": {
+          "fullTime": "Tiempo completo",
+          "partTime": "Tiempo parcial",
+          "temporary": "Temporal/Estacional",
+          "contract": "Contrato"
+        },
+        "options": {
+          "sometimes": "A veces"
+        },
+        "shiftOptions": {
+          "morning": "Mañana (6 AM - 2 PM)",
+          "afternoon": "Tarde (2 PM - 10 PM)",
+          "evening": "Noche (10 PM - 6 AM)",
+          "night": "Nocturno/Madrugada",
+          "rotating": "Turnos Rotativos",
+          "any": "Cualquier Turno"
+        },
+        "hints": {
+          "hourlyRate": "Opcional - Ingrese su tarifa por hora deseada",
+          "relatives": "Deje en blanco si no hay ninguno"
+        },
+        "validation": {
+          "startDatePast": "La fecha de inicio no puede estar en el pasado",
+          "previousEmploymentDetails": "Por favor proporcione detalles sobre su empleo anterior",
+          "employeeReferralName": "Por favor proporcione el nombre del empleado",
+          "referralSourceOther": "Por favor especifique cómo se enteró de nosotros",
+          "contactEmployerRequired": "Por favor indique si podemos contactar a su empleador actual"
+        },
+        "note": {
+          "title": "Nota",
+          "text": "Por favor sea honesto sobre su disponibilidad. Valoramos el equilibrio entre trabajo y vida personal y trabajaremos con usted para encontrar un horario que satisfaga tanto sus necesidades como nuestros requisitos comerciales."
+        }
+      },
+      "employmentHistory": {
+        "title": "Historial de Empleo",
+        "description": "Su experiencia laboral",
+        "noExperience": "No tengo experiencia laboral previa",
+        "instruction": "Liste su experiencia laboral comenzando con su empleador más reciente. Incluya todo el empleo dentro de los últimos 10 años.",
+        "employment": "Empleo",
+        "current": "Actual",
+        "fields": {
+          "companyName": "Nombre de la Empresa",
+          "companyPhone": "Teléfono de la Empresa",
+          "companyAddress": "Dirección de la Empresa",
+          "startingJobTitle": "Título del Puesto Inicial",
+          "finalJobTitle": "Título del Puesto Final",
+          "currentlyWork": "Actualmente trabajo aquí",
+          "startDate": "Fecha de Inicio",
+          "endDate": "Fecha de Finalización",
+          "startingSalary": "Salario Inicial",
+          "endingSalary": "Salario Final",
+          "responsibilities": "Responsabilidades del Trabajo",
+          "reasonForLeaving": "Razón para Dejar el Empleo",
+          "supervisorName": "Nombre del Supervisor",
+          "supervisorPhone": "Teléfono del Supervisor",
+          "mayContact": "¿Podemos contactar a este empleador?",
+          "employmentGaps": "Brechas en el Empleo",
+          "gapsExplanation": "Por favor explique cualquier brecha en el empleo mayor a 3 meses"
+        },
+        "placeholders": {
+          "companyName": "Grupo Hotelero ABC",
+          "companyAddress": "123 Calle Principal, Ciudad, Estado ZIP",
+          "jobTitle": "Recepcionista",
+          "finalJobTitle": "Recepcionista Senior",
+          "salary": "$15/hora o $30,000/año",
+          "endingSalary": "$18/hora o $36,000/año",
+          "responsibilities": "Describa sus principales deberes y responsabilidades...",
+          "reasonForLeaving": "Avance profesional, reubicación, etc.",
+          "supervisorName": "Juan Pérez",
+          "employmentGaps": "Educación, responsabilidades familiares, viaje, etc."
+        },
+        "validation": {
+          "employerNameRequired": "El nombre del empleador es requerido",
+          "startingJobTitleRequired": "El título del puesto inicial es requerido",
+          "endingJobTitleRequired": "El título del puesto final es requerido para puestos anteriores",
+          "startingSalaryRequired": "El salario inicial es requerido",
+          "endingSalaryRequired": "El salario final es requerido para puestos anteriores",
+          "startDateRequired": "La fecha de inicio es requerida",
+          "endDateRequired": "La fecha de finalización es requerida para puestos anteriores",
+          "endDateBeforeStart": "La fecha de finalización debe ser posterior a la fecha de inicio",
+          "reasonForLeavingRequired": "La razón para dejar el empleo es requerida"
+        },
+        "note": {
+          "title": "Nota",
+          "noExperienceText": "¡No tener experiencia laboral previa está perfectamente bien! Valoramos el entusiasmo, la voluntad de aprender y una actitud positiva tanto como la experiencia."
+        },
+        "addAnother": "Agregar Otro Empleo"
+      },
+      "education": {
+        "title": "Educación, Capacitación Especializada y Certificaciones",
+        "description": "Su formación educativa",
+        "instruction": "Por favor liste todas las instituciones educativas a las que asistió, comenzando con la escuela secundaria. Deje los campos en blanco si no aplican.",
+        "collegeSection": "Educación Universitaria",
+        "addCollege": "Agregar Universidad",
+        "noCollege": "No se ha agregado educación universitaria",
+        "addFirstCollege": "Agregar su primera universidad",
+        "schools": {
+          "highSchool": "Escuela Secundaria",
+          "college": "Universidad",
+          "technical": "Escuela Técnica/Vocacional/de Negocios",
+          "other": "Otra Escuela"
+        },
+        "fields": {
+          "schoolName": "Nombre de la Escuela",
+          "location": "Ubicación (Ciudad/Estado)",
+          "yearsAttended": "# de Años Asistidos",
+          "graduated": "¿Se Graduó?",
+          "degreeReceived": "Título Recibido",
+          "major": "Especialización/Secundaria",
+          "skills": "Habilidades y Certificaciones",
+          "skillsDescription": "Liste cualquier habilidad (como conocimiento de software), idioma(s) extranjero(s), membresías profesionales, licencias, capacitación especializada o certificaciones que considere pertinentes al trabajo al que está aplicando y que puedan sernos útiles al evaluar su solicitud.",
+          "skillsNote": "Omita cualquier organización que refleje su raza, color, religión, edad, sexo, orientación sexual, estado civil o discapacidades."
+        },
+        "placeholders": {
+          "schoolName": "Ingrese el nombre de la escuela",
+          "location": "Ciudad, Estado",
+          "diploma": "Diploma",
+          "degree": "Certificado, Diploma, etc.",
+          "major": "Campo principal de estudio",
+          "universityName": "Ingrese el nombre de la universidad",
+          "collegeDegree": "BA, BS, MA, etc.",
+          "collegeMajor": "Campo principal de estudio / Secundaria (si aplica)",
+          "skills": "Ejemplo: Fluido en inglés, Microsoft Office Suite, Certificado en RCP, Licencia de Manipulador de Alimentos..."
+        },
+        "noTechnicalEducation": "No he asistido a escuela técnica/vocacional",
+        "noOtherEducation": "No tengo otra educación que reportar",
+        "noSkillsCertifications": "No tengo habilidades especiales o certificaciones que reportar"
+      },
+      "additionalInfo": {
+        "title": "Información Adicional",
+        "description": "Referencias y detalles adicionales",
+        "conviction": {
+          "title": "Registro de Condenas y Conducción (MVR)",
+          "notice": "UNA CONDENA Y/O INFRACCIÓN(ES) DE TRÁNSITO EN SU REGISTRO DE CONDUCCIÓN Y/O CRIMINAL, NO RESULTARÁ NECESARIAMENTE EN LA DENEGACIÓN DEL EMPLEO",
+          "applicantNoticeTitle": "AVISO A LOS SOLICITANTES",
+          "applicantNotice": "Todas las ofertas de empleo están supeditadas a los resultados de verificaciones de antecedentes específicas, incluidos los antecedentes penales. Una condena no necesariamente resultará en una denegación de empleo ya que los detalles de la(s) condena(s) serán considerados en relación con el trabajo al que ha aplicado. Se le notificará si la información obtenida de una verificación de antecedentes penales (condena) resultará en una acción de empleo adversa. Las verificaciones de antecedentes se realizarán de acuerdo con las pautas federales, estatales y locales.",
+          "doNotList": "No liste arrestos que no resultaron en una condena. No liste condenas que están selladas, anuladas, eliminadas y/o perdonadas.",
+          "convictionQuestion": "¿Ha sido condenado por alguna violación de la ley, incluyendo pero no limitado a infracciones de tránsito?",
+          "convictionExplain": "Si 'Sí', proporcione la siguiente información: Fecha del fallo, ubicación (estado, condado), tipo de ofensa y la rehabilitación requerida por el tribunal. Use una página en blanco, si es necesario:",
+          "driverSection": "PARA TODAS LAS POSICIONES DE CONDUCTOR O POSICIONES CUYAS TAREAS INCLUYEN EL TRANSPORTE DE PASAJEROS O USO DE VEHÍCULO DE LA EMPRESA:",
+          "licenseDenied": "¿Alguna vez se le ha negado una licencia, permiso o privilegio para operar un vehículo motorizado?",
+          "licenseSuspended": "¿Alguna licencia, permiso o privilegio ha sido suspendido o revocado?",
+          "explainBelow": "Si sí, por favor explique a continuación",
+          "additionalPages": "Marque si se está enviando información adicional con esta solicitud en página(s) separada(s)"
+        },
+        "personalReference": {
+          "title": "Referencia Personal",
+          "name": "Nombre",
+          "yearsKnown": "Años de Conocerse",
+          "phone": "Número de Teléfono",
+          "relationship": "Relación",
+          "noReference": "No tengo una referencia personal para proporcionar"
+        },
+        "military": {
+          "title": "Servicio Militar",
+          "branch": "Rama",
+          "fromTo": "Desde - Hasta",
+          "rankDuties": "Rango y Deberes",
+          "dischargeDate": "Fecha de Baja",
+          "noService": "No he servido en las fuerzas armadas"
+        },
+        "validation": {
+          "convictionRequired": "Por favor responda la pregunta sobre condenas",
+          "convictionExplanationRequired": "Por favor proporcione una explicación",
+          "drivingExplanationRequired": "Por favor proporcione una explicación"
+        },
+        "placeholders": {
+          "convictionDetails": "Fecha del fallo, ubicación (estado, condado), tipo de ofensa y la rehabilitación requerida por el tribunal",
+          "drivingDetails": "Proporcione detalles sobre la negación/suspensión/revocación de licencia",
+          "referenceName": "Juan Pérez",
+          "referenceRelationship": "Amigo, Vecino, etc.",
+          "militaryBranch": "Ejército, Marina, Fuerza Aérea, etc.",
+          "militaryRankDuties": "Su rango y deberes/responsabilidades principales"
+        }
+      },
+      "voluntaryIdentification": {
+        "title": "Auto-identificación Voluntaria",
+        "description": "Información demográfica opcional",
+        "header": "{{propertyName}} y sus afiliados es un Empleador de Igualdad de Oportunidades. Como lo requiere la ley, debemos registrar cierta información para que forme parte de nuestro Programa de Acción Afirmativa.",
+        "invitation": "Los solicitantes de empleo también están invitados a participar en el Programa de Acción Afirmativa reportando su estado como discapacitado, veterano discapacitado, veterano de la era de Vietnam u otra minoría.",
+        "notice": "Al extender esta invitación también se le informa que: (a) los trabajadores (solicitantes) no tienen obligación de responder, pero pueden hacerlo en el futuro si así lo desean; (b) las respuestas permanecerán confidenciales dentro del Departamento de Recursos Humanos; y (c) las respuestas se utilizarán solo para la información necesaria para incluir en nuestro Programa de Acción Afirmativa. Somos una empresa que valora la diversidad. Alentamos activamente a las mujeres y las minorías a postularse.",
+        "refusal": "LA NEGATIVA A PROPORCIONAR ESTA INFORMACIÓN NO AFECTARÁ SU SOLICITUD Y NO LO SOMETERÁ A NINGÚN TRATO ADVERSO.",
+        "instruction": "Por favor complete la información solicitada a continuación. Gracias por su cooperación.",
+        "declineToIdentify": "No deseo auto-identificarme",
+        "raceEthnicity": {
+          "title": "Raza o Identidad Étnica (Por favor marque todas las que apliquen)",
+          "hispanicLatino": {
+            "label": "Hispano o Latino",
+            "description": "Una persona de cultura u origen cubano, mexicano, puertorriqueño, sudamericano o centroamericano, u otra cultura u origen español, independientemente de la raza."
+          },
+          "white": {
+            "label": "Blanco (No Hispano o Latino)",
+            "description": "Una persona con orígenes en cualquiera de los pueblos originarios de Europa, Medio Oriente o África del Norte."
+          },
+          "blackAfricanAmerican": {
+            "label": "Negro o Afroamericano (No Hispano o Latino)",
+            "description": "Una persona con orígenes en cualquiera de los grupos raciales negros de África."
+          },
+          "nativeHawaiianPacificIslander": {
+            "label": "Nativo de Hawái u Otra Isla del Pacífico (No Hispano o Latino)",
+            "description": "Una persona con orígenes en cualquiera de los pueblos de Hawái, Guam, Samoa u otras islas del Pacífico."
+          },
+          "asian": {
+            "label": "Asiático (No Hispano o Latino)",
+            "description": "Una persona con orígenes en cualquiera de los pueblos originarios del Lejano Oriente, el Sudeste Asiático o el Subcontinente Indio, incluyendo, por ejemplo, Camboya, China, India, Japón, Corea, Malasia, Pakistán, las Islas Filipinas, Tailandia y Vietnam."
+          },
+          "americanIndianAlaskaNative": {
+            "label": "Indio Americano o Nativo de Alaska (No Hispano o Latino)",
+            "description": "Una persona con orígenes en cualquiera de los pueblos originarios de América del Norte y del Sur (incluida América Central), y que mantiene afiliación tribal o apego comunitario."
+          },
+          "twoOrMore": {
+            "label": "Dos o Más Razas (No Hispano o Latino)",
+            "description": "Todas las personas que se identifican con más de una de las cinco razas anteriores."
+          }
+        },
+        "gender": {
+          "title": "Género",
+          "male": "Masculino",
+          "female": "Femenino",
+          "decline": "No deseo divulgar esta información"
+        },
+        "referralSource": "¿Cómo se enteró de nuestra oferta de trabajo?",
+        "referralOptions": {
+          "employee": "Referencia de Empleado",
+          "indeed": "Indeed",
+          "linkedin": "LinkedIn",
+          "companyWebsite": "Sitio Web de la Empresa",
+          "jobFair": "Feria de Empleo",
+          "recruitmentAgency": "Agencia de Reclutamiento",
+          "socialMedia": "Redes Sociales",
+          "other": "Otro"
+        },
+        "placeholders": {
+          "referralSource": "Seleccionar fuente de referencia"
+        }
+      },
+      "reviewConsent": {
+        "title": "Revisión y Consentimiento",
+        "description": "Revise su solicitud y proporcione consentimiento",
+        "applicantCertification": "Certificación del Solicitante",
+        "readAndInitial": "LEA E INICIAL LAS DECLARACIONES A CONTINUACIÓN RECONOCIENDO QUE COMPRENDE",
+        "certification1": "Por la presente certifico que los hechos establecidos en la solicitud de empleo anterior, y cualquier archivo adjunto, son verdaderos y completos según mi leal saber y entender, y autorizo a <strong>{{propertyName}}</strong> a verificar su exactitud y obtener información de referencia sobre mi desempeño laboral y educación. Por la presente libero a <strong>{{propertyName}}</strong> de cualquier responsabilidad de cualquier tipo y naturaleza que, en cualquier momento, pueda resultar de obtener y tener una decisión de empleo basada en dicha información. Entiendo que, si soy empleado, las declaraciones falsificadas de cualquier tipo u omisiones de hechos solicitados en esta solicitud se considerarán base suficiente para el despido",
+        "certification2": "Entiendo que si se me extiende y acepta una oferta de empleo, cumpliré completamente con las políticas, reglas y regulaciones de empleo del Empleador. Sin embargo, entiendo además que ni las políticas, reglas, regulaciones de empleo, ni nada dicho durante el proceso de entrevista se considerará que constituye los términos de un contrato de empleo implícito. Entiendo que cualquier empleo ofrecido es por una duración indefinida y 'A Voluntad' y que yo o el Empleador podemos terminar mi empleo en cualquier momento con o sin aviso o causa.",
+        "certification3": "Soy consciente de que este hotel puede requerir una evaluación de drogas y alcohol posterior a la oferta, e investigación de antecedentes que incluye antecedentes penales e historial crediticio (para puestos específicos), todo de acuerdo con las leyes federales, estatales y locales aplicables. Acepto someterme a la investigación y evaluación requeridas, si se solicita. Además, soy consciente de que pueden requerirse futuras evaluaciones e investigaciones.",
+        "signatureSection": {
+          "instruction": "Mi firma a continuación certifica que he leído cada una de las declaraciones anteriores o que me las han leído y las entiendo completamente.",
+          "applicantSignature": "Firma del Solicitante",
+          "date": "Fecha",
+          "typeOrDraw": "Escriba su nombre o dibuje su firma arriba",
+          "initialError": "Por favor ponga sus iniciales en la declaración {{statement}}",
+          "signatureError": "Por favor firme la solicitud",
+          "dateError": "La fecha es requerida"
+        },
+        "readInstructions": "Por favor lea la declaración de consentimiento a continuación y proporcione su firma para completar su solicitud.",
+        "clear": "Borrar",
+        "placeholders": {
+          "initial": "INICIAL",
+          "typeFullName": "Escriba su nombre completo"
+        }
+      }
+    },
+    "messages": {
+      "submitSuccess": "¡Solicitud Enviada Exitosamente!",
+      "submitMessage": "¡Gracias por aplicar a {{propertyName}}!",
+      "reviewMessage": "Nuestro equipo de contratación revisará su solicitud y lo contactará dentro de 3-5 días hábiles.",
+      "confirmationEmail": "Debería recibir un correo electrónico de confirmación en breve a {{email}}",
+      "returnHome": "Regresar al Inicio",
+      "saveDraftSuccess": "Solicitud guardada exitosamente",
+      "loadDraftSuccess": "Borrador de solicitud cargado",
+      "submitError": "Error al enviar la solicitud. Por favor intente de nuevo.",
+      "propertyLoadError": "Error al cargar la información de la propiedad. Por favor intente de nuevo.",
+      "completeRequired": "Por favor complete todos los campos requeridos en \"{{stepTitle}}\" antes de continuar.",
+      "phoneTypeRequired": "Por favor seleccione al menos un tipo de teléfono",
+      "nextSteps": "Próximos Pasos"
+    }
+  },
+  "validation": {
+    "common": {
+      "required": "Este campo es obligatorio",
+      "invalidEmail": "Por favor ingrese un correo electrónico válido",
+      "invalidPhone": "Por favor ingrese un número de teléfono válido",
+      "fieldRequired": "{{field}} es obligatorio",
+      "selectRequired": "Por favor seleccione {{field}}",
+      "mustMatch": "{{field}} debe coincidir",
+      "minLength": "Debe tener al menos {{min}} caracteres",
+      "maxLength": "No debe tener más de {{max}} caracteres",
+      "invalidFormat": "Formato inválido",
+      "invalidDate": "Fecha inválida"
+    },
+    "forms": {
+      "routingNumber": "El número de ruta debe tener 9 dígitos",
+      "accountNumberMismatch": "Los números de cuenta no coinciden",
+      "authorizationRequired": "Se requiere autorización",
+      "ageRequirement": "Los empleados deben tener al menos 18 años para puestos en hoteles",
+      "federalCompliance": "Se requiere cumplimiento de la ley laboral federal",
+      "ssnRequired": "Se requiere el número de Seguro Social",
+      "ssnInvalid": "Formato de SSN inválido - requerido para propósitos fiscales",
+      "selectAccountType": "Por favor seleccione un tipo de cuenta",
+      "bankNameRequired": "Se requiere el nombre del banco",
+      "accountNumberRequired": "Se requiere el número de cuenta",
+      "confirmAccountNumber": "Por favor confirme el número de cuenta"
+    },
+    "personalInfo": {
+      "firstNameRequired": "Se requiere el nombre",
+      "lastNameRequired": "Se requiere el apellido",
+      "emailRequired": "Se requiere el correo electrónico",
+      "phoneRequired": "Se requiere el número de teléfono",
+      "addressRequired": "Se requiere la dirección",
+      "cityRequired": "Se requiere la ciudad",
+      "stateRequired": "Se requiere el estado",
+      "zipRequired": "Se requiere el código postal"
+    },
+    "emergencyContact": {
+      "nameRequired": "Se requiere el nombre del contacto de emergencia",
+      "relationshipRequired": "Se requiere la relación del contacto de emergencia",
+      "phoneRequired": "Se requiere el teléfono del contacto de emergencia"
+    },
+    "i9Form": {
+      "lastNameRequired": "Se requiere el apellido para el I-9",
+      "firstNameRequired": "Se requiere el nombre para el I-9",
+      "dobRequired": "Se requiere la fecha de nacimiento",
+      "ssnRequired": "Se requiere el número de Seguro Social",
+      "citizenshipRequired": "Debe seleccionar su estado de ciudadanía",
+      "alienNumberRequired": "Se requiere el Número de Registro de Extranjero o Número USCIS para extranjeros autorizados para trabajar",
+      "signatureRequired": "Se requiere firma electrónica"
+    },
+    "w4Form": {
+      "firstNameRequired": "Se requiere el nombre",
+      "lastNameRequired": "Se requiere el apellido",
+      "ssnRequired": "Se requiere el número de Seguro Social",
+      "addressRequired": "Se requiere la dirección",
+      "filingStatusRequired": "Debe seleccionar un estado civil para efectos fiscales"
+    },
+    "directDeposit": {
+      "bankNameRequired": "Se requiere el nombre del banco",
+      "routingNumberRequired": "Se requiere el número de ruta",
+      "routingNumberFormat": "El número de ruta debe tener 9 dígitos",
+      "accountNumberRequired": "Se requiere el número de cuenta",
+      "confirmAccountRequired": "Por favor confirme el número de cuenta",
+      "accountNumberMismatch": "Los números de cuenta no coinciden"
+    },
+    "companyPolicies": {
+      "acknowledgmentRequired": "Se requiere el reconocimiento de la política",
+      "signatureRequired": "Se requiere firma"
+    },
+    "healthInsurance": {
+      "firstNameRequired": "Se requiere el nombre del empleado",
+      "lastNameRequired": "Se requiere el apellido del empleado",
+      "dobRequired": "Se requiere la fecha de nacimiento"
+    },
+    "documents": {
+      "uploadRequired": "Se requiere cargar el documento",
+      "fileTypeInvalid": "Tipo de archivo inválido"
+    },
+    "finalReview": {
+      "reviewRequired": "Por favor revise toda la información antes de enviar",
+      "confirmationRequired": "Se requiere confirmación"
+    }
+  }
+}

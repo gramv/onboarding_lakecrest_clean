@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Frontend</title>
+</head>
+<body>
+    <h1>Frontend Debug Page</h1>
+    <div id="status"></div>
+    
+    <script>
+        const status = document.getElementById('status');
+        
+        // Check if we can fetch the main page
+        fetch('/')
+            .then(response => {
+                status.innerHTML += `<p>Main page response: ${response.status} ${response.statusText}</p>`;
+                return response.text();
+            })
+            .then(html => {
+                // Check if the HTML contains the root div
+                if (html.includes('id="root"')) {
+                    status.innerHTML += '<p>✅ Root div found in HTML</p>';
+                } else {
+                    status.innerHTML += '<p>❌ Root div NOT found in HTML</p>';
+                }
+                
+                // Check if main.tsx script is included
+                if (html.includes('src="/src/main.tsx"')) {
+                    status.innerHTML += '<p>✅ main.tsx script tag found</p>';
+                } else {
+                    status.innerHTML += '<p>❌ main.tsx script tag NOT found</p>';
+                }
+                
+                // Try to load the main.tsx file
+                return fetch('/src/main.tsx');
+            })
+            .then(response => {
+                status.innerHTML += `<p>main.tsx response: ${response.status} ${response.statusText}</p>`;
+                
+                // Check API
+                return fetch('http://localhost:8000/healthz');
+            })
+            .then(response => {
+                status.innerHTML += `<p>Backend API response: ${response.status} ${response.statusText}</p>`;
+            })
+            .catch(error => {
+                status.innerHTML += `<p>Error: ${error.message}</p>`;
+            });
+    </script>
+</body>
+</html>

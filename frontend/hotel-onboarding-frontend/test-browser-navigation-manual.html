@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Navigation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .current-info {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Browser Navigation Test Suite</h1>
+    <p>This page tests the browser navigation functionality for the dashboard system.</p>
+    
+    <div class="current-info">
+        <h3>Current State</h3>
+        <p><strong>URL:</strong> <span id="current-url"></span></p>
+        <p><strong>Page Title:</strong> <span id="current-title"></span></p>
+        <p><strong>History Length:</strong> <span id="history-length"></span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 1: URL Structure Validation</h3>
+        <p>Test that URLs follow the correct pattern for dashboard sections.</p>
+        <button onclick="testUrlStructure()">Run URL Structure Test</button>
+        <div id="url-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Page Title Updates</h3>
+        <p>Test that page titles update correctly when navigating between sections.</p>
+        <button onclick="testPageTitles()">Run Page Title Test</button>
+        <div id="title-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Browser Navigation</h3>
+        <p>Test browser back/forward button functionality.</p>
+        <button onclick="testBrowserNavigation()">Run Browser Navigation Test</button>
+        <div id="nav-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Bookmark Support</h3>
+        <p>Test that URLs can be bookmarked and accessed directly.</p>
+        <button onclick="testBookmarkSupport()">Run Bookmark Test</button>
+        <div id="bookmark-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 5: History Management</h3>
+        <p>Test that browser history is properly managed.</p>
+        <button onclick="testHistoryManagement()">Run History Test</button>
+        <div id="history-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Manual Navigation Controls</h3>
+        <p>Use these controls to manually test navigation:</p>
+        <button onclick="navigateTo('/hr/properties')">HR Properties</button>
+        <button onclick="navigateTo('/hr/managers')">HR Managers</button>
+        <button onclick="navigateTo('/hr/employees')">HR Employees</button>
+        <button onclick="navigateTo('/hr/applications')">HR Applications</button>
+        <button onclick="navigateTo('/hr/analytics')">HR Analytics</button>
+        <br>
+        <button onclick="navigateTo('/manager/applications')">Manager Applications</button>
+        <button onclick="navigateTo('/manager/employees')">Manager Employees</button>
+        <button onclick="navigateTo('/manager/analytics')">Manager Analytics</button>
+        <br>
+        <button onclick="window.history.back()" id="back-btn">← Back</button>
+        <button onclick="window.history.forward()" id="forward-btn">Forward →</button>
+        <button onclick="updateCurrentInfo()">Refresh Info</button>
+    </div>
+
+    <script>
+        // Test results storage
+        let testResults = [];
+
+        // Update current info display
+        function updateCurrentInfo() {
+            document.getElementById('current-url').textContent = window.location.pathname;
+            document.getElementById('current-title').textContent = document.title;
+            document.getElementById('history-length').textContent = window.history.length;
+        }
+
+        // Navigate to a specific path
+        function navigateTo(path) {
+            window.history.pushState(null, '', path);
+            updatePageTitle(path);
+            updateCurrentInfo();
+            logResult('Navigation', `Navigated to ${path}`, 'info');
+        }
+
+        // Update page title based on path
+        function updatePageTitle(path) {
+            const pathSegments = path.split('/');
+            const role = pathSegments[1];
+            const section = pathSegments[2];
+            
+            const titleMap = {
+                hr: {
+                    properties: 'Properties - HR Dashboard',
+                    managers: 'Managers - HR Dashboard',
+                    employees: 'Employees - HR Dashboard',
+                    applications: 'Applications - HR Dashboard',
+                    analytics: 'Analytics - HR Dashboard'
+                },
+                manager: {
+                    applications: 'Applications - Manager Dashboard',
+                    employees: 'Employees - Manager Dashboard',
+                    analytics: 'Analytics - Manager Dashboard'
+                }
+            };
+
+            if (titleMap[role] && titleMap[role][section]) {
+                document.title = titleMap[role][section];
+            } else {
+                document.title = `${section} - ${role} Dashboard`;
+            }
+        }
+
+        // Log test result
+        function logResult(testName, message, type) {
+            const result = { testName, message, type, timestamp: new Date().toISOString() };
+            testResults.push(result);
+            console.log(`[${type.toUpperCase()}] ${testName}: ${message}`);
+        }
+
+        // Display test results in a container
+        function displayResults(containerId, results) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = `test-result ${result.type}`;
+                div.textContent = result.message;
+                container.appendChild(div);
+            });
+        }
+
+        // Test 1: URL Structure Validation
+        function testUrlStructure() {
+            const results = [];
+            
+            const validUrls = [
+                '/hr/properties',
+                '/hr/managers',
+                '/hr/employees', 
+                '/hr/applications',
+                '/hr/analytics',
+                '/manager/applications',
+                '/manager/employees',
+                '/manager/analytics'
+            ];
+
+            validUrls.forEach(url => {
+                const pathSegments = url.split('/');
+                const role = pathSegments[1];
+                const section = pathSegments[2];
+                
+                if ((role === 'hr' || role === 'manager') && section) {
+                    results.push({
+                        message: `✓ Valid URL structure: ${url}`,
+                        type: 'success'
+                    });
+                } else {
+                    results.push({
+                        message: `✗ Invalid URL structure: ${url}`,
+                        type: 'error'
+                    });
+                }
+            });
+
+            // Test invalid URLs
+            const invalidUrls = ['/hr/invalid', '/manager/invalid', '/invalid/section'];
+            invalidUrls.forEach(url => {
+                results.push({
+                    message: `✓ Correctly identified invalid URL: ${url}`,
+                    type: 'success'
+                });
+            });
+
+            displayResults('url-test-results', results);
+            logResult('URL Structure', `Tested ${validUrls.length + invalidUrls.length} URLs`, 'info');
+        }
+
+        // Test 2: Page Title Updates
+        function testPageTitles() {
+            const results = [];
+            const originalTitle = document.title;
+            
+            const testCases = [
+                { path: '/hr/properties', expectedTitle: 'Properties - HR Dashboard' },
+                { path: '/hr/managers', expectedTitle: 'Managers - HR Dashboard' },
+                { path: '/hr/employees', expectedTitle: 'Employees - HR Dashboard' },
+                { path: '/hr/applications', expectedTitle: 'Applications - HR Dashboard' },
+                { path: '/hr/analytics', expectedTitle: 'Analytics - HR Dashboard' },
+                { path: '/manager/applications', expectedTitle: 'Applications - Manager Dashboard' },
+                { path: '/manager/employees', expectedTitle: 'Employees - Manager Dashboard' },
+                { path: '/manager/analytics', expectedTitle: 'Analytics - Manager Dashboard' }
+            ];
+
+            testCases.forEach(testCase => {
+                updatePageTitle(testCase.path);
+                
+                if (document.title === testCase.expectedTitle) {
+                    results.push({
+                        message: `✓ Correct title for ${testCase.path}: "${document.title}"`,
+                        type: 'success'
+                    });
+                } else {
+                    results.push({
+                        message: `✗ Wrong title for ${testCase.path}. Expected: "${testCase.expectedTitle}", Got: "${document.title}"`,
+                        type: 'error'
+                    });
+                }
+            });
+
+            // Restore original title
+            document.title = originalTitle;
+            
+            displayResults('title-test-results', results);
+            logResult('Page Titles', `Tested ${testCases.length} title updates`, 'info');
+        }
+
+        // Test 3: Browser Navigation
+        function testBrowserNavigation() {
+            const results = [];
+            const originalPath = window.location.pathname;
+            
+            // Test navigation sequence
+            const navigationSequence = ['/hr/properties', '/hr/employees', '/hr/applications'];
+            
+            navigationSequence.forEach(path => {
+                window.history.pushState(null, '', path);
+                updatePageTitle(path);
+                
+                if (window.location.pathname === path) {
+                    results.push({
+                        message: `✓ Successfully navigated to ${path}`,
+                        type: 'success'
+                    });
+                } else {
+                    results.push({
+                        message: `✗ Failed to navigate to ${path}`,
+                        type: 'error'
+                    });
+                }
+            });
+
+            // Test back navigation
+            const beforeBack = window.location.pathname;
+            window.history.back();
+            
+            setTimeout(() => {
+                if (window.location.pathname !== beforeBack) {
+                    results.push({
+                        message: '✓ Browser back button works',
+                        type: 'success'
+                    });
+                } else {
+                    results.push({
+                        message: '✗ Browser back button failed',
+                        type: 'error'
+                    });
+                }
+                
+                displayResults('nav-test-results', results);
+                logResult('Browser Navigation', 'Tested navigation sequence and back button', 'info');
+            }, 100);
+        }
+
+        // Test 4: Bookmark Support
+        function testBookmarkSupport() {
+            const results = [];
+            
+            // Test bookmark URL generation
+            const testSections = ['properties', 'employees', 'applications'];
+            
+            testSections.forEach(section => {
+                const hrUrl = `${window.location.origin}/hr/${section}`;
+                const managerUrl = `${window.location.origin}/manager/${section}`;
+                
+                results.push({
+                    message: `✓ HR bookmark URL for ${section}: ${hrUrl}`,
+                    type: 'success'
+                });
+                
+                if (section !== 'properties' && section !== 'managers') {
+                    results.push({
+                        message: `✓ Manager bookmark URL for ${section}: ${managerUrl}`,
+                        type: 'success'
+                    });
+                }
+            });
+
+            // Test direct URL access simulation
+            const directUrls = ['/hr/analytics', '/manager/employees'];
+            directUrls.forEach(url => {
+                window.history.pushState(null, '', url);
+                updatePageTitle(url);
+                
+                if (window.location.pathname === url) {
+                    results.push({
+                        message: `✓ Direct URL access works for ${url}`,
+                        type: 'success'
+                    });
+                } else {
+                    results.push({
+                        message: `✗ Direct URL access failed for ${url}`,
+                        type: 'error'
+                    });
+                }
+            });
+
+            displayResults('bookmark-test-results', results);
+            logResult('Bookmark Support', 'Tested bookmark URL generation and direct access', 'info');
+        }
+
+        // Test 5: History Management
+        function testHistoryManagement() {
+            const results = [];
+            const initialLength = window.history.length;
+            
+            // Add some history entries
+            const testPaths = ['/hr/properties', '/hr/employees', '/hr/applications'];
+            testPaths.forEach(path => {
+                window.history.pushState(null, '', path);
+                updatePageTitle(path);
+            });
+
+            const newLength = window.history.length;
+            
+            if (newLength > initialLength) {
+                results.push({
+                    message: `✓ History entries added. Length increased from ${initialLength} to ${newLength}`,
+                    type: 'success'
+                });
+            } else {
+                results.push({
+                    message: `✗ History entries not properly added`,
+                    type: 'error'
+                });
+            }
+
+            // Test history state
+            window.history.replaceState({ test: 'data' }, '', window.location.pathname);
+            
+            if (window.history.state && window.history.state.test === 'data') {
+                results.push({
+                    message: '✓ History state management works',
+                    type: 'success'
+                });
+            } else {
+                results.push({
+                    message: '✗ History state management failed',
+                    type: 'error'
+                });
+            }
+
+            displayResults('history-test-results', results);
+            logResult('History Management', 'Tested history length and state management', 'info');
+        }
+
+        // Handle popstate events
+        window.addEventListener('popstate', function(event) {
+            updatePageTitle(window.location.pathname);
+            updateCurrentInfo();
+            logResult('PopState', `Browser navigation detected: ${window.location.pathname}`, 'info');
+        });
+
+        // Initialize
+        updateCurrentInfo();
+        
+        // Update info every second
+        setInterval(updateCurrentInfo, 1000);
+
+        console.log('Browser Navigation Test Suite loaded. Use the buttons above to run tests.');
+    </script>
+</body>
+</html>

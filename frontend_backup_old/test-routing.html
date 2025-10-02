@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Routing Test</title>
+</head>
+<body>
+    <h1>Test the following URLs in your browser:</h1>
+    <ul>
+        <li><a href="http://localhost:5176/hr">HR Dashboard (should redirect to /hr/properties)</a></li>
+        <li><a href="http://localhost:5176/hr/properties">HR Properties</a></li>
+        <li><a href="http://localhost:5176/hr/managers">HR Managers</a></li>
+        <li><a href="http://localhost:5176/hr/employees">HR Employees</a></li>
+        <li><a href="http://localhost:5176/hr/applications">HR Applications</a></li>
+        <li><a href="http://localhost:5176/hr/analytics">HR Analytics</a></li>
+        <li><a href="http://localhost:5176/manager">Manager Dashboard (should redirect to /manager/applications)</a></li>
+        <li><a href="http://localhost:5176/manager/applications">Manager Applications</a></li>
+        <li><a href="http://localhost:5176/manager/employees">Manager Employees</a></li>
+        <li><a href="http://localhost:5176/manager/analytics">Manager Analytics</a></li>
+    </ul>
+    
+    <h2>Requirements Verification:</h2>
+    <ul>
+        <li>✅ Updated App.tsx with nested routing for HR dashboard sections</li>
+        <li>✅ Added nested routes for Manager dashboard sections</li>
+        <li>✅ Implemented default redirects from base routes to default sections</li>
+        <li>✅ Added route protection for all dashboard sections</li>
+    </ul>
+</body>
+</html>

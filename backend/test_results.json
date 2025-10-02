@@ -1,0 +1,168 @@
+{
+  "passed": 4,
+  "failed": 6,
+  "warnings": 4,
+  "details": [
+    {
+      "test": "Form Data Sync",
+      "status": "start",
+      "message": "Testing cross-browser synchronization...",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:55.768851"
+    },
+    {
+      "test": "Form Data Sync - Save",
+      "status": "pass",
+      "message": "Data saved successfully",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:56.152916"
+    },
+    {
+      "test": "Form Data Sync - Load",
+      "status": "pass",
+      "message": "Data loaded successfully in second browser",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:57.546342"
+    },
+    {
+      "test": "PDF Endpoints",
+      "status": "info",
+      "message": "Testing all document generation endpoints...",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:57.547299"
+    },
+    {
+      "test": "PDF Generation - W-4 Form",
+      "status": "start",
+      "message": "Testing /onboarding/19310a36-797c-4464-945b-a4a06a5e17c2/w4-form/generate-pdf",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:57.547368"
+    },
+    {
+      "test": "PDF Generation - W-4 Form",
+      "status": "fail",
+      "message": "Error: 'int' object is not subscriptable",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:58.344922"
+    },
+    {
+      "test": "PDF Generation - Direct Deposit",
+      "status": "start",
+      "message": "Testing /onboarding/19310a36-797c-4464-945b-a4a06a5e17c2/direct-deposit/generate-pdf",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:58.846466"
+    },
+    {
+      "test": "PDF Generation - Direct Deposit",
+      "status": "fail",
+      "message": "Error: 'int' object is not subscriptable",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:59.343473"
+    },
+    {
+      "test": "PDF Generation - Company Policies",
+      "status": "start",
+      "message": "Testing /onboarding/19310a36-797c-4464-945b-a4a06a5e17c2/company-policies/generate-pdf",
+      "details": null,
+      "timestamp": "2025-09-14T16:33:59.845004"
+    },
+    {
+      "test": "PDF Generation - Company Policies",
+      "status": "fail",
+      "message": "Error: 'int' object is not subscriptable",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:00.116328"
+    },
+    {
+      "test": "PDF Generation - Weapons Policy",
+      "status": "start",
+      "message": "Testing /onboarding/19310a36-797c-4464-945b-a4a06a5e17c2/weapons-policy/generate-pdf",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:00.617838"
+    },
+    {
+      "test": "PDF Generation - Weapons Policy",
+      "status": "fail",
+      "message": "Error: 'int' object is not subscriptable",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:00.936229"
+    },
+    {
+      "test": "PDF Generation - Human Trafficking",
+      "status": "start",
+      "message": "Testing /onboarding/19310a36-797c-4464-945b-a4a06a5e17c2/human-trafficking/generate-pdf",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:01.437711"
+    },
+    {
+      "test": "PDF Generation - Human Trafficking",
+      "status": "fail",
+      "message": "Error: 'int' object is not subscriptable",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:01.881302"
+    },
+    {
+      "test": "PDF Generation - I-9 Complete",
+      "status": "start",
+      "message": "Testing /onboarding/19310a36-797c-4464-945b-a4a06a5e17c2/i9-complete/generate-pdf",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:02.384055"
+    },
+    {
+      "test": "PDF Generation - I-9 Complete",
+      "status": "fail",
+      "message": "Error: 'int' object is not subscriptable",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:03.462667"
+    },
+    {
+      "test": "Document Retrieval",
+      "status": "warning",
+      "message": "No documents were saved to test retrieval",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:03.964670"
+    },
+    {
+      "test": "Data Consistency",
+      "status": "info",
+      "message": "Checking data consistency across endpoints...",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:03.964700"
+    },
+    {
+      "test": "Data Consistency - Employee",
+      "status": "warning",
+      "message": "Could not retrieve employee data: HTTP 404",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:03.971098"
+    },
+    {
+      "test": "Data Consistency - personal-info",
+      "status": "pass",
+      "message": "Data exists",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:04.019187"
+    },
+    {
+      "test": "Data Consistency - w4-form",
+      "status": "warning",
+      "message": "Could not check: HTTP 500",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:04.084627"
+    },
+    {
+      "test": "Data Consistency - direct-deposit",
+      "status": "warning",
+      "message": "Could not check: HTTP 404",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:04.085792"
+    },
+    {
+      "test": "Data Consistency - i9-complete",
+      "status": "pass",
+      "message": "Data exists",
+      "details": null,
+      "timestamp": "2025-09-14T16:34:04.135511"
+    }
+  ]
+}

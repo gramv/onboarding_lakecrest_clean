@@ -1,0 +1,24 @@
+DOCUMENT RETRIEVAL SUMMARY
+==================================================
+
+Employee ID: dbf6ebdd-f88e-4b9e-a06d-ab173205b7ef
+Retrieval Date: 2025-08-23T22:27:49.317723
+
+
+Company Policies:
+  status: Saved
+  path: saved_documents/company_policies_signed.pdf
+  completed_at: N/A
+
+I-9 Form:
+  status: Saved
+  path: saved_documents/i9_form_complete.pdf
+  section: section1
+  signed: True
+  completed_at: 2025-08-24T02:20:12.796
+
+W-4 Form:
+  status: Not Found
+
+==================================================
+All documents have been saved to: saved_documents/
