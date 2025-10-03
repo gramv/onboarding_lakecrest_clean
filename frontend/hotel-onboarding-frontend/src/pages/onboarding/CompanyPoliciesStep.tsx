@@ -1302,10 +1302,9 @@ export default function CompanyPoliciesStep({
           {/* Section 5: Final Acknowledgment & Signature */}
           {currentSection === 5 && (
             <div className="space-y-6">
-              {/* Acknowledgment Section - Only show when all sections are complete and initials are provided */}
-              {allSectionsComplete && 
-               validateInitials(companyPoliciesInitials, 'Company Policies') === true &&
-               validateInitials(sexualHarassmentInitials, 'Sexual Harassment') === true && 
+              {/* Acknowledgment Section - Show when user has provided all initials */}
+              {validateInitials(companyPoliciesInitials, 'Company Policies') === true &&
+               validateInitials(sexualHarassmentInitials, 'Sexual Harassment') === true &&
                validateInitials(eeoInitials, 'EEO') === true && (
                 <Card className="border-blue-200 bg-blue-50">
                   <CardHeader>
@@ -1442,35 +1441,59 @@ export default function CompanyPoliciesStep({
               )}
 
               {/* Instructions for incomplete form */}
-              {(!allSectionsComplete || !isFormComplete) && (
+              {!isFormComplete && (
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <ScrollText className="h-8 w-8 text-blue-600 mx-auto mb-2" />
                       <h3 className="font-medium text-gray-900 mb-1">{t.incompleteTitle}</h3>
-                      <div className="text-sm text-gray-600 space-y-1">
+                      <div className="text-sm text-gray-600 space-y-2">
                         <p>{t.toProceeed}</p>
                         <ul className="text-left inline-block space-y-1">
-                          {!allSectionsComplete && (
-                            <li>• Complete all policy sections</li>
+                          {!section1Complete && (
+                            <li>• {language === 'es' ? 'Complete la Sección 1 (Políticas de la Empresa)' : 'Complete Section 1 (Company Policies)'}</li>
+                          )}
+                          {!section2Complete && (
+                            <li>• {language === 'es' ? 'Complete la Sección 2 (Igualdad de Oportunidades)' : 'Complete Section 2 (Equal Employment Opportunity)'}</li>
+                          )}
+                          {!section3Complete && (
+                            <li>• {language === 'es' ? 'Complete la Sección 3 (Acoso Sexual)' : 'Complete Section 3 (Sexual Harassment)'}</li>
+                          )}
+                          {!section4Complete && (
+                            <li>• {language === 'es' ? 'Complete la Sección 4 (Línea Directa Confidencial)' : 'Complete Section 4 (Confidential Hotline)'}</li>
                           )}
                           {validateInitials(companyPoliciesInitials, 'Company Policies') !== true && (
-                            <li>• Provide valid initials for Company Policies section</li>
+                            <li>• {language === 'es' ? 'Proporcione iniciales válidas para Políticas de la Empresa' : 'Provide valid initials for Company Policies'}</li>
                           )}
                           {validateInitials(eeoInitials, 'EEO') !== true && (
-                            <li>• Provide valid initials for Equal Employment Opportunity Policy</li>
+                            <li>• {language === 'es' ? 'Proporcione iniciales válidas para Igualdad de Oportunidades' : 'Provide valid initials for Equal Employment Opportunity'}</li>
                           )}
                           {validateInitials(sexualHarassmentInitials, 'Sexual Harassment') !== true && (
-                            <li>• Provide valid initials for Sexual Harassment Policy</li>
-                          )}
-                          {(allSectionsComplete && 
-                            validateInitials(companyPoliciesInitials, 'Company Policies') === true &&
-                            validateInitials(sexualHarassmentInitials, 'Sexual Harassment') === true && 
-                            validateInitials(eeoInitials, 'EEO') === true && 
-                            !acknowledgmentChecked) && (
-                            <li>• Check the acknowledgment agreement</li>
+                            <li>• {language === 'es' ? 'Proporcione iniciales válidas para Acoso Sexual' : 'Provide valid initials for Sexual Harassment'}</li>
                           )}
                         </ul>
+                        <div className="mt-4 flex gap-2 justify-center">
+                          {!section1Complete && (
+                            <Button size="sm" variant="outline" onClick={() => { setCurrentSection(1); scrollToTop() }}>
+                              {language === 'es' ? 'Ir a Sección 1' : 'Go to Section 1'}
+                            </Button>
+                          )}
+                          {section1Complete && !section2Complete && (
+                            <Button size="sm" variant="outline" onClick={() => { setCurrentSection(2); scrollToTop() }}>
+                              {language === 'es' ? 'Ir a Sección 2' : 'Go to Section 2'}
+                            </Button>
+                          )}
+                          {section2Complete && !section3Complete && (
+                            <Button size="sm" variant="outline" onClick={() => { setCurrentSection(3); scrollToTop() }}>
+                              {language === 'es' ? 'Ir a Sección 3' : 'Go to Section 3'}
+                            </Button>
+                          )}
+                          {section3Complete && !section4Complete && (
+                            <Button size="sm" variant="outline" onClick={() => { setCurrentSection(4); scrollToTop() }}>
+                              {language === 'es' ? 'Ir a Sección 4' : 'Go to Section 4'}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
