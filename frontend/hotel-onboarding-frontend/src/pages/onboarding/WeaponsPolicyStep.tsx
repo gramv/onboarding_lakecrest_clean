@@ -71,7 +71,7 @@ export default function WeaponsPolicyStep({
     }
   })
 
-  // Load existing data
+  // Load existing data - ONLY RUN ONCE on mount to prevent clearing checkboxes
   useEffect(() => {
     // Load from session storage
     const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
@@ -99,7 +99,8 @@ export default function WeaponsPolicyStep({
     if (progress.completedSteps.includes(currentStep.id)) {
       setFormData(prev => ({ ...prev, isSigned: true }))
     }
-  }, [currentStep.id, progress.completedSteps])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // ONLY run on mount, not on every state change
 
   const content: Record<'en' | 'es', PolicyContent> = {
     en: {

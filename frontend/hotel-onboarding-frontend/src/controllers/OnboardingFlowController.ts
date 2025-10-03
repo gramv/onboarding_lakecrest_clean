@@ -678,8 +678,11 @@ export class OnboardingFlowController {
       }
 
       // Make API call to save to cloud
+      // ⚠️ IMPORTANT: Exclude large PDF data from progress save to prevent request timeouts
+      const { inlinePdfData, pdfUrl, signedPdfUrl, ...dataWithoutPdf } = data || {}
+
       const payload = {
-        formData: data || {},
+        formData: dataWithoutPdf,
         stepId,
         timestamp: new Date().toISOString(),
         is_single_step: this.isSingleStepMode,
