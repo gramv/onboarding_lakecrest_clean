@@ -468,7 +468,7 @@ export default function CompanyPoliciesStep({
     }
   })
 
-  // Load existing data
+  // Load existing data - SIMPLIFIED to avoid navigation loops
   useEffect(() => {
     const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
     if (savedData) {
@@ -523,41 +523,13 @@ export default function CompanyPoliciesStep({
         setSection4Complete(section4)
         setSection5Complete(section5)
 
-        // Determine which section to show based on completion status
-        // If everything is complete and signed, show section 5 (review)
+        // ONLY restore currentSection if everything is complete, otherwise start at section 1
+        // This prevents navigation loops
         if (section1 && section2 && section3 && section4 && section5 && derivedSigned) {
           setCurrentSection(5)
-        }
-        // If we have a saved section and it's valid, restore it
-        else if (parsed.currentSection && parsed.currentSection >= 1 && parsed.currentSection <= 5) {
-          // Only restore saved section if prerequisites are met
-          const canShowSection = (sectionNum: number): boolean => {
-            if (sectionNum === 1) return true
-            if (sectionNum === 2) return section1
-            if (sectionNum === 3) return section1 && section2
-            if (sectionNum === 4) return section1 && section2 && section3
-            if (sectionNum === 5) return section1 && section2 && section3
-            return false
-          }
-
-          if (canShowSection(parsed.currentSection)) {
-            setCurrentSection(parsed.currentSection)
-          } else {
-            // Find the first incomplete section
-            if (!section1) setCurrentSection(1)
-            else if (!section2) setCurrentSection(2)
-            else if (!section3) setCurrentSection(3)
-            else if (!section4) setCurrentSection(4)
-            else setCurrentSection(5)
-          }
-        }
-        // Otherwise, find the first incomplete section
-        else {
-          if (!section1) setCurrentSection(1)
-          else if (!section2) setCurrentSection(2)
-          else if (!section3) setCurrentSection(3)
-          else if (!section4) setCurrentSection(4)
-          else setCurrentSection(5)
+        } else {
+          // Always start at section 1 if not complete - user can navigate forward
+          setCurrentSection(1)
         }
       } catch (e) {
         console.warn('Failed to parse saved company policies data:', e)
