@@ -474,8 +474,8 @@ export default function CompanyPoliciesStep({
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData)
-        // Always restore the section state
-        setCurrentSection(parsed.currentSection || 1)
+
+        // Restore form data
         setCompanyPoliciesInitials(parsed.companyPoliciesInitials || '')
         setSexualHarassmentInitials(parsed.sexualHarassmentInitials || '')
         setEeoInitials(parsed.eeoInitials || '')
@@ -510,6 +510,7 @@ export default function CompanyPoliciesStep({
         const derivedSigned = Boolean(parsed.isSigned || parsed.signatureData || parsed.documentMetadata?.signed_url || parsed.remotePdfUrl)
         setIsSigned(derivedSigned)
 
+        // Calculate section completion based on actual data
         const section1 = validateInitials(parsed.companyPoliciesInitials || '', 'Company Policies') === true
         const section2 = validateInitials(parsed.eeoInitials || '', 'EEO') === true
         const section3 = validateInitials(parsed.sexualHarassmentInitials || '', 'Sexual Harassment') === true
@@ -522,8 +523,41 @@ export default function CompanyPoliciesStep({
         setSection4Complete(section4)
         setSection5Complete(section5)
 
+        // Determine which section to show based on completion status
+        // If everything is complete and signed, show section 5 (review)
         if (section1 && section2 && section3 && section4 && section5 && derivedSigned) {
           setCurrentSection(5)
+        }
+        // If we have a saved section and it's valid, restore it
+        else if (parsed.currentSection && parsed.currentSection >= 1 && parsed.currentSection <= 5) {
+          // Only restore saved section if prerequisites are met
+          const canShowSection = (sectionNum: number): boolean => {
+            if (sectionNum === 1) return true
+            if (sectionNum === 2) return section1
+            if (sectionNum === 3) return section1 && section2
+            if (sectionNum === 4) return section1 && section2 && section3
+            if (sectionNum === 5) return section1 && section2 && section3
+            return false
+          }
+
+          if (canShowSection(parsed.currentSection)) {
+            setCurrentSection(parsed.currentSection)
+          } else {
+            // Find the first incomplete section
+            if (!section1) setCurrentSection(1)
+            else if (!section2) setCurrentSection(2)
+            else if (!section3) setCurrentSection(3)
+            else if (!section4) setCurrentSection(4)
+            else setCurrentSection(5)
+          }
+        }
+        // Otherwise, find the first incomplete section
+        else {
+          if (!section1) setCurrentSection(1)
+          else if (!section2) setCurrentSection(2)
+          else if (!section3) setCurrentSection(3)
+          else if (!section4) setCurrentSection(4)
+          else setCurrentSection(5)
         }
       } catch (e) {
         console.warn('Failed to parse saved company policies data:', e)
