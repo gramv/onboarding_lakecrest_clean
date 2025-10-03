@@ -468,7 +468,7 @@ export default function CompanyPoliciesStep({
     }
   })
 
-  // Load existing data - SIMPLIFIED to avoid navigation loops
+  // Load existing data - ONLY RUN ONCE on mount
   useEffect(() => {
     const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
     if (savedData) {
@@ -523,20 +523,15 @@ export default function CompanyPoliciesStep({
         setSection4Complete(section4)
         setSection5Complete(section5)
 
-        // ONLY restore currentSection if everything is complete, otherwise start at section 1
-        // This prevents navigation loops
-        if (section1 && section2 && section3 && section4 && section5 && derivedSigned) {
-          setCurrentSection(5)
-        } else {
-          // Always start at section 1 if not complete - user can navigate forward
-          setCurrentSection(1)
+        // Restore the saved section - trust what was saved
+        if (parsed.currentSection >= 1 && parsed.currentSection <= 5) {
+          setCurrentSection(parsed.currentSection)
         }
       } catch (e) {
         console.warn('Failed to parse saved company policies data:', e)
       }
     } else if (progress.completedSteps.includes(currentStep.id)) {
       // Only set all complete if no saved data exists but step is marked complete
-      // Note: We don't have the PDF URL here, so the PDF won't display until re-signed
       setIsSigned(true)
       setSection5Complete(true)
       setSection4Complete(true)
@@ -545,7 +540,8 @@ export default function CompanyPoliciesStep({
       setSection1Complete(true)
       setCurrentSection(5)
     }
-  }, [currentStep.id, progress.completedSteps])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // ONLY run on mount, not on every state change
 
   useEffect(() => {
     setMetadataRequested(false)
