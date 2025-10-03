@@ -19,7 +19,8 @@ export default function DigitalSignatureCapture({
   requireIdentityVerification = false,
   language,
   onSignatureComplete,
-  onCancel
+  onCancel,
+  submitButtonText  // ✅ NEW: Custom button text prop
 }) {
   const canvasRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -130,8 +131,19 @@ export default function DigitalSignatureCapture({
     const allAcknowledgmentsChecked = acknowledgementsChecked.every(checked => checked)
     const hasSignature = signatureData.length > 0
     const identityOk = requireIdentityVerification ? identityVerified : true
+    const canSignNow = allAcknowledgmentsChecked && hasSignature && termsAccepted && identityOk
 
-    setCanSign(allAcknowledgmentsChecked && hasSignature && termsAccepted && identityOk)
+    console.log('🔍 DigitalSignatureCapture - Can Sign Check:', {
+      allAcknowledgmentsChecked,
+      hasSignature,
+      termsAccepted,
+      identityOk,
+      canSignNow,
+      acknowledgementsChecked,
+      signatureDataLength: signatureData.length
+    })
+
+    setCanSign(canSignNow)
   }, [acknowledgementsChecked, signatureData, typedName, termsAccepted, identityVerified, requireIdentityVerification, signatureMethod])
 
   const startDrawing = (e) => {
@@ -502,7 +514,7 @@ export default function DigitalSignatureCapture({
           className="w-full sm:w-auto min-h-[48px] px-8"
         >
           <Check className="h-5 w-5 mr-2" />
-          {t('sign_document')}
+          {submitButtonText || t('sign_document')}
         </Button>
       </div>
     </div>

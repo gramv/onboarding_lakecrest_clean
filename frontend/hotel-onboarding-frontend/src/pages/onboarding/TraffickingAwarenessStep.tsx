@@ -9,7 +9,8 @@ import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { getApiUrl } from '@/config/api'
-import SimplePDFViewer from '@/components/SimplePDFViewer'
+import PDFViewer from '@/components/PDFViewer'
+import axios from 'axios'
 
 export default function TraffickingAwarenessStep({
   currentStep,
@@ -24,12 +25,16 @@ export default function TraffickingAwarenessStep({
   canProceedToNext: _canProceedToNext
 }: StepProps) {
   
+  // ✅ FIX #1: Add state variables following I-9 pattern
   const [trainingComplete, setTrainingComplete] = useState(false)
   const [certificateData, setCertificateData] = useState(null)
   const [showReview, setShowReview] = useState(false)
   const [isSigned, setIsSigned] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)  // Base64 PDF data
+  const [remotePdfUrl, setRemotePdfUrl] = useState<string | null>(null)  // Supabase URL
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false)
   const [trainingProgress, setTrainingProgress] = useState<any>(null)
+  const [sessionToken, setSessionToken] = useState<string>('')
 
   // Auto-save data
   const autoSaveData = {
@@ -37,7 +42,8 @@ export default function TraffickingAwarenessStep({
     certificateData,
     showReview,
     isSigned,
-    pdfUrl
+    pdfUrl,
+    remotePdfUrl
   }
 
   // Auto-save hook
@@ -47,81 +53,233 @@ export default function TraffickingAwarenessStep({
     }
   })
 
-  // Load existing data
+  // Get session token
   useEffect(() => {
-    const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData)
-        if (parsed.isSigned) {
-          setIsSigned(true)
-          setPdfUrl(parsed.pdfUrl)
-          setTrainingComplete(true)
-          setCertificateData(parsed.certificateData)
-        } else if (parsed.trainingComplete) {
-          setTrainingComplete(true)
-          setCertificateData(parsed.certificateData)
+    const token = sessionStorage.getItem('hotel_onboarding_token') || ''
+    setSessionToken(token)
+  }, [])
+
+  // ✅ FIX #4: Load existing data and rehydrate from database if needed
+  useEffect(() => {
+    const loadData = async () => {
+      // Step 1: Check if step is completed
+      if (progress.completedSteps.includes(currentStep.id)) {
+        setIsSigned(true)
+        setTrainingComplete(true)
+      }
+
+      // Step 2: Load from session storage
+      const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData)
+          if (parsed.isSigned) {
+            setIsSigned(true)
+            // ✅ FIX #4: Load both pdfUrl and remotePdfUrl
+            setPdfUrl(parsed.pdfUrl)
+            setRemotePdfUrl(parsed.remotePdfUrl)
+            setTrainingComplete(true)
+            setCertificateData(parsed.certificate || parsed.certificateData)
+            console.log('✅ Rehydrated from session storage:', {
+              isSigned: true,
+              hasPdfUrl: !!parsed.pdfUrl,
+              hasRemotePdfUrl: !!parsed.remotePdfUrl
+            })
+          } else if (parsed.trainingComplete) {
+            setTrainingComplete(true)
+            setCertificateData(parsed.certificateData || parsed.certificate)
+          }
+        } catch (e) {
+          console.error('Failed to parse saved trafficking awareness data:', e)
         }
-      } catch (e) {
-        console.error('Failed to parse saved trafficking awareness data:', e)
+      }
+
+      // Step 3: If step complete but no session data, fetch from database
+      if (progress.completedSteps.includes(currentStep.id) && !savedData) {
+        console.log('📥 Step marked complete but no session data - fetching from database...')
+        setIsSigned(true)
+        setTrainingComplete(true)
+        setIsLoadingPdf(true)
+
+        // ✅ FIX #6: Add token to API call
+        if (employee?.id && !employee.id.startsWith('demo-') && sessionToken) {
+          try {
+            const response = await axios.get(
+              `${getApiUrl()}/onboarding/${employee.id}/documents/human-trafficking?token=${sessionToken}`
+            )
+
+            if (response.data?.success && response.data?.data?.document_metadata?.signed_url) {
+              setRemotePdfUrl(response.data.data.document_metadata.signed_url)
+              console.log('✅ Fetched signed PDF from database:', response.data.data.document_metadata.signed_url)
+            }
+          } catch (error) {
+            console.error('❌ Failed to fetch signed PDF from database:', error)
+          } finally {
+            setIsLoadingPdf(false)
+          }
+        } else {
+          setIsLoadingPdf(false)
+        }
+      }
+
+      // Load training progress (video/section state)
+      const savedProgress = sessionStorage.getItem(`${currentStep.id}_training_progress`)
+      if (savedProgress) {
+        try {
+          const parsed = JSON.parse(savedProgress)
+          setTrainingProgress(parsed)
+        } catch (e) {
+          console.error('Failed to parse training progress:', e)
+        }
+      }
+
+      if (progress.completedSteps.includes(currentStep.id)) {
+        setIsSigned(true)
+        setTrainingComplete(true)
+      }
+
+      // ✅ FIX: Load personal info from personal-info step for PDF generation
+      const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+      if (personalInfoData) {
+        try {
+          const parsed = JSON.parse(personalInfoData)
+          const personalInfo = parsed.personalInfo || parsed.formData?.personalInfo || {}
+
+          // Merge personal info into certificate data
+          if (certificateData || Object.keys(personalInfo).length > 0) {
+            setCertificateData({
+              ...certificateData,
+              personalInfo: personalInfo
+            })
+
+            console.log('✅ Loaded personal info for human trafficking certificate:', {
+              hasPersonalInfo: !!personalInfo,
+              firstName: personalInfo.firstName,
+              lastName: personalInfo.lastName
+            })
+          }
+        } catch (e) {
+          console.error('Failed to parse personal info:', e)
+        }
       }
     }
 
-    // Load training progress (video/section state)
-    const savedProgress = sessionStorage.getItem(`${currentStep.id}_training_progress`)
-    if (savedProgress) {
-      try {
-        const parsed = JSON.parse(savedProgress)
-        setTrainingProgress(parsed)
-      } catch (e) {
-        console.error('Failed to parse training progress:', e)
-      }
-    }
-
-    if (progress.completedSteps.includes(currentStep.id)) {
-      setIsSigned(true)
-      setTrainingComplete(true)
-    }
-  }, [currentStep.id, progress.completedSteps])
+    loadData()
+  }, [currentStep.id, progress.completedSteps, employee?.id, sessionToken])
 
   const handleTrainingComplete = async (data: any) => {
+    // ✅ FIX: Load personal info from personal-info step
+    const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+    let personalInfo = {}
+
+    if (personalInfoData) {
+      try {
+        const parsed = JSON.parse(personalInfoData)
+        personalInfo = parsed.personalInfo || parsed.formData?.personalInfo || {}
+        console.log('✅ Loaded personal info for certificate:', {
+          firstName: personalInfo.firstName,
+          lastName: personalInfo.lastName
+        })
+      } catch (e) {
+        console.error('Failed to parse personal info:', e)
+      }
+    }
+
+    // Merge personal info into certificate data
+    const completeData = {
+      ...data,
+      personalInfo: personalInfo
+    }
+
     setTrainingComplete(true)
-    setCertificateData(data)
+    setCertificateData(completeData)
     setShowReview(true)
 
     // Save to session storage but DON'T mark complete yet
     sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
       trainingComplete: true,
-      certificateData: data,
+      certificateData: completeData,
       showReview: true,
       isSigned: false
     }))
   }
 
   const handleSign = async (signatureData: any) => {
+    console.log('✅ Human Trafficking - handleSign called with:', {
+      hasSignature: !!signatureData.signature,
+      hasPdfUrl: !!signatureData.pdfUrl,
+      pdfUrl: signatureData.pdfUrl
+    })
+
     setIsSigned(true)
 
+    const completedAt = new Date().toISOString()
     const stepData = {
       trainingComplete: true,
       certificate: certificateData,
       signed: true,
       signatureData,
-      completedAt: new Date().toISOString()
+      completedAt
     }
 
-    // Save signed status to session storage
+    // ✅ FIX #2 & #3: Call backend to generate and save signed PDF, set both URLs
+    let supabaseUrl: string | null = null
+    let base64Pdf: string | null = null
+
+    if (employee?.id && !employee.id.startsWith('demo-')) {
+      try {
+        console.log('📤 Calling backend to save signed Human Trafficking PDF...')
+
+        const response = await axios.post(
+          `${getApiUrl()}/onboarding/${employee.id}/human-trafficking/generate-pdf`,
+          {
+            employee_data: {
+              ...certificateData,
+              personalInfo: certificateData.personalInfo || {}
+            },
+            signature_data: {
+              signature: signatureData.signature,
+              signedAt: completedAt,
+              ipAddress: signatureData.ipAddress,
+              userAgent: signatureData.userAgent
+            }
+          }
+        )
+
+        if (response.data?.success && response.data?.data) {
+          supabaseUrl = response.data.data.pdf_url
+          const pdfBase64 = response.data.data.pdf
+          base64Pdf = `data:application/pdf;base64,${pdfBase64}`
+
+          // ✅ FIX #2: Set BOTH URLs
+          setPdfUrl(base64Pdf)
+          setRemotePdfUrl(supabaseUrl)
+
+          console.log('✅ Signed Human Trafficking PDF saved to database:', supabaseUrl)
+        } else {
+          console.error('❌ Failed to save signed PDF:', response.data)
+        }
+      } catch (error) {
+        console.error('❌ Error saving signed Human Trafficking PDF:', error)
+        // Continue even if backend save fails - data is in session storage
+      }
+    }
+
+    // ✅ FIX #3: Save BOTH URLs to session storage
     sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
       ...stepData,
       isSigned: true,
-      pdfUrl: signatureData.pdfUrl
+      pdfUrl: base64Pdf,
+      remotePdfUrl: supabaseUrl
     }))
 
-    if (signatureData.pdfUrl) {
-      setPdfUrl(signatureData.pdfUrl)
-    }
-
-    await markStepComplete(currentStep.id, stepData)
+    // Hide review BEFORE marking complete to prevent re-render issues
     setShowReview(false)
+
+    // Mark step complete (this may trigger navigation)
+    await markStepComplete(currentStep.id, stepData)
+
+    console.log('✅ Human Trafficking step completed and signed')
   }
 
   const translations = {
@@ -158,8 +316,28 @@ export default function TraffickingAwarenessStep({
 
   // Three-state rendering: Completed PDF view → Review & Sign → Training Module
 
-  // State 1: Already signed - show PDF viewer
-  if (isSigned && pdfUrl) {
+  // ✅ FIX #7: Show loading state while fetching PDF
+  if (isSigned && isLoadingPdf) {
+    return (
+      <StepContainer saveStatus={saveStatus} canProceed={true}>
+        <StepContentWrapper>
+          <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+            <div className="text-center py-12">
+              <div className="inline-flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="text-gray-600">
+                  {language === 'es' ? 'Cargando certificado...' : 'Loading certificate...'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </StepContentWrapper>
+      </StepContainer>
+    )
+  }
+
+  // ✅ FIX #5: State 1: Already signed - show PDF viewer (accept either URL)
+  if (isSigned && (pdfUrl || remotePdfUrl)) {
     return (
       <StepContainer saveStatus={saveStatus} canProceed={true}>
         <StepContentWrapper>
@@ -173,9 +351,14 @@ export default function TraffickingAwarenessStep({
               <p className="text-sm sm:text-base text-gray-600">{t.completionMessage}</p>
             </div>
 
-            {/* PDF Viewer */}
+            {/* ✅ FIX: Use PDFViewer (like I-9/W-4) to handle both base64 and remote URLs */}
             <div className="max-w-4xl mx-auto">
-              <SimplePDFViewer pdfUrl={pdfUrl} />
+              <PDFViewer
+                pdfUrl={remotePdfUrl || undefined}
+                pdfData={!remotePdfUrl ? pdfUrl ?? undefined : undefined}
+                height="600px"
+                title="Signed Human Trafficking Awareness Certificate"
+              />
             </div>
           </div>
         </StepContentWrapper>

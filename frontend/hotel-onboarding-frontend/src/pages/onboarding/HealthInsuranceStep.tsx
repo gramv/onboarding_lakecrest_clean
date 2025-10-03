@@ -3,6 +3,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import HealthInsuranceForm from '@/components/HealthInsuranceForm'
 import ReviewAndSign from '@/components/ReviewAndSign'
+import PDFViewer from '@/components/PDFViewer'
 import { CheckCircle, Heart, Users, AlertTriangle } from 'lucide-react'
 import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
@@ -30,6 +31,7 @@ export default function HealthInsuranceStep({
   const [isValid, setIsValid] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [isSigned, setIsSigned] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
 
   // Validation hook
   const { errors, fieldErrors, validate } = useStepValidation(healthInsuranceValidator)
@@ -52,34 +54,73 @@ export default function HealthInsuranceStep({
   // Load existing data
   useEffect(() => {
     console.log('HealthInsuranceStep - Loading data for step:', currentStep.id)
-    
+
+    let loadedFormData: any = {}
+
     // Try to load saved data from session storage
     const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData)
         console.log('HealthInsuranceStep - Found saved data:', parsed)
-        
+
         // Check for different data structures
         if (parsed.formData) {
           console.log('HealthInsuranceStep - Setting formData from parsed.formData')
-          setFormData(parsed.formData)
+          loadedFormData = parsed.formData
         } else if (parsed.medicalPlan !== undefined || parsed.isWaived !== undefined) {
           // Direct data structure
           console.log('HealthInsuranceStep - Setting formData from direct structure')
-          setFormData(parsed)
+          loadedFormData = parsed
         }
-        
+
         if (parsed.isSigned || parsed.signed) {
           console.log('HealthInsuranceStep - Form was previously signed')
           setIsSigned(true)
           setIsValid(true)
+
+          // Restore PDF URL if available
+          if (parsed.pdfUrl) {
+            console.log('HealthInsuranceStep - Restoring PDF URL:', parsed.pdfUrl)
+            setPdfUrl(parsed.pdfUrl)
+          }
         }
       } catch (e) {
         console.error('Failed to parse saved health insurance data:', e)
       }
     }
-    
+
+    // Load personal info from personal-info step (CRITICAL FIX)
+    const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+    if (personalInfoData) {
+      try {
+        const parsed = JSON.parse(personalInfoData)
+        const personalInfo = parsed.personalInfo || parsed.formData?.personalInfo || {}
+
+        // Merge personal info into formData
+        loadedFormData = {
+          ...loadedFormData,
+          personalInfo: personalInfo
+        }
+
+        console.log('✅ Loaded personal info for health insurance:', {
+          firstName: personalInfo.firstName,
+          lastName: personalInfo.lastName,
+          hasSSN: !!personalInfo.ssn,
+          hasDOB: !!personalInfo.dateOfBirth
+        })
+      } catch (e) {
+        console.error('Failed to parse personal info:', e)
+      }
+    } else {
+      console.warn('⚠️ No personal info found in session storage')
+    }
+
+    // Set the complete form data
+    if (Object.keys(loadedFormData).length > 0) {
+      setFormData(loadedFormData)
+    }
+
     if (progress.completedSteps.includes(currentStep.id)) {
       console.log('HealthInsuranceStep - Step marked as complete in progress')
       setIsSigned(true)
@@ -92,20 +133,32 @@ export default function HealthInsuranceStep({
     // Validate the form data
     const validation = await validate(data)
     console.log('Validation result:', validation)
-    
+
     if (validation.valid) {
       console.log('Validation passed, saving data and showing review')
-      setFormData(data)
+
+      // Merge with existing formData to preserve personalInfo (CRITICAL FIX)
+      const completeData = {
+        ...formData,  // Preserve personalInfo and other existing fields
+        ...data       // Add/update health insurance fields
+      }
+
+      setFormData(completeData)
       setIsValid(true)
       setShowReview(true)
-      
-      // Save to session storage
+
+      // Save to session storage with complete data
       sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
-        formData: data,
+        formData: completeData,  // Save complete data including personalInfo
         isValid: true,
         isSigned: false,
         showReview: true
       }))
+
+      console.log('✅ Saved complete data with personalInfo:', {
+        hasPersonalInfo: !!completeData.personalInfo,
+        hasMedicalPlan: !!completeData.medicalPlan
+      })
     } else {
       console.log('Validation failed:', validation.errors)
     }
@@ -117,47 +170,115 @@ export default function HealthInsuranceStep({
 
   const handleDigitalSignature = async (signatureData: any) => {
     setIsSigned(true)
-    
-    // Create complete data with both nested and flat structure for compatibility
+
+    // Ensure personalInfo is included in complete data (CRITICAL FIX)
     const completeData = {
-      // Include flat structure for validator
-      ...formData,
-      // Also include nested structure for consistency
-      formData,
+      ...formData,  // Includes personalInfo and all health insurance fields
       signed: true,
-      isSigned: true, // Include both for compatibility
+      isSigned: true,
       signatureData,
       completedAt: new Date().toISOString()
     }
-    
-    // Save to backend if we have an employee ID
+
+    console.log('✅ Signing with complete data:', {
+      hasPersonalInfo: !!completeData.personalInfo,
+      personalInfoFields: completeData.personalInfo ? Object.keys(completeData.personalInfo) : [],
+      hasMedicalPlan: !!completeData.medicalPlan,
+      // ✅ DEBUG: Log signature data details
+      hasSignatureData: !!signatureData,
+      signatureDataType: typeof signatureData,
+      signatureDataKeys: signatureData ? Object.keys(signatureData) : [],
+      hasSignatureField: signatureData?.signature ? 'YES' : 'NO',
+      hasSignedAtField: signatureData?.signedAt ? 'YES' : 'NO'
+    })
+
+    // ✅ FIX: Generate and save signed PDF to Supabase
+    let pdfUrl = null
     if (employee?.id) {
       try {
+        console.log('📄 Generating signed Health Insurance PDF...')
+        console.log('📄 Payload being sent to backend:', {
+          employee_id: employee.id,
+          property_id: property?.id,
+          hasEmployeeData: !!completeData,
+          employeeDataKeys: Object.keys(completeData),
+          hasSignatureData: !!completeData.signatureData,
+          signatureDataKeys: completeData.signatureData ? Object.keys(completeData.signatureData) : []
+        })
+
+        // Call generate-pdf endpoint with signature to save PDF to Supabase
+        const pdfResponse = await axios.post(
+          `${getApiUrl()}/onboarding/${employee.id}/health-insurance/generate-pdf`,
+          {
+            employee_data: completeData,
+            property_id: property?.id
+          }
+        )
+
+        console.log('📄 Backend response:', {
+          success: pdfResponse.data?.success,
+          hasPdfUrl: !!pdfResponse.data?.data?.pdf_url,
+          hasPdf: !!pdfResponse.data?.data?.pdf,
+          responseKeys: pdfResponse.data?.data ? Object.keys(pdfResponse.data.data) : []
+        })
+
+        if (pdfResponse.data?.success) {
+          pdfUrl = pdfResponse.data.data?.pdf_url
+          const signedPdfBase64 = pdfResponse.data.data?.pdf
+          console.log('✅ Signed Health Insurance PDF saved to Supabase:', pdfUrl)
+          console.log('✅ Signed PDF base64 received, length:', signedPdfBase64?.length || 0)
+
+          // Set the PDF URL for display (use base64 PDF data)
+          if (signedPdfBase64) {
+            setPdfUrl(signedPdfBase64)
+          }
+        } else {
+          console.error('❌ Backend returned success=false:', pdfResponse.data)
+        }
+
+        // Also save form data to backend
         await axios.post(`${getApiUrl()}/onboarding/${employee.id}/health-insurance`, completeData)
-        console.log('Health insurance data saved to backend')
+        console.log('✅ Health insurance data saved to backend')
       } catch (error) {
-        console.error('Failed to save health insurance data to backend:', error)
+        console.error('❌ Failed to save health insurance PDF/data:', error)
         // Continue even if backend save fails - data is in session storage
       }
     }
-    
-    // Save to session storage with signed status
+
+    // ✅ FIX: Clean data before saving to sessionStorage (prevent quota errors)
+    const cleanData = {
+      ...completeData,
+      // Remove signature image (keep metadata only)
+      signatureData: signatureData ? {
+        signedAt: signatureData.signedAt,
+        ipAddress: signatureData.ipAddress,
+        userAgent: signatureData.userAgent
+      } : undefined
+    }
+
+    // Save to session storage with signed status and complete data
     sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
-      ...formData, // Include flat structure in session storage too
-      formData,
+      formData: cleanData,  // Clean data without signature image
       isValid: true,
       isSigned: true,
       showReview: false,
       signed: true,
-      signatureData,
-      completedAt: completeData.completedAt
+      signatureData: cleanData.signatureData,
+      completedAt: completeData.completedAt,
+      pdfUrl
     }))
-    
-    // Save progress to update controller's step data - this ensures data is available for validation
-    await saveProgress(currentStep.id, completeData)
-    
-    await markStepComplete(currentStep.id, completeData)
+
+    // Save progress to update controller's step data
+    await saveProgress(currentStep.id, cleanData)
+
+    await markStepComplete(currentStep.id, cleanData)
     setShowReview(false)
+
+    // ✅ FIX: Navigate to next step after signing
+    if (advanceToNextStep) {
+      console.log('✅ Advancing to next step...')
+      await advanceToNextStep()
+    }
   }
 
   const isStepComplete = isValid && isSigned
@@ -206,6 +327,43 @@ export default function HealthInsuranceStep({
 
   const t = translations[language]
 
+  // Show signed PDF if form is already signed
+  if (isSigned && pdfUrl) {
+    return (
+      <StepContainer errors={errors} saveStatus={saveStatus}>
+        <StepContentWrapper>
+          <div className="space-y-4 sm:space-y-6">
+            {/* Completion Status */}
+            <Alert className="bg-green-50 border-green-200 p-3 sm:p-4">
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+              <AlertDescription className="text-sm sm:text-base text-green-800">
+                {t.completionMessage}
+              </AlertDescription>
+            </Alert>
+
+            {/* Signed PDF Display */}
+            <Card>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                  <span>Signed Health Insurance Enrollment</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Your health insurance enrollment has been completed and signed.
+                  </p>
+                  <PDFViewer pdfData={pdfUrl} height="600px" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </StepContentWrapper>
+      </StepContainer>
+    )
+  }
+
   // Show review and sign if form is valid and review is requested
   if (showReview && formData) {
     return (
@@ -238,19 +396,13 @@ export default function HealthInsuranceStep({
             <div className="max-w-4xl mx-auto">
               <ReviewAndSign
                 formType="health_insurance"
-                formTitle="Health Insurance Enrollment Form"
-                formData={formData}
-                documentName="Health Insurance Enrollment"
-                signerName={employee?.firstName + ' ' + employee?.lastName || 'Employee'}
-                signerTitle={employee?.position}
+                title="Health Insurance Enrollment Form"  // ✅ FIX: Changed from formTitle to title
+                formData={{
+                  ...formData,
+                  personalInfo: formData.personalInfo || {}  // Ensure personalInfo is included (CRITICAL FIX)
+                }}
                 onSign={handleDigitalSignature}
-                onEdit={handleBackFromReview}
-                acknowledgments={[
-                  t.acknowledgments.planSelection,
-                  t.acknowledgments.dependentInfo,
-                  t.acknowledgments.coverage,
-                  t.acknowledgments.changes
-                ]}
+                onBack={handleBackFromReview}  // ✅ FIX: Changed from onEdit to onBack
                 language={language}
                 description={t.reviewDescription}
                 usePDFPreview={true}

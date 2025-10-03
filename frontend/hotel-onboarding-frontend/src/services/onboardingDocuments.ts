@@ -8,7 +8,6 @@ interface UploadOnboardingDocumentParams {
 }
 
 export async function uploadOnboardingDocument({ employeeId, documentType, documentCategory, file }: UploadOnboardingDocumentParams) {
-  // Get session token for authentication
   const sessionToken = sessionStorage.getItem('current_onboarding_token') || ''
 
   const formData = new FormData()
@@ -19,9 +18,7 @@ export async function uploadOnboardingDocument({ employeeId, documentType, docum
   const response = await fetch(`${getApiUrl()}/onboarding/${encodeURIComponent(employeeId)}/documents/upload`, {
     method: 'POST',
     body: formData,
-    headers: {
-      'Authorization': `Bearer ${sessionToken}`
-    }
+    headers: sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : undefined
   })
 
   if (!response.ok) {

@@ -30,6 +30,11 @@ export default function PersonalInfoStep({
   const [activeTab, setActiveTab] = useState('personal')
   const [dataLoaded, setDataLoaded] = useState(false)
   const tabOverrideRef = useRef(false)
+
+  // ✅ PERFORMANCE FIX: Add completion guard flags
+  const [isCompleting, setIsCompleting] = useState(false)
+  const completionAttemptedRef = useRef(false)
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
   
   // Combine form data for saving
   const formData = {
@@ -154,13 +159,39 @@ export default function PersonalInfoStep({
     })
   }, [personalInfoValid, emergencyContactsValid, isStepComplete, progress.completedSteps, currentStep.id])
 
-  // Auto-mark complete when both forms are valid
+  // ✅ PERFORMANCE FIX: Auto-mark complete with proper guards
   useEffect(() => {
-    if (isStepComplete && !progress.completedSteps.includes(currentStep.id)) {
-      console.log('🎯 PersonalInfoStep: Auto-completing step...')
-      markStepComplete(currentStep.id, formData)
+    const completeStep = async () => {
+      // Guard: Don't run if already completing or already attempted
+      if (isCompleting || completionAttemptedRef.current) {
+        return
+      }
+
+      // Guard: Only run if step is actually complete and not already in completed list
+      if (isStepComplete && !progress.completedSteps.includes(currentStep.id)) {
+        console.log('🎯 PersonalInfoStep: Auto-completing step...')
+        setIsCompleting(true)
+        completionAttemptedRef.current = true
+
+        try {
+          await markStepComplete(currentStep.id, {
+            personalInfo: personalInfoData,
+            emergencyContacts: emergencyContactsData,
+            activeTab
+          })
+          console.log('✅ PersonalInfoStep: Step completed successfully')
+        } catch (error) {
+          console.error('❌ PersonalInfoStep: Failed to complete step:', error)
+          // Don't reset state - let user retry manually
+          completionAttemptedRef.current = false
+        } finally {
+          setIsCompleting(false)
+        }
+      }
     }
-  }, [isStepComplete, currentStep.id, formData, markStepComplete, progress.completedSteps])
+
+    completeStep()
+  }, [isStepComplete, progress.completedSteps, currentStep.id])  // ✅ Minimal dependencies
 
   const handlePersonalInfoSave = useCallback(async (data: any) => {
     console.log('Saving personal info:', data)
@@ -176,18 +207,34 @@ export default function PersonalInfoStep({
     await saveProgress(currentStep.id, updatedFormData)
   }, [emergencyContactsData, activeTab, currentStep.id, saveProgress])
 
+  // ✅ PERFORMANCE FIX: Debounced emergency contacts save
   const handleEmergencyContactsSave = useCallback(async (data: any) => {
     console.log('Saving emergency contacts:', data)
     setEmergencyContactsData(data)
-    // Immediately save to session storage and backend
+
     const updatedFormData = {
       personalInfo: personalInfoData,
       emergencyContacts: data,
       activeTab
     }
+
+    // Save to session storage immediately (no data loss)
     sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(updatedFormData))
-    // Also save to backend (this will trigger sync status updates in the portal)
-    await saveProgress(currentStep.id, updatedFormData)
+
+    // Clear existing timer
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+    }
+
+    // Debounce save to backend (500ms)
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await saveProgress(currentStep.id, updatedFormData)
+        console.log('✅ Emergency contacts saved to backend')
+      } catch (error) {
+        console.error('❌ Failed to save emergency contacts:', error)
+      }
+    }, 500)
   }, [personalInfoData, activeTab, currentStep.id, saveProgress])
 
   const handlePersonalInfoValidationChange = useCallback((isValid: boolean) => {

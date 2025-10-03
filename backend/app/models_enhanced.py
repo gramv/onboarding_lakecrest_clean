@@ -35,6 +35,7 @@ class OnboardingStatus(str, Enum):
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     EMPLOYEE_COMPLETED = "employee_completed"
+    COMPLETED = "completed"  # ✅ Added for final onboarding completion
     MANAGER_REVIEW = "manager_review"
     HR_APPROVAL = "hr_approval"
     APPROVED = "approved"

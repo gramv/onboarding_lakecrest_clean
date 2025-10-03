@@ -19,6 +19,7 @@ const HRDashboardLayout = lazy(() => import('@/components/layouts/HRDashboardLay
 
 // Lazy load dashboard components
 const ManagerDashboard = lazy(() => import('./pages/ManagerDashboard'))
+const ManagerReviewEmployee = lazy(() => import('./pages/ManagerReviewEmployee'))
 const PropertiesOverviewTab = lazy(() => import('@/components/dashboard/PropertiesOverviewTab'))
 const PropertiesTab = lazy(() => import('@/components/dashboard/PropertiesTab'))
 const ManagersTab = lazy(() => import('@/components/dashboard/ManagersTab'))
@@ -35,10 +36,11 @@ const LoginPage = lazy(() => import('./pages/LoginPage'))
 const JobApplicationFormV2 = lazy(() => import('./pages/JobApplicationFormV2'))
 const OnboardingFlowPortal = lazy(() => import('./pages/OnboardingFlowPortal'))
 const OnboardingComplete = lazy(() => import('./pages/OnboardingComplete'))
-const OnboardingFlowTest = lazy(() => import('./pages/OnboardingFlowTest'))
+// Test pages removed for production build
+// const OnboardingFlowTest = lazy(() => import('./pages/OnboardingFlowTest'))
 const ExtractI9Fields = lazy(() => import('./pages/ExtractI9Fields'))
-const TestEnhancedUI = lazy(() => import('./pages/TestEnhancedUI'))
-const TestOnboardingSteps = lazy(() => import('./pages/TestOnboardingSteps'))
+// const TestEnhancedUI = lazy(() => import('./pages/TestEnhancedUI'))
+// const TestOnboardingSteps = lazy(() => import('./pages/TestOnboardingSteps'))
 // const TestHealthInsurancePDF = lazy(() => import('./pages/TestHealthInsurancePDF')) // Page doesn't exist
 // const HealthInsuranceTest = lazy(() => import('./pages/HealthInsuranceTest'))
 
@@ -89,10 +91,15 @@ function App() {
                 <Route path="notifications" element={<NotificationCenter />} />
               </Route>
               
-              {/* Manager Dashboard Route - Using integrated dashboard with tabs */}
-              <Route path="/manager/*" element={
+              {/* Manager Dashboard Routes */}
+              <Route path="/manager" element={
                 <ProtectedRoute requiredRole="manager">
                   <ManagerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/manager/review/:employeeId" element={
+                <ProtectedRoute requiredRole="manager">
+                  <ManagerReviewEmployee />
                 </ProtectedRoute>
               } />
               
@@ -110,17 +117,8 @@ function App() {
               <Route path="/onboard-flow" element={<Navigate to="/onboarding" replace />} />
               <Route path="/onboard-flow-test" element={<OnboardingFlowPortal testMode={true} />} />
               
-              {/* Component Test Page */}
-              <Route path="/test-components" element={<OnboardingFlowTest />} />
-              
               {/* I-9 Field Extraction Tool */}
               <Route path="/extract-i9-fields" element={<ExtractI9Fields />} />
-              
-              {/* Enhanced UI Test Page */}
-              <Route path="/test-enhanced-ui" element={<TestEnhancedUI />} />
-
-              {/* Test Pages */}
-              <Route path="/test-steps" element={<TestOnboardingSteps />} />
               {/* <Route path="/test-health-insurance-pdf" element={<TestHealthInsurancePDF />} /> */}
               {/* <Route path="/test-health-insurance" element={<HealthInsuranceTest />} */}
               </Routes>

@@ -204,6 +204,11 @@ class HealthInsurancePDFGenerator(BasePDFGenerator):
             
             logger.info(f"Generating Health Insurance PDF for {employee_data['full_name']} ({employee_id})")
 
+            # ✅ FIX: Support both 'signatureData' and 'signature' keys for consistency
+            if not signature_data and employee_data.get('signature'):
+                signature_data = employee_data.get('signature')
+                logger.info(f"✅ Health Insurance - Using 'signature' key as fallback")
+
             # Include signature data in employee_data for PDF filler
             if signature_data:
                 employee_data['signatureData'] = signature_data

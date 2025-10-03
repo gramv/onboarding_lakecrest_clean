@@ -189,8 +189,45 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
             if (formData && Object.keys(formData).length > 0) {
               console.log(`Setting cloud data for step ${stepId}:`, formData)
               flowController.setStepData(stepId, formData)
-              // Save to sessionStorage for offline access
-              sessionStorage.setItem(`onboarding_${stepId}_data`, JSON.stringify(formData))
+
+              // ✅ FIX: Clean large data before saving to sessionStorage
+              // Remove base64 files that can exceed quota (especially for direct-deposit)
+              const cleanFormData = { ...formData }
+
+              // Remove large file data
+              delete cleanFormData.voidedCheckFile
+              delete cleanFormData.bankLetterFile
+              delete cleanFormData.pdfUrl
+
+              // Clean nested formData if it exists
+              if (cleanFormData.formData && typeof cleanFormData.formData === 'object') {
+                const nestedClean = { ...cleanFormData.formData }
+                delete nestedClean.voidedCheckFile
+                delete nestedClean.bankLetterFile
+                delete nestedClean.pdfUrl
+                cleanFormData.formData = nestedClean
+              }
+
+              // Remove signature image (keep metadata only)
+              if (cleanFormData.signatureData && typeof cleanFormData.signatureData === 'object') {
+                cleanFormData.signatureData = {
+                  signedAt: cleanFormData.signatureData.signedAt,
+                  ipAddress: cleanFormData.signatureData.ipAddress,
+                  userAgent: cleanFormData.signatureData.userAgent
+                }
+              }
+
+              try {
+                // Save cleaned data to sessionStorage for offline access
+                sessionStorage.setItem(`onboarding_${stepId}_data`, JSON.stringify(cleanFormData))
+                console.log(`✅ Saved cleaned data for step ${stepId}`)
+              } catch (storageErr: any) {
+                console.error(`❌ Failed to save data for step ${stepId}:`, storageErr)
+                // If quota exceeded, skip saving this step's data
+                if (storageErr.name === 'QuotaExceededError') {
+                  console.warn(`⚠️ Skipping sessionStorage for ${stepId} due to quota`)
+                }
+              }
             }
           })
         } else {
@@ -293,24 +330,56 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
       // Update controller's step data
       if (data) {
         flowController.setStepData(stepId, data)
-        // Also save to sessionStorage immediately
-        sessionStorage.setItem(`onboarding_${stepId}_data`, JSON.stringify(data))
+
+        // ✅ FIX: Clean large data before saving to sessionStorage
+        const cleanData = { ...data }
+
+        // Remove large file data
+        delete cleanData.voidedCheckFile
+        delete cleanData.bankLetterFile
+        delete cleanData.pdfUrl
+
+        // Clean nested formData if it exists
+        if (cleanData.formData && typeof cleanData.formData === 'object') {
+          const nestedClean = { ...cleanData.formData }
+          delete nestedClean.voidedCheckFile
+          delete nestedClean.bankLetterFile
+          delete nestedClean.pdfUrl
+          cleanData.formData = nestedClean
+        }
+
+        // Remove signature image (keep metadata only)
+        if (cleanData.signatureData && typeof cleanData.signatureData === 'object') {
+          cleanData.signatureData = {
+            signedAt: cleanData.signatureData.signedAt,
+            ipAddress: cleanData.signatureData.ipAddress,
+            userAgent: cleanData.signatureData.userAgent
+          }
+        }
+
+        try {
+          // Save cleaned data to sessionStorage immediately
+          sessionStorage.setItem(`onboarding_${stepId}_data`, JSON.stringify(cleanData))
+        } catch (storageErr: any) {
+          console.error(`Failed to save to sessionStorage for ${stepId}:`, storageErr)
+          // Continue even if sessionStorage fails - data will be in backend
+        }
       }
-      
+
       // Start sync indicator
       startSync()
-      
+
       // Save to backend
       await flowController.saveProgress(stepId, data)
       console.log(`Progress saved for step ${stepId}`)
-      
+
       // Mark sync as successful
       syncSuccess()
     } catch (err) {
       console.error('Failed to save progress:', err)
       // Report sync error
       reportSyncError(err instanceof Error ? err.message : 'Failed to save progress')
-      
+
       // If offline, mark as saved locally
       if (!isOnline) {
         syncOffline()

@@ -8,12 +8,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, RefreshCw, Home, HelpCircle } from 'lucide-react'
-import type {
-  HealthInsuranceError,
-  HealthInsuranceErrorType,
-  ErrorSeverity
-} from '@/types/healthInsuranceErrors'
+import type { HealthInsuranceError, ErrorSeverity } from '@/types/healthInsuranceErrors'
 import { healthInsuranceErrorHandler } from '@/services/HealthInsuranceErrorHandler'
+import { HealthInsuranceErrorType } from '@/types/healthInsuranceErrors'
 
 interface Props {
   children: ReactNode

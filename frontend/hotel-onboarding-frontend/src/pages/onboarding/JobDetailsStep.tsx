@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -25,6 +25,9 @@ export default function JobDetailsStep({
   const [acknowledgedAt, setAcknowledgedAt] = useState<string | null>(null)
   const [isCompleting, setIsCompleting] = useState(false)
 
+  // ✅ PERFORMANCE FIX: Add completion attempt ref
+  const completionAttemptedRef = useRef(false)
+
   // Form data for auto-save
   const formData = {
     acknowledged,
@@ -47,20 +50,30 @@ export default function JobDetailsStep({
     }
   }, [currentStep.id, progress.completedSteps])
 
-  // Auto-mark complete when acknowledged (with proper async handling)
+  // ✅ PERFORMANCE FIX: Auto-mark complete with minimal dependencies
   useEffect(() => {
     const completeStep = async () => {
-      if (acknowledged && !progress.completedSteps.includes(currentStep.id) && !isCompleting) {
+      // Guard: Don't run if already completing or already attempted
+      if (isCompleting || completionAttemptedRef.current) {
+        return
+      }
+
+      // Guard: Only run if acknowledged and not already completed
+      if (acknowledged && !progress.completedSteps.includes(currentStep.id)) {
         console.log('🎯 JobDetailsStep: Auto-completing step...')
         setIsCompleting(true)
+        completionAttemptedRef.current = true
+
         try {
-          await markStepComplete(currentStep.id, formData)
+          await markStepComplete(currentStep.id, {
+            acknowledged,
+            acknowledgedAt
+          })
           console.log('✅ JobDetailsStep: Step completed successfully')
         } catch (error) {
           console.error('❌ JobDetailsStep: Failed to complete step:', error)
-          // Reset acknowledged state on error
-          setAcknowledged(false)
-          setAcknowledgedAt(null)
+          // Don't reset acknowledged state - let user see error and retry
+          completionAttemptedRef.current = false
         } finally {
           setIsCompleting(false)
         }
@@ -68,7 +81,7 @@ export default function JobDetailsStep({
     }
 
     completeStep()
-  }, [acknowledged, currentStep.id, formData, markStepComplete, progress.completedSteps, isCompleting])
+  }, [acknowledged, progress.completedSteps, currentStep.id])  // ✅ Removed formData, markStepComplete
 
   const handleAcknowledgment = async (checked: boolean) => {
     console.log('🖱️ JobDetailsStep: Acknowledgment changed:', checked)

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { getApiUrl } from '@/config/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import DirectDepositFormEnhanced from '@/components/DirectDepositFormEnhanced'
 import ReviewAndSign from '@/components/ReviewAndSign'
 import PDFViewer from '@/components/PDFViewer'
-import { CheckCircle, DollarSign, AlertTriangle } from 'lucide-react'
+import { CheckCircle, DollarSign, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react'
 import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
@@ -15,8 +15,8 @@ import { directDepositValidator } from '@/utils/stepValidators'
 import { ValidationSummary } from '@/components/ui/validation-summary'
 import { FormSection } from '@/components/ui/form-section'
 import axios from 'axios'
-import { secureStorage } from '@/services/SecureStorageService'
-import { savePDFToStorage, getLatestPDFForStep } from '@/services/pdfStorage'
+import { getLatestPDFForStep, savePDFToStorage } from '@/services/pdfStorage'
+import { fetchStepDocumentMetadata, listStepDocuments, persistStepDocument, StepDocumentMetadata } from '@/services/documentService'
 
 export default function DirectDepositStep({
   currentStep,
@@ -39,7 +39,167 @@ export default function DirectDepositStep({
   const [isSigned, setIsSigned] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [sessionTokenState, setSessionTokenState] = useState('')
+  const [documentMetadata, setDocumentMetadata] = useState<StepDocumentMetadata | null>(null)
+  const [storedDocuments, setStoredDocuments] = useState<Array<StepDocumentMetadata & { id?: string }>>([])
+  const [metadataError, setMetadataError] = useState<string | null>(null)
+  const [metadataLoading, setMetadataLoading] = useState(false)
   const [ssnFromI9, setSsnFromI9] = useState<string>('')
+  const [hasStoredDocument, setHasStoredDocument] = useState(false)
+  const [pendingDocuments, setPendingDocuments] = useState<{ voided?: StepDocumentMetadata; bankLetter?: StepDocumentMetadata }>({})
+
+  const effectiveSessionToken = useMemo(() => sessionToken || sessionTokenState, [sessionToken, sessionTokenState])
+
+  const loadLocalFormState = useCallback(() => {
+    const raw = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw)
+
+      // ✅ FIX: Clean up old data with large files to prevent quota errors
+      if (parsed) {
+        // Remove large base64 data that shouldn't be in sessionStorage
+        const { voidedCheckFile, bankLetterFile, pdfUrl, ...cleanData } = parsed
+
+        // If we removed any large data, save the cleaned version
+        if (voidedCheckFile || bankLetterFile || (pdfUrl && pdfUrl.startsWith('data:'))) {
+          console.log('🧹 Cleaning up large data from sessionStorage')
+
+          // Also clean nested formData if it exists
+          if (cleanData.formData) {
+            const { voidedCheckFile: vf, bankLetterFile: blf, pdfUrl: pu, ...cleanFormData } = cleanData.formData
+            cleanData.formData = cleanFormData
+          }
+
+          // Save cleaned data back to sessionStorage
+          try {
+            sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(cleanData))
+            console.log('✅ Cleaned data saved to sessionStorage')
+          } catch (saveErr) {
+            console.error('Failed to save cleaned data:', saveErr)
+            // If still too large, clear it completely
+            sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
+            console.log('🗑️ Removed corrupted sessionStorage data')
+          }
+
+          return cleanData
+        }
+
+        return parsed
+      }
+
+      return null
+    } catch (err) {
+      console.error('Failed to parse stored direct deposit state:', err)
+      // Clear corrupted data
+      sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
+      return null
+    }
+  }, [currentStep.id])
+
+  const persistLocalFormState = useCallback((payload: Record<string, unknown>) => {
+    try {
+      // ✅ FIX: Remove any large data before saving
+      const { voidedCheckFile, bankLetterFile, pdfUrl, ...cleanPayload } = payload
+
+      // Also clean nested formData if it exists
+      if (cleanPayload.formData && typeof cleanPayload.formData === 'object') {
+        const { voidedCheckFile: vf, bankLetterFile: blf, pdfUrl: pu, ...cleanFormData } = cleanPayload.formData as any
+        cleanPayload.formData = cleanFormData
+      }
+
+      const jsonString = JSON.stringify(cleanPayload)
+      const sizeKB = new Blob([jsonString]).size / 1024
+
+      console.log(`💾 Saving Direct Deposit state to sessionStorage (${sizeKB.toFixed(2)} KB)`)
+
+      if (sizeKB > 1000) {
+        console.warn(`⚠️ sessionStorage data is large (${sizeKB.toFixed(2)} KB). May cause issues.`)
+      }
+
+      sessionStorage.setItem(`onboarding_${currentStep.id}_data`, jsonString)
+      console.log('✅ Direct Deposit state saved successfully')
+    } catch (err: any) {
+      console.error('❌ Failed to persist direct deposit state:', err)
+
+      // If quota exceeded, try to clear old data and retry with minimal data
+      if (err.name === 'QuotaExceededError' || err.message?.includes('quota')) {
+        console.log('🧹 Quota exceeded - clearing old data and retrying with minimal state')
+
+        try {
+          // Clear the current key
+          sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
+
+          // Save only essential data
+          const minimalPayload = {
+            isValid: payload.isValid,
+            isSigned: payload.isSigned,
+            signed: payload.signed,
+            completedAt: payload.completedAt,
+            // Keep only essential form fields (no files, no PDFs)
+            primaryAccount: payload.primaryAccount,
+            documentMetadata: payload.documentMetadata
+          }
+
+          sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(minimalPayload))
+          console.log('✅ Saved minimal Direct Deposit state after quota error')
+        } catch (retryErr) {
+          console.error('❌ Failed to save even minimal state:', retryErr)
+          // Give up - data is in backend anyway
+        }
+      }
+    }
+  }, [currentStep.id])
+
+  useEffect(() => {
+    if (!sessionToken && !sessionTokenState) {
+      const storedToken = sessionStorage.getItem('hotel_onboarding_token') || ''
+      setSessionTokenState(storedToken)
+    }
+  }, [sessionToken, sessionTokenState])
+
+  useEffect(() => {
+    if (!employee?.id || employee.id.startsWith('demo-') || !effectiveSessionToken) {
+      return
+    }
+
+    const loadMetadata = async () => {
+      try {
+        setMetadataLoading(true)
+        setMetadataError(null)
+
+        const localState = loadLocalFormState()
+        if (localState?.pdfUrl) {
+          setPdfUrl(localState.pdfUrl)
+        }
+
+        const storedPdf = await getLatestPDFForStep(currentStep.id)
+        if (storedPdf && !pdfUrl) {
+          setPdfUrl(storedPdf)
+        }
+
+        const [metadataResponse, documents] = await Promise.all([
+          fetchStepDocumentMetadata(employee.id, currentStep.id, effectiveSessionToken),
+          listStepDocuments(employee.id, currentStep.id, effectiveSessionToken)
+        ])
+
+        if (metadataResponse.document_metadata?.signed_url) {
+          setPdfUrl(metadataResponse.document_metadata.signed_url)
+        }
+
+        setDocumentMetadata(metadataResponse.document_metadata ?? null)
+        setStoredDocuments(documents)
+        setHasStoredDocument(Boolean(metadataResponse.document_metadata?.signed_url) || documents.length > 0)
+      } catch (err) {
+        console.error('Failed to load direct deposit metadata:', err)
+        setMetadataError(err instanceof Error ? err.message : 'Unable to load direct deposit document')
+      } finally {
+        setMetadataLoading(false)
+      }
+    }
+
+    loadMetadata()
+  }, [employee?.id, currentStep.id, effectiveSessionToken, loadLocalFormState, pdfUrl])
 
   const hrContactEmail = singleStepMeta?.hrContactEmail || singleStepMeta?.hr_contact_email
 
@@ -190,7 +350,7 @@ export default function DirectDepositStep({
   }, [])
 
   // Stable extra data for PDF generation
-  const extraPdfData = React.useMemo(() => {
+  const extraPdfData = useMemo(() => {
     // Get firstName and lastName from PersonalInfoStep sessionStorage (matches SSN pattern)
     let firstName = employee?.firstName || (employee as any)?.first_name || ''
     let lastName = employee?.lastName || (employee as any)?.last_name || ''
@@ -221,7 +381,7 @@ export default function DirectDepositStep({
   const { errors, fieldErrors, validate } = useStepValidation(directDepositValidator)
 
   // Convert errors to ValidationSummary format
-  const validationMessages = React.useMemo(() => {
+  const validationMessages = useMemo(() => {
     const messages = []
 
     // Add general errors
@@ -242,12 +402,12 @@ export default function DirectDepositStep({
   }, [errors, fieldErrors])
 
   // Auto-save data
-  const autoSaveData = {
+  const autoSaveData = useMemo(() => ({
     formData,
     isValid,
     isSigned,
     showReview
-  }
+  }), [formData, isValid, isSigned, showReview])
 
   // Auto-save hook
   const { saveStatus } = useAutoSave(autoSaveData, {
@@ -256,63 +416,47 @@ export default function DirectDepositStep({
         ...data,
         isSingleStepMode
       })
+      const existing = loadLocalFormState() || {}
+      persistLocalFormState({
+        ...existing,
+        ...data
+      })
     }
   })
 
-  // Load existing data
   useEffect(() => {
-    console.log('DirectDepositStep - Loading data for step:', currentStep.id)
-
-    // Try to load saved data from secure session storage
-    ;(async () => {
-      const savedData = await secureStorage.secureRetrieve<any>(`onboarding_${currentStep.id}_data`)
-    if (savedData) {
+    const parsed = loadLocalFormState()
+    if (parsed) {
       try {
-        const parsed = savedData
-        console.log('DirectDepositStep - Found saved data:', parsed)
-
-        // Check for different data structures
         if (parsed.formData) {
-          console.log('DirectDepositStep - Setting formData from parsed.formData')
           setFormData(parsed.formData)
         } else if (parsed.paymentMethod || parsed.primaryAccount) {
-          // Direct data structure
-          console.log('DirectDepositStep - Setting formData from direct structure')
           setFormData(parsed)
         }
 
-        // Only set as signed if BOTH signed flag AND final PDF exist
-        if ((parsed.isSigned || parsed.signed) && parsed.pdfUrl) {
-          console.log('DirectDepositStep - Form was previously signed with PDF')
+        if (parsed.isSigned) {
           setIsSigned(true)
           setIsValid(true)
-          setPdfUrl(parsed.pdfUrl)
+          if (parsed.pdfUrl) {
+            setPdfUrl(parsed.pdfUrl)
+          }
         } else if (parsed.showReview) {
-          // Restore review state if it was saved but not signed
-          console.log('DirectDepositStep - Restoring review state')
           setShowReview(true)
-          setIsValid(parsed.isValid || false)
+          setIsValid(Boolean(parsed.isValid))
         }
-      } catch (e) {
-        console.error('Failed to parse saved direct deposit data:', e)
+      } catch (err) {
+        console.error('Failed to restore direct deposit state:', err)
       }
     }
 
-    // Only set as signed if step is complete AND we have a saved PDF
-    if (progress.completedSteps.includes(currentStep.id)) {
-      console.log('DirectDepositStep - Step marked as complete in progress')
-      // Check if we have a signed PDF before marking as signed
-      const savedData2 = await secureStorage.secureRetrieve<any>(`onboarding_${currentStep.id}_data`)
-      if (savedData2) {
-        const parsed = savedData2
-        if (parsed.pdfUrl && (parsed.isSigned || parsed.signed)) {
-          setIsSigned(true)
-          setIsValid(true)
-        }
+    if (progress.completedSteps.includes(currentStep.id) && parsed?.isSigned) {
+      setIsSigned(true)
+      setIsValid(true)
+      if (parsed.pdfUrl) {
+        setPdfUrl(parsed.pdfUrl)
       }
     }
-    })()
-  }, [currentStep.id, progress.completedSteps])
+  }, [currentStep.id, progress.completedSteps, loadLocalFormState])
 
   const handleFormComplete = async (data: any) => {
     // Transform nested data structure to flat structure for validation
@@ -340,14 +484,12 @@ export default function DirectDepositStep({
       setIsValid(true)
       setShowReview(true)
 
-      // Save to secure session storage (no pdfUrl until signed)
-      await secureStorage.secureStore(`onboarding_${currentStep.id}_data`, {
+      persistLocalFormState({
         formData: data,
         isValid: true,
         isSigned: false,
-        showReview: true,
-        // Don't save pdfUrl here - only after signing
-      });
+        showReview: true
+      })
     }
   }
 
@@ -355,13 +497,11 @@ export default function DirectDepositStep({
     setShowReview(false)
     setPdfUrl(null)  // Clear any preview PDF
 
-    // Update secure session storage to clear review state
-    await secureStorage.secureStore(`onboarding_${currentStep.id}_data`, {
+    persistLocalFormState({
       formData,
       isValid: true,
       isSigned: false,
-      showReview: false,
-      // No pdfUrl
+      showReview: false
     })
   }
 
@@ -383,18 +523,45 @@ export default function DirectDepositStep({
         console.log('🖊️ DirectDepositStep - Regenerating PDF with signature...')
         const apiUrl = getApiUrl()
 
+        // ✅ OPTIMIZATION: Get file data (base64) instead of metadata
+        // This eliminates the need for backend to download from storage
+        // ✅ FIX: Use correct property names from pendingDocuments state
+        const voidedCheckFile = formData.voidedCheckFile || pendingDocuments.voided
+        const bankLetterFile = formData.bankLetterFile || pendingDocuments.bankLetter
+
+        console.log('📎 Direct Deposit - File data (OPTIMIZED):', {
+          hasVoidedCheck: !!voidedCheckFile,
+          voidedCheckSize: voidedCheckFile?.fileSize,
+          voidedCheckType: voidedCheckFile?.mimeType,
+          voidedCheckName: voidedCheckFile?.fileName,
+          hasBankLetter: !!bankLetterFile,
+          bankLetterSize: bankLetterFile?.fileSize,
+          bankLetterType: bankLetterFile?.mimeType,
+          bankLetterName: bankLetterFile?.fileName,
+          // ✅ DEBUG: Log pendingDocuments state
+          pendingDocumentsKeys: Object.keys(pendingDocuments),
+          hasPendingVoided: !!pendingDocuments.voided,
+          hasPendingBankLetter: !!pendingDocuments.bankLetter
+        })
+
         // Create payload with signature included - ensure SSN is properly included
         const pdfPayload = {
           ...formData,
           ...extraPdfData,
           signatureData: signatureData,
           // Ensure SSN is always included - try multiple sources
-          ssn: ssnFromI9 || extraPdfData?.ssn || (formData as any)?.ssn || ''
+          ssn: ssnFromI9 || extraPdfData?.ssn || (formData as any)?.ssn || '',
+          // ✅ OPTIMIZATION: Send file data directly (base64) for immediate merging
+          // Backend will merge in memory and upload only the final merged PDF
+          voidedCheckFile: voidedCheckFile,
+          bankLetterFile: bankLetterFile
         }
 
         console.log('🖊️ PDF Payload signature check:', {
           payloadHasSignatureData: !!pdfPayload.signatureData,
-          signatureDataKeys: pdfPayload.signatureData ? Object.keys(pdfPayload.signatureData) : []
+          signatureDataKeys: pdfPayload.signatureData ? Object.keys(pdfPayload.signatureData) : [],
+          hasVoidedCheckDoc: !!pdfPayload.voidedCheckDocument,
+          hasBankLetterDoc: !!pdfPayload.bankLetterDocument
         })
 
         if (isSingleStepMode) {
@@ -432,18 +599,23 @@ export default function DirectDepositStep({
     setIsSigned(true)
     setPdfUrl(finalPdfUrl)
 
+    // ✅ FIX: Exclude large file data from completeData to prevent quota issues
+    const { voidedCheckFile, bankLetterFile, ...formDataWithoutFiles } = formData
+
     // Create complete data with both nested and flat structure for compatibility
     const completeData = {
       // Include flattened primary account data for validator
       ...(formData.primaryAccount || {}),
-      // Include all form data
-      ...formData,
-      // Keep nested structure too
-      formData,
+      // Include all form data (WITHOUT large files)
+      ...formDataWithoutFiles,
+      // Keep nested structure too (WITHOUT large files)
+      formData: formDataWithoutFiles,
       signed: true,
       isSigned: true, // Include both for compatibility
       signatureData,
-      pdfUrl: finalPdfUrl,
+      // ✅ FIX: Don't include pdfUrl (base64 PDF is too large for sessionStorage)
+      // PDF is already saved to database via backend API call
+      pdfUrl: undefined,
       completedAt: new Date().toISOString()
     }
 
@@ -464,47 +636,78 @@ export default function DirectDepositStep({
         const apiUrl = getApiUrl()
         await axios.post(`${apiUrl}/onboarding/${employee.id}/direct-deposit`, completeData)
         console.log('Direct deposit data saved to backend')
+
+        try {
+          if (documentMetadata || storedDocuments.length > 0 || Object.keys(pendingDocuments).length > 0) {
+            await persistStepDocument(
+              employee.id,
+              currentStep.id,
+              {
+                documentMetadata,
+                storedDocuments,
+                pendingDocuments,
+                completedAt: completeData.completedAt,
+                signed: true
+              },
+              { token: effectiveSessionToken }
+            )
+          }
+        } catch (metaError) {
+          console.error('Failed to persist direct deposit metadata:', metaError)
+        }
       } catch (error) {
         console.error('Failed to save direct deposit data to backend:', error)
         // Continue even if backend save fails - data is in session storage
       }
     }
 
-    // Save to secure session storage with signed status and flat structure
-    // For single-step mode, we need the PDF for email notifications
-    // For regular mode, avoid storing PDF to prevent sessionStorage quota issues
-    const dataToStore = {
+    // ✅ FIX: Save to secure session storage WITHOUT large base64 data
+    // formDataWithoutFiles already created above (line 515)
+    const localState = {
       ...(formData.primaryAccount || {}), // Include flattened data
-      ...formData,
-      formData,
+      ...formDataWithoutFiles, // ✅ FIX: Exclude large file data
+      formData: formDataWithoutFiles, // ✅ FIX: Exclude large file data
       isValid: true,
       isSigned: true,
       showReview: false,
       signed: true,
       signatureData,
-      completedAt: completeData.completedAt
+      completedAt: completeData.completedAt,
+      // ✅ FIX: Don't store PDF in sessionStorage (too large)
+      // PDF is already saved to database, can be fetched when needed
+      pdfUrl: undefined,
+      documentMetadata,
+      storedDocuments
     }
 
-    if (isSingleStepMode) {
-      // Single-step mode needs PDF for email notifications
-      dataToStore.pdfUrl = generatedPdfUrl || pdfUrl
-    } else {
-      // Regular mode: Use IndexedDB for PDF storage to avoid quota issues
-      if (finalPdfUrl) {
-        const { pdfId, stored } = await savePDFToStorage(currentStep.id, finalPdfUrl, employee?.id)
-        dataToStore.pdfId = pdfId
-        dataToStore.pdfStored = stored
-      }
-      dataToStore.pdfGenerated = true
-      dataToStore.pdfGeneratedAt = new Date().toISOString()
+    if (!isSingleStepMode && finalPdfUrl) {
+      const { pdfId, stored } = await savePDFToStorage(currentStep.id, finalPdfUrl, employee?.id)
+      localState.pdfId = pdfId
+      localState.pdfStored = stored
+      localState.pdfGenerated = true
+      localState.pdfGeneratedAt = new Date().toISOString()
     }
 
-    await secureStorage.secureStore(`onboarding_${currentStep.id}_data`, dataToStore)
+    console.log('✅ Saving Direct Deposit state to sessionStorage (without large files)')
+    persistLocalFormState(localState)
+
+    // ✅ FIX: Use localState (without large files) for saveProgress and markStepComplete
+    // These functions also save to sessionStorage, so we must pass clean data
+    const cleanDataForController = {
+      ...localState,
+      // Remove signature image too (can be 50-200 KB)
+      signatureData: signatureData ? {
+        signedAt: signatureData.signedAt,
+        ipAddress: signatureData.ipAddress,
+        userAgent: signatureData.userAgent,
+        // Don't include signature image
+      } : undefined
+    }
 
     // Save progress to update controller's step data
-    await saveProgress(currentStep.id, completeData)
+    await saveProgress(currentStep.id, cleanDataForController)
 
-    await markStepComplete(currentStep.id, completeData)
+    await markStepComplete(currentStep.id, cleanDataForController)
 
     await sendSingleStepNotifications(finalPdfUrl || pdfUrl || '', completeData)
     setShowReview(false)
@@ -618,6 +821,24 @@ export default function DirectDepositStep({
             </Alert>
           )}
 
+          {metadataLoading && (
+            <Alert className="bg-blue-50 border-blue-200 p-3 sm:p-4">
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 animate-spin" />
+              <AlertDescription className="text-xs sm:text-sm text-blue-800">
+                Checking stored direct deposit documents...
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {metadataError && (
+            <Alert className="bg-amber-50 border-amber-200 p-3 sm:p-4">
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+              <AlertDescription className="text-xs sm:text-sm text-amber-800">
+                {metadataError}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <FormSection
             title={t.reviewTitle}
             description="Please review your direct deposit information and sign to complete this step"
@@ -714,6 +935,12 @@ export default function DirectDepositStep({
                 employee={employee}
                 property={property}
                 employeeSSN={ssnFromI9}
+                onDocumentMetadata={({ type, metadata }) => {
+                  setPendingDocuments(prev => ({
+                    ...prev,
+                    [type === 'voided_check' ? 'voided' : 'bankLetter']: metadata
+                  }))
+                }}
               />
             </div>
           </div>

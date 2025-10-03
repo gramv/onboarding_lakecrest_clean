@@ -168,14 +168,19 @@ class HumanTraffickingCertificateGenerator:
         c.line(200, text_y - 2, 500, text_y - 2)
         
         # Add signature image if provided and not preview
-        if not is_preview and signature_data.get('signatureImage'):
+        # ✅ FIX: Check for both 'signatureImage' and 'signature' keys (frontend sends 'signature')
+        sig_data_raw = signature_data.get('signatureImage') or signature_data.get('signature')
+
+        if not is_preview and sig_data_raw:
             try:
-                sig_data = signature_data.get('signatureImage', '')
+                sig_data = sig_data_raw
                 if sig_data.startswith('data:image'):
                     sig_data = sig_data.split(',')[1]
-                
+
                 # Decode the base64 signature
                 sig_bytes = base64.b64decode(sig_data)
+
+                print(f"✅ Human Trafficking - Processing signature: {len(sig_bytes)} bytes")
                 
                 # Process signature image for proper display
                 from PIL import Image as PILImage

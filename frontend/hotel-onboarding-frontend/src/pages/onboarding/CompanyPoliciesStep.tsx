@@ -1345,7 +1345,7 @@ export default function CompanyPoliciesStep({
               {isFormComplete && allSectionsComplete && !isSigned && (
                 <ReviewAndSign
                   formType="company_policies"
-                  formTitle="Company Policy Acknowledgment"
+                  title="Company Policy Acknowledgment"
                   formData={{
                     companyPoliciesInitials,
                     eeoInitials,
@@ -1353,7 +1353,6 @@ export default function CompanyPoliciesStep({
                     acknowledgmentChecked,
                     ...formData
                   }}
-                  documentName="Company Policy Acknowledgment"
                   signerName={employee?.firstName + ' ' + employee?.lastName || 'Employee'}
                   signerTitle={employee?.position}
                   onSign={handleSignature}

@@ -392,23 +392,24 @@ class BasePDFGenerator(ABC):
         return base64.b64encode(pdf_bytes).decode('utf-8')
     
     def create_pdf_response(
-        self, 
-        pdf_bytes: bytes, 
+        self,
+        pdf_bytes: bytes,
         filename: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create a standardized PDF response
-        
+
         Args:
             pdf_bytes: PDF document bytes
             filename: Optional filename for the PDF
-            
+
         Returns:
             Response dictionary with PDF data
         """
         return {
             'success': True,
             'pdf_base64': self.pdf_to_base64(pdf_bytes),
+            'pdf_bytes': pdf_bytes,  # ✅ FIX: Include raw bytes for save_signed_document
             'filename': filename or f"document_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
             'content_type': 'application/pdf',
             'size': len(pdf_bytes)

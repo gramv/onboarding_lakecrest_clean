@@ -33,6 +33,7 @@ from fastapi.responses import JSONResponse, FileResponse, Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, date, timedelta, timezone
+from dataclasses import asdict
 import uuid
 import json
 import os
@@ -680,6 +681,11 @@ if static_dir.exists():
 token_manager = OnboardingTokenManager()
 password_manager = PasswordManager()
 supabase_service = EnhancedSupabaseService()
+
+# Initialize document path manager with supabase service for proper property/employee name lookup
+from .document_path_utils import initialize_path_manager
+initialize_path_manager(supabase_service)
+
 bulk_operation_service = BulkOperationService()
 bulk_application_ops = BulkApplicationOperations()
 bulk_employee_ops = BulkEmployeeOperations()
@@ -817,6 +823,14 @@ try:
 except ImportError as e:
     logger.warning(f"Session lock router not available: {e}")
 
+# Include manager review API router
+try:
+    from .manager_review_api import router as manager_review_router
+    app.include_router(manager_review_router)
+    logger.info("✅ Manager review router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Manager review router not available: {e}")
+
 # Initialize enhanced services
 onboarding_orchestrator = None
 form_update_service = None
@@ -841,6 +855,13 @@ async def get_property_id_for_employee(employee_id: str, employee: dict = None, 
     if property_id_hint:
         return property_id_hint
     
+    # If no employee record was provided, try to load it (for real employees)
+    if not employee and not employee_id.startswith('temp_'):
+        try:
+            employee = await supabase_service.get_employee_by_id(employee_id)
+        except Exception as fetch_error:
+            logger.warning(f"Failed to load employee {employee_id} for property resolution: {fetch_error}")
+
     # Priority 2: Get from employee record (for real employees)
     if employee and not employee_id.startswith('temp_'):
         if isinstance(employee, dict):
@@ -870,9 +891,9 @@ async def get_property_id_for_employee(employee_id: str, employee: dict = None, 
                     return form_data["formData"]["property_id"]
         except Exception as e:
             logger.warning(f"Failed to get property_id from PersonalInfoStep for {employee_id}: {e}")
-    
-    # Fallback: return 'unknown'
-    return 'unknown'
+
+    # Fallback: return None (not 'unknown' string) so document_path_manager handles it correctly
+    return None
 
 async def get_employee_names_from_personal_info(employee_id: str, employee: dict = None):
     """
@@ -10554,7 +10575,7 @@ async def save_i9_section1(
                 saved = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=employee.get('property_id') if isinstance(employee, dict) else getattr(employee, 'property_id', None) if employee else None,
-                    form_type='i9-section1',
+                    form_type='i9_form',
                     pdf_bytes=pdf_bytes,
                     is_edit=False
                 )
@@ -10902,7 +10923,7 @@ async def save_w4_form(
                     saved = await supabase_service.save_signed_document(
                         employee_id=employee_id,
                         property_id=employee.get('property_id') if isinstance(employee, dict) else getattr(employee, 'property_id', None) if employee else None,
-                        form_type='w4-form',
+                        form_type='w4_form',
                         pdf_bytes=pdf_bytes,
                         is_edit=False
                     )
@@ -10989,25 +11010,24 @@ async def save_direct_deposit(
         if not employee:
             logger.warning(f"Proceeding without employee record while saving direct deposit for {employee_id}")
 
-        # Save direct deposit data
-        # TODO: Implement actual Supabase table for direct deposit
+        # Save direct deposit data using onboarding_form_data
         saved = supabase_service.save_onboarding_form_data(
             token=employee_id,
             employee_id=employee_id,
             step_id='direct-deposit',
             form_data=data
         )
-        
-        if saved:
-            return success_response(
-                data={"saved": True},
-                message="Direct deposit data saved successfully"
-            )
-        else:
+
+        if not saved:
             return error_response(
                 message="Failed to save direct deposit data",
                 status_code=500
             )
+
+        return success_response(
+            data={"saved": True},
+            message="Direct deposit data saved successfully"
+        )
             
     except Exception as e:
         logger.error(f"Error saving direct deposit data: {e}")
@@ -11532,7 +11552,7 @@ async def generate_i9_complete_pdf(employee_id: str, request: Request):
             saved = await supabase_service.save_signed_document(
                 employee_id=employee_id,
                 property_id=property_id_for_storage,
-                form_type='i9-complete',
+                form_type='i9_form',
                 pdf_bytes=pdf_bytes,
                 is_edit=False,
                 signed_url_expires_in_seconds=2592000
@@ -11939,7 +11959,7 @@ async def generate_i9_section1_pdf(employee_id: str, request: Request):
                 saved = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=employee.get('property_id') if isinstance(employee, dict) else getattr(employee, 'property_id', None) if employee else None,
-                    form_type='i9-section1',
+                    form_type='i9_form',
                     pdf_bytes=pdf_bytes,
                     is_edit=False
                 )
@@ -12073,9 +12093,14 @@ async def upload_onboarding_document(
             try:
                 from .document_path_utils import document_path_manager
 
-                # Get property ID for employee
-                employee = await supabase_service.get_employee(employee_id)
-                property_id = employee.get('property_id') if employee else None
+                # Get property ID for employee using shared helper so storage paths stay consistent
+                employee_record = None
+                try:
+                    employee_record = await supabase_service.get_employee_by_id(employee_id)
+                except Exception as employee_lookup_error:
+                    logger.warning(f"Failed to load employee {employee_id} for financial document upload: {employee_lookup_error}")
+
+                property_id = await get_property_id_for_employee(employee_id, employee_record)
 
                 if not property_id:
                     return error_response(
@@ -12114,14 +12139,50 @@ async def upload_onboarding_document(
 
                 file_url = url_response.get('signedURL') if url_response else None
 
+                # Save metadata to signed_documents table (same as I-9 documents)
+                document_id = str(uuid.uuid4())
+                try:
+                    document_record = {
+                        'id': document_id,
+                        'employee_id': employee_id,
+                        'property_id': property_id,
+                        'document_type': document_type,  # 'voided_check' or 'bank_letter'
+                        'document_category': 'financial_documents',
+                        'storage_path': storage_path,
+                        'bucket_name': bucket_name,
+                        'file_name': file.filename,
+                        'original_filename': file.filename,
+                        'file_size': len(file_content),
+                        'mime_type': file.content_type,
+                        'signed_url': file_url,
+                        'status': 'uploaded',
+                        'verification_status': 'pending',
+                        'metadata': {
+                            'upload_source': 'direct_deposit_form',
+                            'document_subtype': upload_subtype,
+                            'upload_timestamp': datetime.now(timezone.utc).isoformat()
+                        },
+                        'created_at': datetime.now(timezone.utc).isoformat(),
+                        'updated_at': datetime.now(timezone.utc).isoformat()
+                    }
+
+                    supabase_service.client.table('signed_documents').insert(document_record).execute()
+                    logger.info(f"✅ Saved financial document metadata to database: {document_id}")
+
+                except Exception as db_error:
+                    logger.error(f"Failed to save financial document metadata to database: {db_error}")
+                    # Continue anyway - file is uploaded to storage
+
                 logger.info(f"✅ Direct Deposit document uploaded: {storage_path}")
 
                 return success_response(
                     data={
+                        "document_id": document_id,
                         "document_type": document_type,
                         "document_category": document_category,
                         "file_url": file_url,
                         "storage_path": storage_path,
+                        "original_filename": file.filename,
                         "filename": file.filename,
                         "status": "uploaded"
                     },
@@ -12238,6 +12299,53 @@ async def upload_onboarding_document(
         logger.error(f"Document upload error: {e}")
         return error_response(
             message="Failed to process document upload",
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+            status_code=500
+        )
+
+@app.post("/api/onboarding/validate-routing-number")
+async def validate_routing_number(request: Request):
+    """
+    Validate a routing number using ABA checksum algorithm and bank database lookup.
+    Returns bank information if available.
+    """
+    try:
+        body = await request.json()
+        routing_number = body.get('routing_number', '').strip()
+
+        if not routing_number:
+            return error_response(
+                message="Routing number is required",
+                error_code=ErrorCode.VALIDATION_FAILED,
+                status_code=400
+            )
+
+        # Import routing validator
+        from .routing_validator import RoutingValidator
+
+        # Initialize validator
+        validator = RoutingValidator()
+
+        # Validate routing number
+        result = await validator.validate_routing_number(routing_number)
+
+        if result.get('valid'):
+            return success_response(
+                data=result,
+                message="Routing number is valid"
+            )
+        else:
+            return error_response(
+                message=result.get('error', 'Invalid routing number'),
+                error_code=ErrorCode.VALIDATION_FAILED,
+                status_code=400,
+                detail=result
+            )
+
+    except Exception as e:
+        logger.error(f"Routing number validation error: {e}")
+        return error_response(
+            message="Failed to validate routing number",
             error_code=ErrorCode.INTERNAL_SERVER_ERROR,
             status_code=500
         )
@@ -12564,7 +12672,7 @@ async def store_signed_w4_pdf(employee_id: str, request: Request):
             stored = await supabase_service.save_signed_document(
                 employee_id=employee_id,
                 property_id=property_id,
-                form_type='w4-form',
+                form_type='w4_form',
                 pdf_bytes=pdf_bytes,
                 is_edit=False
             )
@@ -12642,12 +12750,34 @@ async def generate_direct_deposit_pdf(employee_id: str, request: Request):
         if not employee_info and isinstance(employee_data_from_request, dict):
             employee_info = employee_data_from_request.get('employeeInfo')
         
-        # Create minimal employee object without database lookup (performance optimization)
-        employee = {
-            "id": employee_id,
-            "property_id": employee_info.get('propertyId') if employee_info else None
-        }
-        
+        # Load actual employee context when available so property-aware storage paths are used
+        employee_record = None
+        if not employee_id.startswith(('test-', 'demo-', 'temp_')):
+            try:
+                employee_record = await supabase_service.get_employee_by_id(employee_id)
+            except Exception as employee_lookup_error:
+                logger.warning(f"Failed to load employee {employee_id} for direct deposit PDF: {employee_lookup_error}")
+
+        # Normalise employee context to a dictionary for downstream consumers
+        employee = None
+        if employee_record:
+            try:
+                employee = asdict(employee_record)
+            except TypeError:
+                if isinstance(employee_record, dict):
+                    employee = employee_record
+                elif hasattr(employee_record, '__dict__'):
+                    employee = dict(employee_record.__dict__)
+        if not employee:
+            employee = {
+                "id": employee_id,
+                "property_id": employee_info.get('propertyId') if employee_info else None
+            }
+
+        # Ensure property_id is set if we have hints in the request payload
+        if isinstance(employee, dict) and not employee.get('property_id') and employee_info:
+            employee['property_id'] = employee_info.get('propertyId')
+
         # Use form data from request if provided (for preview)
         if employee_data_from_request:
             form_data = employee_data_from_request
@@ -12806,7 +12936,200 @@ async def generate_direct_deposit_pdf(employee_id: str, request: Request):
 
         # Generate PDF using template overlay
         pdf_bytes = pdf_filler.fill_direct_deposit_form(pdf_data)
-        
+
+        # ✅ OPTIMIZATION: Merge voided check with Direct Deposit PDF if available
+        # NEW: Accept file data (base64) directly instead of downloading from storage
+        try:
+            # ✅ OPTIMIZATION: Check for file data (base64) instead of metadata
+            voided_check_file_data = None
+
+            # Try different paths where the file data might be stored
+            if form_data.get('voidedCheckFile'):
+                voided_check_file_data = form_data.get('voidedCheckFile')
+                logger.info(f"   - Found voidedCheckFile at root level")
+            elif form_data.get('formData', {}).get('voidedCheckFile'):
+                voided_check_file_data = form_data.get('formData', {}).get('voidedCheckFile')
+                logger.info(f"   - Found voidedCheckFile in formData")
+            else:
+                voided_check_file_data = None
+                logger.info(f"   - voidedCheckFile NOT FOUND in form_data")
+
+            # Log what we found for debugging
+            logger.info(f"📎 Checking for voided check file data to merge (OPTIMIZED)")
+            logger.info(f"   - form_data keys: {list(form_data.keys())}")
+            logger.info(f"   - form_data type: {type(form_data)}")
+            logger.info(f"   - voidedCheckFile found: {voided_check_file_data is not None}")
+
+            # ✅ DEBUG: Log first 200 chars of form_data to see structure
+            form_data_str = str(form_data)[:500]
+            logger.info(f"   - form_data preview: {form_data_str}...")
+
+            if voided_check_file_data:
+                logger.info(f"   - voidedCheckFile type: {type(voided_check_file_data)}")
+                logger.info(f"   - voidedCheckFile keys: {list(voided_check_file_data.keys()) if isinstance(voided_check_file_data, dict) else 'not a dict'}")
+                logger.info(f"   - File name: {voided_check_file_data.get('fileName')}")
+                logger.info(f"   - File size: {voided_check_file_data.get('fileSize')} bytes")
+                logger.info(f"   - MIME type: {voided_check_file_data.get('mimeType')}")
+
+            # ✅ OPTIMIZATION: Process file data directly (no download needed)
+            if voided_check_file_data and isinstance(voided_check_file_data, dict):
+                try:
+                    # Decode base64 to bytes
+                    base64_data = voided_check_file_data.get('base64Data')
+                    if not base64_data:
+                        logger.warning(f"⚠️ Voided check file data has no base64Data field")
+                    else:
+                        file_bytes = base64.b64decode(base64_data)
+                        mime_type = voided_check_file_data.get('mimeType')
+
+                        logger.info(f"📄 Processing voided check with MIME type: {mime_type}")
+                        logger.info(f"   - Decoded file size: {len(file_bytes)} bytes")
+
+                        # Merge with existing PDF
+                        import io
+                        from PyPDF2 import PdfReader, PdfWriter
+                        from PIL import Image
+
+                        writer = PdfWriter()
+                        current_pdf = PdfReader(io.BytesIO(pdf_bytes))
+
+                        # Add all existing pages from Direct Deposit form
+                        for page in current_pdf.pages:
+                            writer.add_page(page)
+
+                        if mime_type and mime_type.startswith('image/'):
+                            # Convert image to PDF page
+                            logger.info(f"📄 Converting voided check image to PDF page")
+                            img = Image.open(io.BytesIO(file_bytes))
+                            if img.mode == 'RGBA':
+                                img = img.convert('RGB')
+
+                            img_pdf_bytes = io.BytesIO()
+                            img.save(img_pdf_bytes, format='PDF')
+                            img_pdf_bytes.seek(0)
+
+                            img_pdf = PdfReader(img_pdf_bytes)
+                            for page in img_pdf.pages:
+                                writer.add_page(page)
+
+                            logger.info(f"✅ Added voided check image as PDF page")
+
+                        elif mime_type == 'application/pdf':
+                            # Add PDF pages directly
+                            logger.info(f"📄 Adding voided check PDF pages")
+                            check_pdf = PdfReader(io.BytesIO(file_bytes))
+                            for page in check_pdf.pages:
+                                writer.add_page(page)
+
+                            logger.info(f"✅ Added {len(check_pdf.pages)} page(s) from voided check PDF")
+
+                        # Write merged PDF
+                        merged_pdf_bytes = io.BytesIO()
+                        writer.write(merged_pdf_bytes)
+                        merged_pdf_bytes.seek(0)
+                        pdf_bytes = merged_pdf_bytes.read()
+
+                        logger.info(f"✅ Successfully merged voided check with Direct Deposit PDF (OPTIMIZED)")
+                        logger.info(f"   - Final PDF size: {len(pdf_bytes)} bytes")
+
+                except Exception as merge_error:
+                    logger.error(f"❌ Failed to merge voided check: {merge_error}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+
+        except Exception as check_error:
+            logger.error(f"❌ Error processing voided check for merge: {check_error}")
+            # Continue with original PDF if check processing fails
+
+        # ✅ OPTIMIZATION: Merge bank letter if provided (same logic as voided check)
+        try:
+            bank_letter_file_data = None
+
+            # Try different paths where the file data might be stored
+            if form_data.get('bankLetterFile'):
+                bank_letter_file_data = form_data.get('bankLetterFile')
+            elif form_data.get('formData', {}).get('bankLetterFile'):
+                bank_letter_file_data = form_data.get('formData', {}).get('bankLetterFile')
+
+            logger.info(f"📎 Checking for bank letter file data to merge (OPTIMIZED)")
+            logger.info(f"   - bankLetterFile found: {bank_letter_file_data is not None}")
+
+            if bank_letter_file_data:
+                logger.info(f"   - File name: {bank_letter_file_data.get('fileName')}")
+                logger.info(f"   - File size: {bank_letter_file_data.get('fileSize')} bytes")
+                logger.info(f"   - MIME type: {bank_letter_file_data.get('mimeType')}")
+
+            # Process file data directly (no download needed)
+            if bank_letter_file_data and isinstance(bank_letter_file_data, dict):
+                try:
+                    # Decode base64 to bytes
+                    base64_data = bank_letter_file_data.get('base64Data')
+                    if not base64_data:
+                        logger.warning(f"⚠️ Bank letter file data has no base64Data field")
+                    else:
+                        file_bytes = base64.b64decode(base64_data)
+                        mime_type = bank_letter_file_data.get('mimeType')
+
+                        logger.info(f"📄 Processing bank letter with MIME type: {mime_type}")
+
+                        # Merge with existing PDF (which may already include voided check)
+                        import io
+                        from PyPDF2 import PdfReader, PdfWriter
+                        from PIL import Image
+
+                        writer = PdfWriter()
+                        current_pdf = PdfReader(io.BytesIO(pdf_bytes))
+
+                        # Add all existing pages
+                        for page in current_pdf.pages:
+                            writer.add_page(page)
+
+                        if mime_type and mime_type.startswith('image/'):
+                            # Convert image to PDF page
+                            logger.info(f"📄 Converting bank letter image to PDF page")
+                            img = Image.open(io.BytesIO(file_bytes))
+                            if img.mode == 'RGBA':
+                                img = img.convert('RGB')
+
+                            img_pdf_bytes = io.BytesIO()
+                            img.save(img_pdf_bytes, format='PDF')
+                            img_pdf_bytes.seek(0)
+
+                            img_pdf = PdfReader(img_pdf_bytes)
+                            for page in img_pdf.pages:
+                                writer.add_page(page)
+
+                            logger.info(f"✅ Added bank letter image as PDF page")
+
+                        elif mime_type == 'application/pdf':
+                            # Add PDF pages directly
+                            logger.info(f"📄 Adding bank letter PDF pages")
+                            letter_pdf = PdfReader(io.BytesIO(file_bytes))
+                            for page in letter_pdf.pages:
+                                writer.add_page(page)
+
+                            logger.info(f"✅ Added {len(letter_pdf.pages)} page(s) from bank letter PDF")
+
+                        # Write merged PDF
+                        merged_pdf_bytes = io.BytesIO()
+                        writer.write(merged_pdf_bytes)
+                        merged_pdf_bytes.seek(0)
+                        pdf_bytes = merged_pdf_bytes.read()
+
+                        logger.info(f"✅ Successfully merged bank letter with Direct Deposit PDF (OPTIMIZED)")
+                        logger.info(f"   - Final PDF size: {len(pdf_bytes)} bytes")
+
+                except Exception as merge_error:
+                    logger.error(f"❌ Failed to merge bank letter: {merge_error}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+
+        except Exception as letter_error:
+            logger.error(f"❌ Error processing bank letter for merge: {letter_error}")
+
+        # ✅ OPTIMIZATION COMPLETE: Old download-from-storage logic removed
+        # Files are now sent directly as base64 data, eliminating redundant storage operations
+
         # Convert to base64
         pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
         
@@ -12841,40 +13164,51 @@ async def generate_direct_deposit_pdf(employee_id: str, request: Request):
             if not property_id_hint and employee_data_from_request:
                 property_id_hint = employee_data_from_request.get('propertyId')
 
-            property_id = await get_property_id_for_employee(employee_id, employee, property_id_hint)
+            property_context = employee_record or employee
+            property_id = await get_property_id_for_employee(employee_id, property_context, property_id_hint)
 
-            # Check if signature_data exists and has actual signature
-            if signature_data and signature_data.get('signature'):
-                logger.info(f"Saving signed Direct Deposit PDF for employee {employee_id} with property_id: {property_id}")
+            # ✅ FIX: Check if signature_data exists (more flexible check)
+            # signature_data can be a dict with 'signature' key, or a string, or have other signature indicators
+            has_signature = False
+            if signature_data:
+                if isinstance(signature_data, dict):
+                    # Check for signature in various formats
+                    has_signature = bool(
+                        signature_data.get('signature') or
+                        signature_data.get('signedAt') or
+                        signature_data.get('signed_at')
+                    )
+                elif isinstance(signature_data, str):
+                    has_signature = len(signature_data) > 0
+
+            logger.info(f"📝 Direct Deposit PDF save check:")
+            logger.info(f"   - signature_data exists: {signature_data is not None}")
+            logger.info(f"   - signature_data type: {type(signature_data)}")
+            logger.info(f"   - has_signature: {has_signature}")
+            if isinstance(signature_data, dict):
+                logger.info(f"   - signature_data keys: {list(signature_data.keys())}")
+
+            if has_signature:
+                logger.info(f"✅ Saving signed Direct Deposit PDF for employee {employee_id} with property_id: {property_id}")
 
                 # Use unified save_signed_document method (same as I-9 and W-4)
                 stored = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=property_id,
-                    form_type='direct-deposit',
+                    form_type='direct_deposit',
                     pdf_bytes=pdf_bytes,
                     is_edit=False
                 )
 
                 pdf_url = stored.get('signed_url')
                 storage_path = stored.get('storage_path')
+                document_id = stored.get('document_id')
                 logger.info(f"✅ Signed Direct Deposit PDF uploaded successfully: {storage_path}")
+                logger.info(f"✅ Document metadata saved with ID: {document_id}")
 
-                # Save URL to onboarding progress
-                if not employee_id.startswith('test-') and not employee_id.startswith('temp_'):
-                    try:
-                        supabase_service.save_onboarding_progress(
-                            employee_id=employee_id,
-                            step_id='direct-deposit',
-                            data={
-                                'pdf_url': pdf_url,
-                                'pdf_filename': os.path.basename(storage_path),
-                                'storage_path': storage_path,
-                                'generated_at': datetime.now(timezone.utc).isoformat()
-                            }
-                        )
-                    except Exception as save_error:
-                        logger.error(f"Failed to save Direct Deposit PDF URL to progress: {save_error}")
+                # ✅ FIX: Document is already saved to signed_documents table by save_signed_document()
+                # No need for additional save_onboarding_progress call
+                # The signed_documents table contains all necessary metadata
             else:
                 # This is just a preview - don't save to storage
                 logger.info(f"Direct Deposit preview PDF generated for employee {employee_id} (not saved - no signature)")
@@ -13068,7 +13402,13 @@ async def validate_voided_check(employee_id: str, request: Request):
                             "reason": f"System detected '{values['ocr']}' with {ocr_confidence*100:.0f}% confidence"
                         })
                 response_data['suggestions'] = suggestions
-        
+
+        # Add voided check upload status BEFORE starting storage upload
+        # This will be updated after upload completes
+        response_data['voided_check_uploaded'] = False
+        response_data['voided_check_url'] = None
+        response_data['voided_check_storage_path'] = None
+
         # Log successful extraction
         logger.info(f"Successfully extracted check data for employee {employee_id}")
         logger.info(f"Extracted bank: {ocr_result['extracted_data'].get('bank_name')}")
@@ -13076,6 +13416,8 @@ async def validate_voided_check(employee_id: str, request: Request):
         
         # Save voided check image to Supabase storage using consistent path structure
         check_url = None
+        voided_check_uploaded = False
+        storage_path = None
         if image_data:
             try:
                 # Get property_id from employee data (with proper await)
@@ -13083,7 +13425,11 @@ async def validate_voided_check(employee_id: str, request: Request):
                 property_id = employee_data.get('property_id') if employee_data else None
 
                 if not property_id:
-                    logger.warning(f"No property_id found for employee {employee_id}, skipping voided check storage")
+                    error_msg = f"Cannot upload voided check: No property_id found for employee {employee_id}"
+                    logger.error(error_msg)
+                    # For temp employees in single-step mode, allow to continue without property
+                    if not employee_id.startswith('temp_'):
+                        raise ValueError(error_msg)
                 else:
                     # Convert base64 to bytes
                     if ',' in image_data:
@@ -13108,6 +13454,7 @@ async def validate_voided_check(employee_id: str, request: Request):
                     await supabase_service.create_storage_bucket(bucket_name, public=False)
 
                     # Upload using admin client
+                    logger.info(f"📤 Uploading voided check to {storage_path}")
                     res = supabase_service.admin_client.storage.from_(bucket_name).upload(
                         storage_path,
                         file_data,
@@ -13122,11 +13469,15 @@ async def validate_voided_check(employee_id: str, request: Request):
 
                     if url_response and url_response.get('signedURL'):
                         check_url = url_response['signedURL']
+                        voided_check_uploaded = True
                         logger.info(f"✅ Voided check uploaded to Supabase: {storage_path}")
+                    else:
+                        logger.error(f"Failed to generate signed URL for voided check at {storage_path}")
 
             except Exception as upload_error:
-                logger.error(f"Failed to upload voided check to Supabase: {upload_error}")
-                # Continue processing even if upload fails
+                logger.error(f"Failed to upload voided check to Supabase: {upload_error}", exc_info=True)
+                # Don't silently continue - add error to response
+                voided_check_uploaded = False
         
         # Save extraction results to session for later use
         if ocr_result['extracted_data'].get('routing_number') and ocr_result['extracted_data'].get('account_number'):
@@ -13149,7 +13500,12 @@ async def validate_voided_check(employee_id: str, request: Request):
                 step_id='direct-deposit-ocr',
                 form_data=form_data
             )
-        
+
+        # Update response_data with actual voided check upload status
+        response_data['voided_check_uploaded'] = voided_check_uploaded
+        response_data['voided_check_url'] = check_url
+        response_data['voided_check_storage_path'] = storage_path
+
         return success_response(
             data=response_data,
             message="Check validation completed successfully"
@@ -13341,15 +13697,36 @@ async def generate_health_insurance_pdf_enhanced(employee_id: str, request: Requ
             else:
                 property_id = property_id_hint or 'unknown'
 
-            # Check if signature exists
-            if employee_data.get("signatureData"):
-                logger.info(f"Saving signed Health Insurance PDF for employee {employee_id} with property_id: {property_id}")
+            # ✅ FIX: Check if signature exists (more flexible check like Direct Deposit)
+            has_signature = False
+            signature_data = employee_data.get("signatureData")
+
+            if signature_data:
+                if isinstance(signature_data, dict):
+                    has_signature = bool(
+                        signature_data.get('signature') or
+                        signature_data.get('signedAt') or
+                        signature_data.get('signed_at')
+                    )
+                elif isinstance(signature_data, str):
+                    has_signature = len(signature_data) > 0
+
+            logger.info(f"📝 Health Insurance PDF save check:")
+            logger.info(f"   - employee_data keys: {list(employee_data.keys())}")
+            logger.info(f"   - signatureData exists: {signature_data is not None}")
+            logger.info(f"   - signatureData type: {type(signature_data)}")
+            logger.info(f"   - has_signature: {has_signature}")
+            if isinstance(signature_data, dict):
+                logger.info(f"   - signatureData keys: {list(signature_data.keys())}")
+
+            if has_signature:
+                logger.info(f"✅ Saving signed Health Insurance PDF for employee {employee_id} with property_id: {property_id}")
 
                 # Use unified save_signed_document method
                 stored = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=property_id,
-                    form_type='health-insurance',
+                    form_type='health_insurance',
                     pdf_bytes=pdf_result.get('pdf_bytes'),
                     is_edit=False
                 )
@@ -13474,6 +13851,76 @@ async def generate_health_insurance_pdf_enhanced(employee_id: str, request: Requ
             "status_code": 500
         }
 
+@app.get("/api/onboarding/{employee_id}/documents/health-insurance")
+async def get_health_insurance_document(employee_id: str, token: Optional[str] = None):
+    """Get existing signed Health Insurance document if available (for PDF rehydration)"""
+    try:
+        logger.info(f"📥 Fetching Health Insurance document for employee: {employee_id}")
+
+        # Query signed_documents table for Health Insurance document
+        result = supabase_service.client.table("signed_documents")\
+            .select("*")\
+            .eq("employee_id", employee_id)\
+            .eq("document_type", "health-insurance")\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+
+        if result.data and len(result.data) > 0:
+            doc = result.data[0]
+            storage_path = doc.get('storage_path')
+            bucket_name = doc.get('bucket_name', 'onboarding-documents')
+
+            logger.info(f"✅ Found Health Insurance document:")
+            logger.info(f"   - Document ID: {doc.get('id')}")
+            logger.info(f"   - Bucket: {bucket_name}")
+            logger.info(f"   - Path: {storage_path}")
+
+            # Generate fresh signed URL if document exists in storage
+            signed_url = None
+            if storage_path:
+                try:
+                    url_response = supabase_service.admin_client.storage.from_(bucket_name).create_signed_url(
+                        storage_path,
+                        expires_in=3600  # 1 hour validity
+                    )
+                    if url_response and url_response.get('signedURL'):
+                        signed_url = url_response['signedURL']
+                        logger.info(f"✅ Generated fresh signed URL (expires in 1 hour)")
+                except Exception as e:
+                    logger.warning(f"Failed to generate signed URL for Health Insurance: {e}")
+                    # Fallback to stored URL if available
+                    signed_url = doc.get('signed_url')
+
+            return success_response(
+                data={
+                    "has_document": True,
+                    "document_metadata": {
+                        "signed_url": signed_url,
+                        "filename": doc.get('file_name') or doc.get('document_name'),
+                        "signed_at": doc.get('signed_at') or doc.get('created_at'),
+                        "bucket": bucket_name,
+                        "path": storage_path,
+                        "document_id": doc.get('id')
+                    }
+                },
+                message="Health Insurance document found"
+            )
+        else:
+            logger.info(f"❌ No Health Insurance document found for employee: {employee_id}")
+            return success_response(
+                data={"has_document": False},
+                message="No Health Insurance document found"
+            )
+
+    except Exception as e:
+        logger.error(f"Error retrieving Health Insurance document: {e}")
+        return error_response(
+            message="Failed to retrieve Health Insurance document",
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+            status_code=500
+        )
+
 @app.post("/api/onboarding/{employee_id}/weapons-policy/generate-pdf")
 async def generate_weapons_policy_pdf(employee_id: str, request: Request):
     """Generate PDF for Weapons Prohibition Policy"""
@@ -13525,8 +13972,17 @@ async def generate_weapons_policy_pdf(employee_id: str, request: Request):
         # Signature data if provided
         signature_data = body.get('signature_data', {})
         signed_date = (body.get('employee_data') or {}).get('signedDate') if isinstance(body.get('employee_data'), dict) else None
-        
-        cert = generator.generate_certificate(employee_data, signature_data, signed_date=signed_date, is_preview=False)
+
+        # ✅ FIX: Determine if this is a preview (no signature) or final signed document
+        has_signature = signature_data and (signature_data.get('signature') or signature_data.get('signatureImage'))
+        is_preview = not has_signature
+
+        logger.info(f"Weapons Policy PDF Generation:")
+        logger.info(f"  - Has signature: {has_signature}")
+        logger.info(f"  - Is preview: {is_preview}")
+        logger.info(f"  - Signed date: {signed_date}")
+
+        cert = generator.generate_certificate(employee_data, signature_data, signed_date=signed_date, is_preview=is_preview)
         pdf_bytes = cert.get('pdf_bytes')
         
         # Convert to base64
@@ -13558,7 +14014,7 @@ async def generate_weapons_policy_pdf(employee_id: str, request: Request):
                 stored = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=property_id,
-                    form_type='weapons-policy',
+                    form_type='weapons_policy',
                     pdf_bytes=pdf_bytes,
                     is_edit=False
                 )
@@ -13708,6 +14164,76 @@ async def preview_weapons_policy_certificate(employee_id: str, request: Request)
             status_code=500
         )
 
+@app.get("/api/onboarding/{employee_id}/documents/weapons-policy")
+async def get_weapons_policy_document(employee_id: str, token: Optional[str] = None):
+    """Get existing signed Weapons Policy document if available (for PDF rehydration)"""
+    try:
+        logger.info(f"📥 Fetching Weapons Policy document for employee: {employee_id}")
+
+        # Query signed_documents table for Weapons Policy document
+        result = supabase_service.client.table("signed_documents")\
+            .select("*")\
+            .eq("employee_id", employee_id)\
+            .eq("document_type", "weapons-policy")\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+
+        if result.data and len(result.data) > 0:
+            doc = result.data[0]
+            storage_path = doc.get('storage_path')
+            bucket_name = doc.get('bucket_name', 'onboarding-documents')
+
+            logger.info(f"✅ Found Weapons Policy document:")
+            logger.info(f"   - Document ID: {doc.get('id')}")
+            logger.info(f"   - Bucket: {bucket_name}")
+            logger.info(f"   - Path: {storage_path}")
+
+            # Generate fresh signed URL if document exists in storage
+            signed_url = None
+            if storage_path:
+                try:
+                    url_response = supabase_service.admin_client.storage.from_(bucket_name).create_signed_url(
+                        storage_path,
+                        expires_in=3600  # 1 hour validity
+                    )
+                    if url_response and url_response.get('signedURL'):
+                        signed_url = url_response['signedURL']
+                        logger.info(f"✅ Generated fresh signed URL (expires in 1 hour)")
+                except Exception as e:
+                    logger.warning(f"Failed to generate signed URL for Weapons Policy: {e}")
+                    # Fallback to stored URL if available
+                    signed_url = doc.get('signed_url')
+
+            return success_response(
+                data={
+                    "has_document": True,
+                    "document_metadata": {
+                        "signed_url": signed_url,
+                        "filename": doc.get('file_name') or doc.get('document_name'),
+                        "signed_at": doc.get('signed_at') or doc.get('created_at'),
+                        "bucket": bucket_name,
+                        "path": storage_path,
+                        "document_id": doc.get('id')
+                    }
+                },
+                message="Weapons Policy document found"
+            )
+        else:
+            logger.info(f"❌ No Weapons Policy document found for employee: {employee_id}")
+            return success_response(
+                data={"has_document": False},
+                message="No Weapons Policy document found"
+            )
+
+    except Exception as e:
+        logger.error(f"Error retrieving Weapons Policy document: {e}")
+        return error_response(
+            message="Failed to retrieve Weapons Policy document",
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+            status_code=500
+        )
+
 @app.post("/api/onboarding/{employee_id}/human-trafficking/generate-pdf")
 async def generate_human_trafficking_pdf(employee_id: str, request: Request):
     """Generate PDF for Human Trafficking Awareness"""
@@ -13722,8 +14248,15 @@ async def generate_human_trafficking_pdf(employee_id: str, request: Request):
         
         # If employee_data was provided in request (from PersonalInfoModal), use it
         if employee_data_from_request:
-            first_name = employee_data_from_request.get('firstName', '')
-            last_name = employee_data_from_request.get('lastName', '')
+            # ✅ FIX: Check personalInfo first (for human trafficking, health insurance, etc.)
+            personal_info = employee_data_from_request.get('personalInfo', {})
+            first_name = personal_info.get('firstName') or employee_data_from_request.get('firstName', '')
+            last_name = personal_info.get('lastName') or employee_data_from_request.get('lastName', '')
+
+            logger.info(f"✅ Human Trafficking: Extracted name from request - {first_name} {last_name}")
+            logger.info(f"   - Has personalInfo: {bool(personal_info)}")
+            logger.info(f"   - personalInfo keys: {list(personal_info.keys()) if personal_info else 'none'}")
+
             # If property_name is explicitly provided in employee_data, use it; otherwise get from helper
             property_name = employee_data_from_request.get('property_name')
             if not property_name:
@@ -13772,12 +14305,21 @@ async def generate_human_trafficking_pdf(employee_id: str, request: Request):
             td = employee_data_from_request.get('completionDate') or employee_data_from_request.get('trainingDate')
             if isinstance(td, str) and td:
                 training_date = td[:10].replace('-', '/') if '-' in td else td
-        
+
+        # ✅ FIX: Determine if this is a preview (no signature) or final signed document
+        has_signature = signature_data and (signature_data.get('signature') or signature_data.get('signatureImage'))
+        is_preview = not has_signature
+
+        logger.info(f"Human Trafficking PDF Generation:")
+        logger.info(f"  - Has signature: {has_signature}")
+        logger.info(f"  - Is preview: {is_preview}")
+        logger.info(f"  - Training date: {training_date}")
+
         cert = generator.generate_certificate(
             employee_data=employee_data,
             signature_data=signature_data,
             training_date=training_date,
-            is_preview=False
+            is_preview=is_preview
         )
         pdf_bytes = cert.get('pdf_bytes')
         
@@ -13801,30 +14343,20 @@ async def generate_human_trafficking_pdf(employee_id: str, request: Request):
                 stored = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=property_id,
-                    form_type='human-trafficking',
+                    form_type='human_trafficking',
                     pdf_bytes=pdf_bytes,
                     is_edit=False
                 )
 
                 pdf_url = stored.get('signed_url')
                 storage_path = stored.get('storage_path')
+                document_id = stored.get('document_id')
                 logger.info(f"✅ Signed Human Trafficking PDF uploaded successfully: {storage_path}")
+                logger.info(f"✅ Document metadata saved with ID: {document_id}")
 
-                # Save URL to onboarding progress
-                if not employee_id.startswith('test-') and not employee_id.startswith('temp_'):
-                    try:
-                        supabase_service.save_onboarding_progress(
-                            employee_id=employee_id,
-                            step_id='human-trafficking',
-                            data={
-                                'pdf_url': pdf_url,
-                                'pdf_filename': os.path.basename(storage_path),
-                                'storage_path': storage_path,
-                                'generated_at': datetime.now(timezone.utc).isoformat()
-                            }
-                        )
-                    except Exception as save_error:
-                        logger.error(f"Failed to save Human Trafficking PDF URL to progress: {save_error}")
+                # ✅ FIX: Document is already saved to signed_documents table by save_signed_document()
+                # No need for additional save_onboarding_progress call
+                # The signed_documents table contains all necessary metadata
             else:
                 # This is just a preview - don't save to storage
                 logger.info(f"Human Trafficking preview PDF generated for employee {employee_id} (not saved - no signature)")
@@ -13960,6 +14492,74 @@ async def preview_human_trafficking_certificate(employee_id: str, request: Reque
             status_code=500
         )
 
+
+@app.get("/api/onboarding/{employee_id}/documents/human-trafficking")
+async def get_human_trafficking_document(employee_id: str, token: Optional[str] = None):
+    """Get existing signed Human Trafficking certificate if available"""
+    try:
+        logger.info(f"📥 Fetching Human Trafficking certificate for employee: {employee_id}")
+
+        # Query signed_documents table for Human Trafficking certificate
+        result = supabase_service.client.table("signed_documents")\
+            .select("*")\
+            .eq("employee_id", employee_id)\
+            .eq("document_type", "human-trafficking")\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+
+        if result.data and len(result.data) > 0:
+            doc = result.data[0]
+            metadata = doc.get('metadata', {})
+
+            logger.info(f"✅ Found Human Trafficking certificate:")
+            logger.info(f"   - Document ID: {doc.get('id')}")
+            logger.info(f"   - Bucket: {metadata.get('bucket')}")
+            logger.info(f"   - Path: {metadata.get('path')}")
+
+            # Generate fresh signed URL if document exists in storage
+            signed_url = None
+            if metadata.get('bucket') and metadata.get('path'):
+                try:
+                    url_response = supabase_service.admin_client.storage.from_(metadata['bucket']).create_signed_url(
+                        metadata['path'],
+                        expires_in=3600  # 1 hour validity
+                    )
+                    if url_response and url_response.get('signedURL'):
+                        signed_url = url_response['signedURL']
+                        logger.info(f"✅ Generated fresh signed URL (expires in 1 hour)")
+                except Exception as e:
+                    logger.warning(f"Failed to generate signed URL for Human Trafficking certificate: {e}")
+
+            return success_response(
+                data={
+                    "has_document": True,
+                    "document_metadata": {
+                        "signed_url": signed_url or doc.get('pdf_url'),
+                        "filename": doc.get('document_name'),
+                        "signed_at": doc.get('signed_at'),
+                        "bucket": metadata.get('bucket'),
+                        "path": metadata.get('path')
+                    }
+                },
+                message="Human Trafficking certificate found"
+            )
+        else:
+            logger.info(f"❌ No Human Trafficking certificate found for employee: {employee_id}")
+            return success_response(
+                data={"has_document": False},
+                message="No Human Trafficking certificate found"
+            )
+
+    except Exception as e:
+        logger.error(f"Error retrieving Human Trafficking certificate: {e}")
+        return error_response(
+            message="Failed to retrieve Human Trafficking certificate",
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+            status_code=500
+        )
+
+
 @app.post("/api/onboarding/{employee_id}/company-policies/generate-pdf")
 async def generate_company_policies_pdf(employee_id: str, request: Request):
     """Generate PDF for Company Policies"""
@@ -14089,6 +14689,14 @@ async def generate_company_policies_pdf(employee_id: str, request: Request):
         if isinstance(signature_data_raw, dict) and not signature_present:
             signature_present = bool(signature_data_raw.get('signature') or signature_data_raw.get('signatureData'))
 
+        # Debug logging for signature detection
+        logger.info(f"Company Policies Signature Detection - Employee: {employee_id}")
+        logger.info(f"  signature_data_raw type: {type(signature_data_raw)}")
+        logger.info(f"  signature_data_raw keys: {signature_data_raw.keys() if isinstance(signature_data_raw, dict) else 'N/A'}")
+        logger.info(f"  signature_data extracted: {signature_data[:50] if signature_data else 'None'}...")
+        logger.info(f"  signature_present: {signature_present}")
+        logger.info(f"  property_id_hint: {property_id_hint}")
+
         # Create pdf_data for use in return statement and logging
         pdf_data = {
             **form_data,  # Include all form data (initials, signature, etc.)
@@ -14142,7 +14750,7 @@ async def generate_company_policies_pdf(employee_id: str, request: Request):
         document_metadata: Optional[Dict[str, Any]] = None
 
         if signature_present:
-            logger.info(f"Saving signed Company Policies PDF for employee {employee_id}")
+            logger.info(f"📝 Saving signed Company Policies PDF for employee {employee_id}")
             try:
                 existing_metadata: Optional[Dict[str, Any]] = None
                 if isinstance(saved_policies, dict):
@@ -14152,18 +14760,23 @@ async def generate_company_policies_pdf(employee_id: str, request: Request):
 
                 # Get property_id using helper function (matching Direct Deposit pattern)
                 property_id = await get_property_id_for_employee(employee_id, employee, property_id_hint)
+                logger.info(f"  Resolved property_id: {property_id}")
+                logger.info(f"  PDF size: {len(pdf_bytes)} bytes")
+                logger.info(f"  Is edit: {bool(existing_metadata)}")
 
                 stored = await supabase_service.save_signed_document(
                     employee_id=employee_id,
                     property_id=property_id,
-                    form_type='company-policies',
+                    form_type='company_policies',
                     pdf_bytes=pdf_bytes,
                     is_edit=bool(existing_metadata)
                 )
 
                 pdf_url = stored.get('signed_url')
                 storage_path = stored.get('storage_path')
-                logger.info(f"✅ Signed Company Policies PDF uploaded successfully: {storage_path}")
+                logger.info(f"✅ Signed Company Policies PDF uploaded successfully!")
+                logger.info(f"  Storage path: {storage_path}")
+                logger.info(f"  Signed URL: {pdf_url[:100] if pdf_url else 'None'}...")
 
                 try:
                     import hashlib
@@ -14186,9 +14799,13 @@ async def generate_company_policies_pdf(employee_id: str, request: Request):
                     f"Signed Company Policies PDF stored for employee {employee_id}: {document_metadata.get('path')}"
                 )
             except Exception as save_error:
-                logger.error(f"Failed to save signed Company Policies PDF: {save_error}")
+                logger.error(f"❌ Failed to save signed Company Policies PDF for employee {employee_id}", exc_info=True)
+                logger.error(f"  Error type: {type(save_error).__name__}")
+                logger.error(f"  Error message: {str(save_error)}")
+                logger.error(f"  property_id: {property_id if 'property_id' in locals() else 'Not set'}")
+                # Continue execution - return the PDF even if storage fails
         else:
-            logger.info(f"Company Policies preview PDF generated for employee {employee_id} (not saved - no signature)")
+            logger.info(f"📄 Company Policies preview PDF generated for employee {employee_id} (not saved - no signature)")
             
         if signature_present:
             # Detect single-step mode (HR invitations)
@@ -17337,6 +17954,260 @@ async def preview_health_insurance_pdf(
         )
 
 # Duplicate endpoint removed - functionality merged into the endpoint at line 8247
+
+@app.post("/api/onboarding/{employee_id}/complete-onboarding")
+async def complete_employee_onboarding(
+    employee_id: str,
+    request: dict
+):
+    """
+    Complete employee onboarding and send manager notification
+    Called from Final Review Step after employee signs
+    """
+    try:
+        logger.info(f"📧 Completing onboarding for employee: {employee_id}")
+
+        # Get employee and property info
+        employee = await supabase_service.get_employee_by_id(employee_id)
+        if not employee:
+            return error_response(
+                message="Employee not found",
+                error_code=ErrorCode.NOT_FOUND,
+                status_code=404
+            )
+
+        property_id = request.get('property_id') or employee.property_id
+        property_obj = await supabase_service.get_property_by_id(property_id)
+
+        # ✅ Save final signature metadata
+        final_signature = request.get('final_signature')
+        completed_at = request.get('completed_at') or datetime.now(timezone.utc).isoformat()
+
+        # ✅ CRITICAL: Save final_review signature to signed_documents table
+        if final_signature:
+            try:
+                signed_doc_data = {
+                    'employee_id': employee_id,
+                    'document_type': 'final_review',
+                    'signed_at': final_signature.get('signedAt') or completed_at,
+                    'signature_data': final_signature.get('signature'),
+                    'ip_address': final_signature.get('ipAddress'),
+                    'user_agent': final_signature.get('userAgent'),
+                    'metadata': {
+                        'completed_at': completed_at,
+                        'all_steps_completed': True,
+                        'final_review': True
+                    }
+                }
+
+                supabase_service.client.table('signed_documents').insert(signed_doc_data).execute()
+                logger.info(f"✅ Saved final_review signature to signed_documents table")
+            except Exception as sig_error:
+                logger.error(f"Failed to save final_review signature: {sig_error}")
+
+        # Update employee onboarding status with signature metadata
+        try:
+            update_data = {
+                'onboarding_status': 'completed',
+                'onboarding_completed_at': completed_at,
+                'manager_review_status': 'pending_review',  # ✅ NEW: Set for manager review
+            }
+
+            # Add signature metadata if provided
+            if final_signature:
+                update_data['final_signature_timestamp'] = final_signature.get('signedAt') or completed_at
+                update_data['final_signature_ip'] = final_signature.get('ipAddress')
+                update_data['final_signature_user_agent'] = final_signature.get('userAgent')
+                logger.info(f"📝 Saving final signature metadata: {final_signature.get('signedAt')}")
+
+            # Calculate I-9 Section 2 deadline if start_date is available
+            if employee.start_date:
+                # Use the SQL function to calculate deadline (3 business days)
+                deadline_result = supabase_service.client.rpc(
+                    'calculate_i9_section2_deadline',
+                    {'start_date': employee.start_date}
+                ).execute()
+
+                if deadline_result.data:
+                    update_data['i9_section2_deadline'] = deadline_result.data
+                    update_data['i9_section2_status'] = 'pending'
+                    logger.info(f"📅 Set I-9 Section 2 deadline: {deadline_result.data}")
+
+            supabase_service.client.table('employees').update(update_data).eq('id', employee_id).execute()
+
+            logger.info(f"✅ Updated employee onboarding status to completed with metadata")
+        except Exception as update_error:
+            logger.error(f"Failed to update employee status: {update_error}")
+
+        # Get manager info
+        manager = None
+        manager_email = None
+
+        if employee.manager_id:
+            manager = await supabase_service.get_user_by_id(employee.manager_id)
+            if manager:
+                manager_email = manager.email
+
+        # If no manager assigned, try to get property manager
+        if not manager_email and property_obj:
+            try:
+                # Get property managers
+                managers_response = supabase_service.client.table('users')\
+                    .select('*')\
+                    .eq('property_id', property_id)\
+                    .eq('role', 'manager')\
+                    .eq('is_active', True)\
+                    .execute()
+
+                if managers_response.data and len(managers_response.data) > 0:
+                    manager = managers_response.data[0]
+                    manager_email = manager.get('email')
+                    logger.info(f"Found property manager: {manager_email}")
+            except Exception as manager_error:
+                logger.error(f"Failed to get property manager: {manager_error}")
+
+        # Send email notification to manager
+        if manager_email:
+            try:
+                from app.email_service import EmailService
+                email_service = EmailService()
+
+                # Get employee name from personal_info
+                personal_info = employee.personal_info or {}
+                first_name = personal_info.get('firstName', personal_info.get('first_name', 'Employee'))
+                last_name = personal_info.get('lastName', personal_info.get('last_name', ''))
+                employee_name = f"{first_name} {last_name}".strip()
+                property_name = property_obj.name if property_obj else "Unknown Property"
+
+                html_content = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
+                        <div style="background: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0;">🎉 Employee Onboarding Complete!</h1>
+                        </div>
+
+                        <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px;">
+                            <p style="font-size: 16px;">Hello {manager.first_name if manager else 'Manager'},</p>
+
+                            <p style="font-size: 16px;"><strong>{employee_name}</strong> has successfully completed all onboarding steps!</p>
+
+                            <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+                                <h3 style="margin-top: 0; color: #2c3e50;">Employee Details:</h3>
+                                <ul style="list-style: none; padding: 0;">
+                                    <li style="padding: 8px 0;"><strong>Name:</strong> {employee_name}</li>
+                                    <li style="padding: 8px 0;"><strong>Position:</strong> {employee.position or 'N/A'}</li>
+                                    <li style="padding: 8px 0;"><strong>Property:</strong> {property_name}</li>
+                                    <li style="padding: 8px 0;"><strong>Start Date:</strong> {employee.start_date or 'N/A'}</li>
+                                    <li style="padding: 8px 0;"><strong>Completed:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</li>
+                                </ul>
+                            </div>
+
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                                <p style="margin: 0;"><strong>⚠️ Action Required:</strong></p>
+                                <p style="margin: 10px 0 0 0;">Please complete <strong>I-9 Section 2 verification</strong> within <strong>3 business days</strong> of the employee's first day of work.</p>
+                            </div>
+
+                            <h3 style="color: #2c3e50;">Completed Forms:</h3>
+                            <ul style="color: #555;">
+                                <li>✅ Personal Information</li>
+                                <li>✅ I-9 Form (Section 1)</li>
+                                <li>✅ W-4 Tax Withholding</li>
+                                <li>✅ Direct Deposit</li>
+                                <li>✅ Health Insurance Enrollment</li>
+                                <li>✅ Company Policies</li>
+                                <li>✅ Human Trafficking Awareness</li>
+                                <li>✅ Weapons Policy</li>
+                                <li>✅ Final Review & Signature</li>
+                            </ul>
+
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/review/{employee_id}"
+                                   style="display: inline-block; padding: 15px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                                    Review Employee & Complete I-9 Section 2
+                                </a>
+                            </div>
+
+                            <p style="margin-top: 30px; font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px;">
+                                If you have any questions, please contact HR.<br>
+                                This is an automated notification from the Hotel Onboarding System.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+
+                text_content = f"""
+                Employee Onboarding Complete!
+
+                Hello {manager.first_name if manager else 'Manager'},
+
+                {employee_name} has successfully completed all onboarding steps!
+
+                Employee Details:
+                - Name: {employee_name}
+                - Position: {employee.position or 'N/A'}
+                - Property: {property_name}
+                - Start Date: {employee.start_date or 'N/A'}
+                - Completed: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+
+                ⚠️ Action Required:
+                Please complete I-9 Section 2 verification within 3 business days of the employee's first day of work.
+
+                Completed Forms:
+                ✅ Personal Information
+                ✅ I-9 Form (Section 1)
+                ✅ W-4 Tax Withholding
+                ✅ Direct Deposit
+                ✅ Health Insurance Enrollment
+                ✅ Company Policies
+                ✅ Human Trafficking Awareness
+                ✅ Weapons Policy
+                ✅ Final Review & Signature
+
+                View employee details: {os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/employees/{employee_id}
+
+                If you have any questions, please contact HR.
+                This is an automated notification from the Hotel Onboarding System.
+                """
+
+                email_sent = await email_service.send_email(
+                    to_email=manager_email,
+                    subject=f"🎉 {employee_name} Completed Onboarding - Action Required",
+                    html_content=html_content,
+                    text_content=text_content
+                )
+
+                if email_sent:
+                    logger.info(f"✅ Manager notification sent to: {manager_email}")
+                else:
+                    logger.warning(f"⚠️ Failed to send manager notification to: {manager_email}")
+
+            except Exception as email_error:
+                logger.error(f"❌ Failed to send manager notification email: {email_error}")
+                # Continue anyway - onboarding is complete
+        else:
+            logger.warning(f"⚠️ No manager email found for employee {employee_id}")
+
+        return success_response(
+            data={
+                "success": True,
+                "employee_id": employee_id,
+                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "manager_notified": manager_email is not None
+            },
+            message="Onboarding completed successfully. Manager has been notified."
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Failed to complete onboarding: {e}")
+        return error_response(
+            message="Failed to complete onboarding",
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+            status_code=500,
+            detail=str(e)
+        )
 
 # =============================================
 # STEP INVITATIONS API ENDPOINTS

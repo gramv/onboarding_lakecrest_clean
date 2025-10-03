@@ -10,6 +10,8 @@ import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { FormSection } from '@/components/ui/form-section'
 import { getApiUrl } from '@/config/api'
+import axios from 'axios'
+import PDFViewer from '@/components/PDFViewer'
 
 interface WeaponsPolicyData {
   hasReadPolicy: boolean
@@ -53,6 +55,8 @@ export default function WeaponsPolicyStep({
     isSigned: false
   })
   const [showReview, setShowReview] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [remotePdfUrl, setRemotePdfUrl] = useState<string | null>(null)
 
   // Auto-save data
   const autoSaveData = {
@@ -80,11 +84,18 @@ export default function WeaponsPolicyStep({
         if (parsed.formData?.isSigned) {
           setShowReview(false)
         }
+        // ✅ FIX: Restore PDF URLs for preview after signing
+        if (parsed.pdfUrl) {
+          setPdfUrl(parsed.pdfUrl)
+        }
+        if (parsed.remotePdfUrl) {
+          setRemotePdfUrl(parsed.remotePdfUrl)
+        }
       } catch (e) {
         console.error('Failed to parse saved weapons policy data:', e)
       }
     }
-    
+
     if (progress.completedSteps.includes(currentStep.id)) {
       setFormData(prev => ({ ...prev, isSigned: true }))
     }
@@ -258,24 +269,78 @@ export default function WeaponsPolicyStep({
   }
 
   const handleSign = async (signatureData: any) => {
+    console.log('✅ Weapons Policy - handleSign called with:', {
+      hasSignature: !!signatureData.signature,
+      hasPdfUrl: !!signatureData.pdfUrl
+    })
+
+    const completedAt = new Date().toISOString()
     const completeData = {
       ...formData,
       isSigned: true,
       signatureData,
-      completedAt: new Date().toISOString()
+      completedAt
     }
-    
+
     setFormData(completeData)
-    
-    // Save to session storage
+
+    // ✅ FIX: Call backend to generate and save signed PDF (like Human Trafficking)
+    let supabaseUrl: string | null = null
+    let base64Pdf: string | null = null
+
+    if (employee?.id && !employee.id.startsWith('demo-')) {
+      try {
+        console.log('📤 Calling backend to save signed Weapons Policy PDF...')
+
+        const response = await axios.post(
+          `${getApiUrl()}/onboarding/${employee.id}/weapons-policy/generate-pdf`,
+          {
+            employee_data: {
+              name: `${employee.firstName} ${employee.lastName}`,
+              property_name: property?.name || '',
+              position: employee.position || '',
+              ...formData
+            },
+            signature_data: {
+              signature: signatureData.signature,
+              signedAt: completedAt,
+              ipAddress: signatureData.ipAddress,
+              userAgent: signatureData.userAgent
+            }
+          }
+        )
+
+        if (response.data?.success && response.data?.data) {
+          supabaseUrl = response.data.data.pdf_url
+          const pdfBase64 = response.data.data.pdf
+          base64Pdf = `data:application/pdf;base64,${pdfBase64}`
+
+          console.log('✅ Signed Weapons Policy PDF saved to database:', supabaseUrl)
+        } else {
+          console.error('❌ Failed to save signed PDF:', response.data)
+        }
+      } catch (error) {
+        console.error('❌ Error saving signed Weapons Policy PDF:', error)
+        // Continue even if backend save fails - data is in session storage
+      }
+    }
+
+    // Save to session storage with PDF URLs
     sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
       formData: completeData,
-      showReview: false
+      showReview: false,
+      pdfUrl: base64Pdf,
+      remotePdfUrl: supabaseUrl
     }))
-    
+
+    // Hide review BEFORE marking complete
+    setShowReview(false)
+
+    // Mark step complete
     await saveProgress(currentStep.id, completeData)
     await markStepComplete(currentStep.id, completeData)
-    setShowReview(false)
+
+    console.log('✅ Weapons Policy step completed and signed')
   }
 
   const handleBack = () => {
@@ -305,21 +370,41 @@ export default function WeaponsPolicyStep({
               </AlertDescription>
             </Alert>
 
-            <Card>
-              <CardContent className="p-4 sm:p-6">
-                <div className="text-center">
-                  <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-500 mx-auto mb-3 sm:mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-green-800 mb-2">
-                    {language === 'es' ? 'Reconocimiento Completo' : 'Acknowledgment Complete'}
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600">
-                    {language === 'es'
-                      ? 'Su reconocimiento ha sido registrado y guardado.'
-                      : 'Your acknowledgment has been recorded and saved.'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* ✅ FIX: Show PDF preview after signing (like Human Trafficking) */}
+            {(pdfUrl || remotePdfUrl) ? (
+              <Card>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+                    <span>{language === 'es' ? 'Vista previa del documento firmado' : 'Signed Document Preview'}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6">
+                  <PDFViewer
+                    pdfUrl={remotePdfUrl || undefined}
+                    pdfData={!remotePdfUrl ? pdfUrl ?? undefined : undefined}
+                    height="600px"
+                    title="Signed Weapons Policy Acknowledgment"
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="text-center">
+                    <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-500 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-green-800 mb-2">
+                      {language === 'es' ? 'Reconocimiento Completo' : 'Acknowledgment Complete'}
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600">
+                      {language === 'es'
+                        ? 'Su reconocimiento ha sido registrado y guardado.'
+                        : 'Your acknowledgment has been recorded and saved.'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </StepContentWrapper>
       </StepContainer>

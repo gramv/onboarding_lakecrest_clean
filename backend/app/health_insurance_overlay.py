@@ -1106,8 +1106,8 @@ class HealthInsuranceFormOverlay:
             for name, value in vision_checkboxes:
                 print(f"    - '{name}': {value}")
 
-            doc.save(pdf_buffer)
-            pdf_bytes = pdf_buffer.getvalue()
+            # ✅ FIX: Use doc.write() instead of doc.save() to avoid broken pipe error
+            pdf_bytes = doc.write()
 
             # Final summary
             print("\n" + "="*50)

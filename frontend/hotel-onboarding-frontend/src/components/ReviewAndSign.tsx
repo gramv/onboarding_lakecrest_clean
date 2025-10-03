@@ -459,15 +459,12 @@ export default function ReviewAndSign({
               </AlertDescription>
             </Alert>
           ) : (pdfUrl || pdfData) ? (
-            <div className="h-[500px] sm:h-[600px] md:h-[700px] lg:h-[800px]">
-              <PDFViewer
-                pdfUrl={pdfUrl || undefined}
-                pdfData={pdfData || undefined}
-                title={`${title} Preview`}
-                height="100%"
-                showToolbar={true}
-              />
-            </div>
+            <PDFViewer
+              pdfUrl={pdfUrl || undefined}
+              pdfData={pdfData || undefined}
+              title={`${title} Preview`}
+              height="600px"
+            />
           ) : null}
         </div>
       ) : (
@@ -572,22 +569,37 @@ export default function ReviewAndSign({
           <div className="flex gap-4">
             {onBack && (
               <Button
+                type="button"
                 variant="outline"
-                onClick={onBack}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onBack()
+                }}
                 className="flex-1"
               >
                 {t.editButton}
               </Button>
             )}
             <Button
+              type="button"
               variant="outline"
-              onClick={handleClearSignature}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleClearSignature()
+              }}
               className="flex-1"
             >
               {t.clearSignature}
             </Button>
             <Button
-              onClick={handleSubmitSignature}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleSubmitSignature()
+              }}
               className="flex-1"
             >
               <CheckCircle className="h-4 w-4 mr-2" />

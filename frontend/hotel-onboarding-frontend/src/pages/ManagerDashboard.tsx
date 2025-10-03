@@ -8,10 +8,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { StatsSkeleton, SkeletonCard } from '@/components/ui/skeleton-loader'
 import { useToast } from '@/hooks/use-toast'
-import { Building2, Users, FileText, BarChart3, MapPin, Phone, AlertTriangle, RefreshCw, Download, Lock, Settings } from 'lucide-react'
+import { Building2, Users, FileText, BarChart3, MapPin, Phone, AlertTriangle, RefreshCw, Download, Lock, Settings, ClipboardCheck } from 'lucide-react'
 import { ApplicationsTab } from '@/components/dashboard/ApplicationsTab'
 import { EmployeesTab } from '@/components/dashboard/EmployeesTab'
 import { AnalyticsTab } from '@/components/dashboard/AnalyticsTab'
+import { PendingReviewsTab } from '@/components/dashboard/PendingReviewsTab'
 import { QRCodeCard } from '@/components/ui/qr-code-display'
 import { PasswordResetModal } from '@/components/profile/PasswordResetModal'
 import { ManagerNotificationSettings } from '@/components/dashboard/ManagerNotificationSettings'
@@ -397,7 +398,12 @@ export default function ManagerDashboard() {
 
         {/* Main Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 sm:mt-6">
-          <TabsList className="w-full grid grid-cols-4 gap-1 bg-gray-50 p-1 rounded-xl">
+          <TabsList className="w-full grid grid-cols-5 gap-1 bg-gray-50 p-1 rounded-xl">
+            <TabsTrigger value="reviews" className="rounded-lg flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] px-1 sm:px-3">
+              <ClipboardCheck className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Reviews</span>
+              <span className="sm:hidden text-xs">Review</span>
+            </TabsTrigger>
             <TabsTrigger value="applications" className="rounded-lg flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] px-1 sm:px-3">
               <FileText className="h-4 w-4 flex-shrink-0" />
               <span className="hidden sm:inline">Applications</span>
@@ -422,6 +428,10 @@ export default function ManagerDashboard() {
               <span className="sm:hidden text-xs">Prefs</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="reviews">
+            <PendingReviewsTab />
+          </TabsContent>
 
           <TabsContent value="applications">
             <ApplicationsTab

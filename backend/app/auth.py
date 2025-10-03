@@ -478,7 +478,11 @@ def require_hr_or_manager_role(current_user: User = Depends(get_current_user)) -
     """Require HR or Manager role"""
     if current_user.role not in ["hr", "manager"]:
         raise HTTPException(
-            status_code=403, 
+            status_code=403,
             detail="HR or Manager access required"
         )
     return current_user
+
+
+# Alias for manager review API
+get_current_manager = require_manager_role

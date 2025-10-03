@@ -11,6 +11,8 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useStepValidation } from '@/hooks/useStepValidation'
 import { finalReviewValidator } from '@/utils/stepValidators'
 import { Button } from '@/components/ui/button'
+import axios from 'axios'
+import { getApiUrl } from '@/config/api'
 
 export default function FinalReviewStep({
   currentStep,
@@ -63,15 +65,29 @@ export default function FinalReviewStep({
   }
 
   const handleSignatureComplete = async (signature) => {
+    console.log('🎉 FINAL REVIEW - handleSignatureComplete called!')
+    console.log('📝 Signature data:', {
+      hasSignature: !!signature,
+      signatureKeys: signature ? Object.keys(signature) : [],
+      hasSignatureField: !!signature?.signature,
+      hasSignedAt: !!signature?.signedAt
+    })
+    console.log('✅ Final acknowledgments:', finalAcknowledgments)
+    console.log('👤 Employee:', { id: employee?.id, name: employee?.firstName })
+    console.log('🏨 Property:', { id: property?.id, name: property?.name })
+
     setSignatureData(signature)
-    
+
     // Validate before completing
     const validation = await validate({
       finalAcknowledgments,
       signature
     })
-    
+
+    console.log('🔍 Validation result:', validation)
+
     if (validation.valid) {
+      console.log('✅ Validation passed! Proceeding with completion...')
       const completionData = {
         finalAcknowledgments,
         signatureData: signature,
@@ -87,7 +103,44 @@ export default function FinalReviewStep({
 
       setReviewData(completionData.reviewData)
       setIsComplete(true)
+
+      // ✅ FIX: Mark step complete
       await markStepComplete(currentStep.id, completionData)
+
+      // ✅ FIX: Call backend to complete onboarding and send manager notification
+      if (employee?.id && property?.id) {
+        try {
+          console.log('📧 Completing onboarding and sending manager notification...')
+
+          const response = await axios.post(
+            `${getApiUrl()}/onboarding/${employee.id}/complete-onboarding`,
+            {
+              employee_id: employee.id,
+              property_id: property.id,
+              completed_at: completionData.completedAt,
+              final_signature: signature
+            }
+          )
+
+          if (response.data?.success) {
+            console.log('✅ Onboarding completed! Manager notification sent.')
+            console.log('📧 Response data:', response.data)
+          } else {
+            console.error('❌ Backend returned success=false:', response.data)
+          }
+        } catch (error) {
+          console.error('❌ Failed to send manager notification:', error)
+          console.error('❌ Error details:', error.response?.data || error.message)
+          // Continue anyway - step is marked complete
+        }
+      } else {
+        console.warn('⚠️ Missing employee or property data:', {
+          hasEmployee: !!employee?.id,
+          hasProperty: !!property?.id
+        })
+      }
+    } else {
+      console.error('❌ Validation failed:', validation.errors)
     }
   }
 
@@ -109,19 +162,17 @@ export default function FinalReviewStep({
       complianceMessage: 'This onboarding process complies with federal employment law requirements including I-9 and tax withholding regulations.',
       finalSignature: 'Final Employee Signature',
       signatureDesc: 'Your signature below certifies that you have completed the onboarding process and agree to all terms and conditions.',
-      submitButton: 'Complete Onboarding',
+      submitButton: '🎉 Complete Onboarding',
       stepStatuses: {
-        personal_info: 'Personal Information',
-        document_upload: 'Document Upload',
-        i9_section1: 'I-9 Section 1',
-        i9_review_sign: 'I-9 Review & Sign',
-        w4_form: 'W-4 Tax Form',
-        w4_review_sign: 'W-4 Review & Sign',
-        direct_deposit: 'Direct Deposit',
-        emergency_contacts: 'Emergency Contacts',
-        health_insurance: 'Health Insurance',
-        company_policies: 'Company Policies',
-        trafficking_awareness: 'Human Trafficking Awareness'
+        'personal-info': 'Personal Information',
+        'job-details': 'Job Details',
+        'company-policies': 'Company Policies',
+        'i9-complete': 'I-9 Form',
+        'w4-form': 'W-4 Tax Form',
+        'direct-deposit': 'Direct Deposit',
+        'health-insurance': 'Health Insurance',
+        'trafficking-awareness': 'Human Trafficking Awareness',
+        'weapons-policy': 'Weapons Policy'
       },
       estimatedTime: 'Estimated time: 4-5 minutes',
       overallProgress: 'Overall Progress',
@@ -146,19 +197,17 @@ export default function FinalReviewStep({
       complianceMessage: 'Este proceso de incorporación cumple con los requisitos de la ley federal de empleo, incluidos los requisitos del I-9 y de retención de impuestos.',
       finalSignature: 'Firma Final del Empleado',
       signatureDesc: 'Su firma a continuación certifica que ha completado el proceso de incorporación y acepta todos los términos y condiciones.',
-      submitButton: 'Completar Incorporación',
+      submitButton: '🎉 Completar Incorporación',
       stepStatuses: {
-        personal_info: 'Información Personal',
-        document_upload: 'Subir Documentos',
-        i9_section1: 'Formulario I-9 Sección 1',
-        i9_review_sign: 'Revisar y Firmar I-9',
-        w4_form: 'Formulario de Impuestos W-4',
-        w4_review_sign: 'Revisar y Firmar W-4',
-        direct_deposit: 'Depósito Directo',
-        emergency_contacts: 'Contactos de Emergencia',
-        health_insurance: 'Seguro de Salud',
-        company_policies: 'Políticas de la Empresa',
-        trafficking_awareness: 'Concientización sobre Trata de Personas'
+        'personal-info': 'Información Personal',
+        'job-details': 'Detalles del Trabajo',
+        'company-policies': 'Políticas de la Empresa',
+        'i9-complete': 'Formulario I-9',
+        'w4-form': 'Formulario de Impuestos W-4',
+        'direct-deposit': 'Depósito Directo',
+        'health-insurance': 'Seguro de Salud',
+        'trafficking-awareness': 'Concientización sobre Trata de Personas',
+        'weapons-policy': 'Política de Armas'
       },
       estimatedTime: 'Tiempo estimado: 4-5 minutos',
       overallProgress: 'Progreso General',
@@ -170,15 +219,30 @@ export default function FinalReviewStep({
 
   const t = translations[language]
 
-  // Calculate completion status for each step
+  // ✅ FIX: Calculate completion status for each step using progress.completedSteps
   const getStepStatus = (stepId: string) => {
-    const stepData = progress.stepData?.[stepId]
-    return stepData?.completed || stepData?.signed || false
+    // Check if step is in completedSteps array
+    const isCompleted = progress.completedSteps?.includes(stepId) || false
+
+    console.log(`Step ${stepId} completion check:`, {
+      isCompleted,
+      completedSteps: progress.completedSteps,
+      hasCompletedSteps: !!progress.completedSteps
+    })
+
+    return isCompleted
   }
 
-  const completedSteps = Object.keys(t.stepStatuses).filter(stepId => getStepStatus(stepId))
+  const completedStepsList = Object.keys(t.stepStatuses).filter(stepId => getStepStatus(stepId))
   const totalSteps = Object.keys(t.stepStatuses).length
-  const completionPercentage = Math.round((completedSteps.length / totalSteps) * 100)
+  const completionPercentage = Math.round((completedStepsList.length / totalSteps) * 100)
+
+  console.log('📊 Final Review Progress:', {
+    completedStepsList,
+    totalSteps,
+    completionPercentage,
+    progressCompletedSteps: progress.completedSteps
+  })
 
   return (
     <StepContainer errors={errors} saveStatus={saveStatus}>
@@ -229,7 +293,7 @@ export default function FinalReviewStep({
                 />
               </div>
               <p className="text-xs sm:text-sm text-blue-700 mt-2">
-                {completedSteps.length} of {totalSteps} {t.stepsCompleted}
+                {completedStepsList.length} of {totalSteps} {t.stepsCompleted}
               </p>
             </div>
 
@@ -309,6 +373,7 @@ export default function FinalReviewStep({
             requireIdentityVerification={false}
             language={language}
             onSignatureComplete={handleSignatureComplete}
+            submitButtonText={t.submitButton}
           />
         </CardContent>
       </Card>

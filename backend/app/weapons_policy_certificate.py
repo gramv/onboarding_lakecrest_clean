@@ -69,13 +69,18 @@ class WeaponsPolicyCertificateGenerator:
         c.drawString(60, y, "Employee Signature:")
         c.line(200, y - 2, 500, y - 2)
 
+        # ✅ FIX: Check for both 'signatureImage' and 'signature' keys (frontend sends 'signature')
+        sig_data_raw = signature_data.get('signatureImage') or signature_data.get('signature')
+
         # Signature image (if not preview)
-        if not is_preview and signature_data.get('signatureImage'):
+        if not is_preview and sig_data_raw:
             try:
-                sig_data = signature_data['signatureImage']
+                sig_data = sig_data_raw
                 if sig_data.startswith('data:image'):
                     sig_data = sig_data.split(',')[1]
                 sig_bytes = base64.b64decode(sig_data)
+
+                print(f"✅ Weapons Policy - Processing signature: {len(sig_bytes)} bytes")
 
                 # Place within a box near the signature line
                 max_w, max_h = 180, 40
@@ -87,14 +92,17 @@ class WeaponsPolicyCertificateGenerator:
                 c.saveState()
                 c.drawImage(img, x0, y0, width=dw, height=dh, preserveAspectRatio=True, mask='auto')
                 c.restoreState()
-            except Exception:
+                print(f"✅ Weapons Policy - Signature successfully added to PDF")
+            except Exception as e:
                 # Fallback to just leave the line
+                print(f"❌ Weapons Policy - Failed to add signature: {e}")
                 pass
         elif is_preview:
             c.setFont("Helvetica", 10)
             c.setFillColor(colors.HexColor('#6b7280'))
             c.drawString(210, y - 15, "[Signature will appear here]")
             c.setFillColor(colors.black)
+            print(f"📄 Weapons Policy - Preview mode: signature placeholder added")
 
         # Date signed
         y -= 40

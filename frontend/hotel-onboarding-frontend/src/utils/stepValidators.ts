@@ -330,8 +330,14 @@ export const finalReviewValidator = (data: any): ValidationResult => {
     errors.push('Please check all final acknowledgments before signing')
   }
 
-  // Check for signature
-  if (!data.signature || !data.signatureData) {
+  // ✅ FIX: Check for signature - DigitalSignatureCapture sends signature object with signatureData field
+  // The signature object has: signatureData, timestamp, signedByName, etc.
+  const hasSignature = data.signature?.signatureData ||
+                       data.signatureData ||
+                       data.signature?.signature ||
+                       (data.signature && typeof data.signature === 'object' && Object.keys(data.signature).length > 0)
+
+  if (!hasSignature) {
     errors.push('Final employee signature is required to complete onboarding')
   }
 
