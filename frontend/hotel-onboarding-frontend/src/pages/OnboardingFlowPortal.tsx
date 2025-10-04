@@ -255,9 +255,15 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
         syncControllerSnapshot()
 
         setError(null)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to initialize onboarding:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load onboarding session')
+
+        // Check if it's a 403 Forbidden (onboarding completed)
+        if (err?.response?.status === 403 || err?.message?.includes('403')) {
+          setError('🎉 Onboarding Complete!\n\nYou have already completed your onboarding. If you need to make changes to your information, please contact your manager.')
+        } else {
+          setError(err instanceof Error ? err.message : 'Failed to load onboarding session')
+        }
       } finally {
         setLoading(false)
       }

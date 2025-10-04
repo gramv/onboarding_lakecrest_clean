@@ -359,9 +359,25 @@ export class OnboardingFlowController {
       // Try to validate token and load session data from API
       try {
         const response = await fetch(`${this.apiUrl}/onboarding/welcome/${token}`)
-        
+
         if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`)
+          // Try to get error details from response
+          let errorMessage = `API responded with status: ${response.status}`
+          try {
+            const errorData = await response.json()
+            if (errorData.error) {
+              errorMessage = errorData.error
+            }
+            if (errorData.detail) {
+              errorMessage += `\n\n${errorData.detail}`
+            }
+          } catch (e) {
+            // Couldn't parse error response, use default message
+          }
+
+          const error: any = new Error(errorMessage)
+          error.response = { status: response.status }
+          throw error
         }
 
         const result = await response.json()
