@@ -3340,7 +3340,9 @@ class EnhancedSupabaseService:
         form_type: str,
         pdf_bytes: bytes,
         is_edit: bool = False,
-        signed_url_expires_in_seconds: int = 2592000  # 30 days
+        signed_url_expires_in_seconds: Optional[int] = None,  # Now optional, will use config
+        user_role: str = 'employee',  # Add user role for expiration calculation
+        request: Optional[Any] = None  # Add request for audit logging
     ) -> Dict[str, Any]:
         """Save a signed document to the unified private bucket with property-based paths.
 
@@ -3350,11 +3352,18 @@ class EnhancedSupabaseService:
           - Archive: {property_name}/{employee_name}/forms/{form_type}/archive/{version_ts}/{original_filename}
         """
         try:
-            # Import path manager
+            # Import path manager and expiration config
             from .document_path_utils import document_path_manager
+            from .config.document_expiration import get_expiration_time
+            from .audit_service import get_audit_service
 
             bucket_name = "onboarding-documents"
             await self.create_storage_bucket(bucket_name, public=False)
+
+            # Get expiration time based on document type and user role
+            if signed_url_expires_in_seconds is None:
+                signed_url_expires_in_seconds = get_expiration_time(form_type, user_role)
+                logger.info(f"📅 Using expiration: {signed_url_expires_in_seconds}s for {form_type} ({user_role})")
 
             # Build filename
             timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
@@ -3434,9 +3443,31 @@ class EnhancedSupabaseService:
                 signed_url_expires_in_seconds
             )
             signed_url = signed.get('signedURL') if isinstance(signed, dict) else None
-            signed_url_expires_at = (
-                datetime.now(timezone.utc) + timedelta(seconds=signed_url_expires_in_seconds)
-            ).isoformat()
+            signed_url_expires_at_dt = datetime.now(timezone.utc) + timedelta(seconds=signed_url_expires_in_seconds)
+            signed_url_expires_at = signed_url_expires_at_dt.isoformat()
+
+            # Log document upload to audit trail
+            try:
+                audit = get_audit_service(self)
+                await audit.log_document_access(
+                    document_path=active_path,
+                    document_type=form_type,
+                    access_type='upload',
+                    accessed_by=employee_id,
+                    request=request,
+                    property_id=property_id,
+                    employee_id=employee_id,
+                    user_role=user_role,
+                    expires_at=signed_url_expires_at_dt,
+                    metadata={
+                        'signed': True,
+                        'is_edit': is_edit,
+                        'file_size': len(pdf_bytes),
+                        'expiration_seconds': signed_url_expires_in_seconds
+                    }
+                )
+            except Exception as audit_err:
+                logger.warning(f"Failed to log audit trail: {audit_err}")
 
             # Record metadata in signed_documents table
             try:
