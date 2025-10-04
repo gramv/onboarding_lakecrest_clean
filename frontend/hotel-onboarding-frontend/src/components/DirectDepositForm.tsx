@@ -15,6 +15,7 @@ interface BankAccount {
   bankName: string;
   routingNumber: string;
   accountNumber: string;
+  accountNumberConfirm: string;  // Added for verification
   accountType: 'checking' | 'savings';
   depositAmount: number;
   percentage: number;
@@ -53,6 +54,7 @@ export default function DirectDepositForm({
       bankName: '',
       routingNumber: '',
       accountNumber: '',
+      accountNumberConfirm: '',  // Added for verification
       accountType: 'checking',
       depositAmount: 0,
       percentage: 100
@@ -89,6 +91,9 @@ export default function DirectDepositForm({
         'bank_name': 'Bank Name',
         'routing_number': 'Routing Number',
         'account_number': 'Account Number',
+        'confirm_account': 'Confirm Account Number',
+        'confirm_account_required': 'Please confirm your account number',
+        'account_mismatch': 'Account numbers do not match',
         'account_type': 'Account Type',
         'checking': 'Checking',
         'savings': 'Savings',
@@ -137,6 +142,9 @@ export default function DirectDepositForm({
         'bank_name': 'Nombre del Banco',
         'routing_number': 'Número de Ruta',
         'account_number': 'Número de Cuenta',
+        'confirm_account': 'Confirmar Número de Cuenta',
+        'confirm_account_required': 'Por favor confirme su número de cuenta',
+        'account_mismatch': 'Los números de cuenta no coinciden',
         'account_type': 'Tipo de Cuenta',
         'checking': 'Corriente',
         'savings': 'Ahorros',
@@ -163,6 +171,12 @@ export default function DirectDepositForm({
     if (!formData.primaryAccount.accountNumber.trim()) {
       newErrors['primaryAccount.accountNumber'] = t('required_field');
     }
+    // Validate account number confirmation
+    if (!formData.primaryAccount.accountNumberConfirm.trim()) {
+      newErrors['primaryAccount.accountNumberConfirm'] = t('confirm_account_required');
+    } else if (formData.primaryAccount.accountNumber !== formData.primaryAccount.accountNumberConfirm) {
+      newErrors['primaryAccount.accountNumberConfirm'] = t('account_mismatch');
+    }
 
     // Check total percentage for split deposits
     if (formData.depositType === 'split') {
@@ -187,6 +201,12 @@ export default function DirectDepositForm({
         }
         if (!account.accountNumber.trim()) {
           newErrors[`additionalAccounts.${index}.accountNumber`] = t('required_field');
+        }
+        // Validate account number confirmation for additional accounts
+        if (!account.accountNumberConfirm || !account.accountNumberConfirm.trim()) {
+          newErrors[`additionalAccounts.${index}.accountNumberConfirm`] = t('confirm_account_required');
+        } else if (account.accountNumber !== account.accountNumberConfirm) {
+          newErrors[`additionalAccounts.${index}.accountNumberConfirm`] = t('account_mismatch');
         }
       });
     }
@@ -255,6 +275,7 @@ export default function DirectDepositForm({
       bankName: '',
       routingNumber: '',
       accountNumber: '',
+      accountNumberConfirm: '',  // Added for verification
       accountType: 'checking',
       depositAmount: 0,
       percentage: 0
@@ -408,6 +429,21 @@ export default function DirectDepositForm({
                 <p className="text-red-600 text-xs mt-1">{errors['primaryAccount.accountNumber']}</p>
               )}
             </div>
+            <div>
+              <Label htmlFor="accountNumberConfirm" className="text-sm">{t('confirm_account')} *</Label>
+              <Input
+                id="accountNumberConfirm"
+                value={formData.primaryAccount.accountNumberConfirm}
+                onChange={(e) => handleInputChange('primaryAccount.accountNumberConfirm', e.target.value)}
+                onBlur={() => handleFieldBlur('primaryAccount.accountNumberConfirm')}
+                className={shouldShowError('primaryAccount.accountNumberConfirm') && errors['primaryAccount.accountNumberConfirm'] ? 'border-red-500' : ''}
+                placeholder=""
+                size="sm"
+              />
+              {shouldShowError('primaryAccount.accountNumberConfirm') && errors['primaryAccount.accountNumberConfirm'] && (
+                <p className="text-red-600 text-xs mt-1">{errors['primaryAccount.accountNumberConfirm']}</p>
+              )}
+            </div>
           </div>
           
           {/* Additional fields for partial/split */}
@@ -539,6 +575,20 @@ export default function DirectDepositForm({
                     />
                     {shouldShowError(`additionalAccounts.${index}.accountNumber`) && errors[`additionalAccounts.${index}.accountNumber`] && (
                       <p className="text-red-600 text-sm mt-1">{errors[`additionalAccounts.${index}.accountNumber`]}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label>{t('confirm_account')} *</Label>
+                    <Input
+                      value={account.accountNumberConfirm || ''}
+                      onChange={(e) => handleAdditionalAccountChange(index, 'accountNumberConfirm', e.target.value)}
+                      onBlur={() => handleFieldBlur(`additionalAccounts.${index}.accountNumberConfirm`)}
+                      className={shouldShowError(`additionalAccounts.${index}.accountNumberConfirm`) && errors[`additionalAccounts.${index}.accountNumberConfirm`] ? 'border-red-500' : ''}
+                      placeholder=""
+                    />
+                    {shouldShowError(`additionalAccounts.${index}.accountNumberConfirm`) && errors[`additionalAccounts.${index}.accountNumberConfirm`] && (
+                      <p className="text-red-600 text-sm mt-1">{errors[`additionalAccounts.${index}.accountNumberConfirm`]}</p>
                     )}
                   </div>
 
