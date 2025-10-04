@@ -466,14 +466,18 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
         warnings.push({ message, type: 'warning' })
       })
 
+      // Only show fallback warning if there are actual warnings from the server
+      // Don't show warning for 401 (expected for onboarding tokens - they use different auth than manager/HR)
       if (navigationResult.fallback && navigationResult.reason && !warningMessages.includes(navigationResult.reason)) {
         warnings.push({ message: navigationResult.reason, type: 'warning' })
-      } else if (navigationResult.fallback && warningMessages.length === 0) {
+      } else if (navigationResult.fallback && warningMessages.length > 0) {
+        // Only show "could not confirm" if there are other warnings (network issues, etc.)
         warnings.push({
           message: 'We could not confirm with the server, but your progress is saved locally. Please refresh once you are back online.',
           type: 'warning'
         })
       }
+      // If fallback is true but no warnings, it's likely a 401 (expected), so don't show any message
 
       setValidationMessages(warnings)
 

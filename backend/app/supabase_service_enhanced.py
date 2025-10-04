@@ -5879,6 +5879,11 @@ def get_enhanced_supabase_service() -> EnhancedSupabaseService:
         enhanced_supabase_service = EnhancedSupabaseService()
     return enhanced_supabase_service
 
+# Alias for compatibility with audit_api.py
+def get_supabase_service() -> EnhancedSupabaseService:
+    """Get Supabase service instance (alias for get_enhanced_supabase_service)"""
+    return get_enhanced_supabase_service()
+
 # Async context manager for database operations
 @asynccontextmanager
 async def get_db_service():
