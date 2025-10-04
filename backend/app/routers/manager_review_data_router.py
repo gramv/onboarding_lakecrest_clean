@@ -51,13 +51,13 @@ async def get_pending_reviews(
     """
     try:
         # Verify user is a manager
-        if current_user.get('role') not in ['manager', 'hr', 'admin']:
+        if current_user.role not in ['manager', 'hr', 'admin']:
             raise HTTPException(
                 status_code=403,
                 detail="Only managers can access pending reviews"
             )
-        
-        property_id = current_user.get('property_id')
+
+        property_id = current_user.property_id
         if not property_id:
             raise HTTPException(
                 status_code=400,
@@ -131,13 +131,13 @@ async def get_employee_review_data(
     """
     try:
         # Verify user is a manager
-        if current_user.get('role') not in ['manager', 'hr', 'admin']:
+        if current_user.role not in ['manager', 'hr', 'admin']:
             raise HTTPException(
                 status_code=403,
                 detail="Only managers can access employee review data"
             )
-        
-        property_id = current_user.get('property_id')
+
+        property_id = current_user.property_id
         
         # Get employee data
         employee = supabase_service.client.table("employees")\
@@ -275,10 +275,10 @@ async def get_i9_section_2_data(
     """
     try:
         # Verify access
-        if current_user.get('role') not in ['manager', 'hr', 'admin']:
+        if current_user.role not in ['manager', 'hr', 'admin']:
             raise HTTPException(status_code=403, detail="Access denied")
-        
-        property_id = current_user.get('property_id')
+
+        property_id = current_user.property_id
         
         # Get employee
         employee = supabase_service.client.table("employees")\
@@ -373,7 +373,7 @@ async def get_i9_section_2_data(
             }
             
             form_data["employer_representative_name"] = {
-                "value": profile.get('i9_employer_name') or current_user.get('name'),
+                "value": profile.get('i9_employer_name') or f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or 'Manager',
                 "source": "employer_profile",
                 "editable": False
             }

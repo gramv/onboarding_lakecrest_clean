@@ -52,14 +52,14 @@ async def request_document_access_otp(
     """
     try:
         # Verify user is a manager
-        if current_user.get('role') not in ['manager', 'hr', 'admin']:
+        if current_user.role not in ['manager', 'hr', 'admin']:
             raise HTTPException(
                 status_code=403,
                 detail="Only managers can request document access"
             )
-        
-        manager_id = current_user['id']
-        manager_email = current_user.get('email')
+
+        manager_id = current_user.id
+        manager_email = current_user.email
         
         if not manager_email:
             raise HTTPException(
@@ -126,13 +126,13 @@ async def verify_document_access_otp(
     """
     try:
         # Verify user is a manager
-        if current_user.get('role') not in ['manager', 'hr', 'admin']:
+        if current_user.role not in ['manager', 'hr', 'admin']:
             raise HTTPException(
                 status_code=403,
                 detail="Only managers can verify document access"
             )
-        
-        manager_id = current_user['id']
+
+        manager_id = current_user.id
         
         # Verify OTP
         result = await document_access_otp_service.verify_otp(
@@ -180,7 +180,7 @@ async def validate_document_access_session(
     Used before showing documents
     """
     try:
-        manager_id = current_user['id']
+        manager_id = current_user.id
         
         # Find active session
         from datetime import datetime, timezone
@@ -243,8 +243,8 @@ async def end_document_access_session(
     """
     try:
         from datetime import datetime, timezone
-        
-        manager_id = current_user['id']
+
+        manager_id = current_user.id
         
         # End the session
         result = supabase_service.client.table("document_access_sessions")\
@@ -281,8 +281,8 @@ async def get_active_sessions(
     """
     try:
         from datetime import datetime, timezone
-        
-        manager_id = current_user['id']
+
+        manager_id = current_user.id
         
         # Get active sessions
         sessions = supabase_service.client.table("document_access_sessions")\
