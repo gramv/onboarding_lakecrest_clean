@@ -20,6 +20,8 @@ const HRDashboardLayout = lazy(() => import('@/components/layouts/HRDashboardLay
 // Lazy load dashboard components
 const ManagerDashboard = lazy(() => import('./pages/ManagerDashboard'))
 const ManagerReviewEmployee = lazy(() => import('./pages/ManagerReviewEmployee'))
+const ManagerReviewEmployeeNew = lazy(() => import('./pages/ManagerReviewEmployeeNew'))
+const EmployerProfileSetup = lazy(() => import('@/components/manager/EmployerProfileSetup'))
 const PropertiesOverviewTab = lazy(() => import('@/components/dashboard/PropertiesOverviewTab'))
 const PropertiesTab = lazy(() => import('@/components/dashboard/PropertiesTab'))
 const ManagersTab = lazy(() => import('@/components/dashboard/ManagersTab'))
@@ -97,6 +99,25 @@ function App() {
                   <ManagerDashboard />
                 </ProtectedRoute>
               } />
+
+              {/* Employer Profile Setup */}
+              <Route path="/manager/employer-profile-setup" element={
+                <ProtectedRoute requiredRole="manager">
+                  <EmployerProfileSetup
+                    onComplete={() => window.location.href = '/manager'}
+                    onSkip={() => window.location.href = '/manager'}
+                  />
+                </ProtectedRoute>
+              } />
+
+              {/* Manager Review Employee - New Interface */}
+              <Route path="/manager/review-new/:employeeId" element={
+                <ProtectedRoute requiredRole="manager">
+                  <ManagerReviewEmployeeNew />
+                </ProtectedRoute>
+              } />
+
+              {/* Manager Review Employee - Legacy */}
               <Route path="/manager/review/:employeeId" element={
                 <ProtectedRoute requiredRole="manager">
                   <ManagerReviewEmployee />

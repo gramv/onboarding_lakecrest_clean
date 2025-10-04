@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Mail, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { documentAccessService } from '@/services/managerReviewService';
 
 interface OTPVerificationModalProps {
   isOpen: boolean;
@@ -64,27 +65,14 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/manager/document-access/request-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ employee_id: employeeId })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to send verification code');
-      }
+      const data = await documentAccessService.requestOTP(employeeId);
 
       setExpiresAt(data.expires_at);
       setStep('verify');
-      
+
       // Focus first input
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
-      
+
     } catch (err: any) {
       setError(err.message || 'Failed to send verification code');
     } finally {
@@ -94,7 +82,7 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
 
   const verifyOTP = async () => {
     const otpCode = otp.join('');
-    
+
     if (otpCode.length !== 6) {
       setError('Please enter all 6 digits');
       return;
@@ -104,31 +92,15 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/manager/document-access/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          employee_id: employeeId,
-          otp_code: otpCode
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Invalid verification code');
-      }
+      const data = await documentAccessService.verifyOTP(employeeId, otpCode);
 
       setStep('success');
-      
+
       // Call onVerified after a brief delay to show success message
       setTimeout(() => {
         onVerified(data.session_token, data.expires_at);
       }, 1500);
-      
+
     } catch (err: any) {
       setError(err.message || 'Invalid verification code');
       setOtp(['', '', '', '', '', '']);
