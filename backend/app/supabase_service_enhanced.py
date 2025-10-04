@@ -2965,13 +2965,65 @@ class EnhancedSupabaseService:
     def save_onboarding_form_data(self, token: str, employee_id: str, step_id: str, form_data: Dict[str, Any]) -> bool:
         """Save or update onboarding form data for a specific step"""
         try:
-            # Encrypt banking data for direct deposit step
-            if step_id == 'direct-deposit':
-                form_data = self.encrypt_banking_data(form_data)
-            
+            # Import new encryption service
+            from .encryption_service import get_encryption_service
+            encryption = get_encryption_service()
+
+            # Encrypt sensitive data based on step
+            if step_id == 'personal-info' or step_id == 'i9-section1':
+                # Encrypt SSN if present
+                if 'ssn' in form_data and form_data['ssn']:
+                    form_data['ssn_encrypted'] = encryption.encrypt(form_data['ssn'])
+                    form_data.pop('ssn', None)  # Remove plain text
+                    logger.info(f"🔒 Encrypted SSN for employee {employee_id}")
+
+                # Also check nested formData structure
+                if 'formData' in form_data and isinstance(form_data['formData'], dict):
+                    if 'ssn' in form_data['formData'] and form_data['formData']['ssn']:
+                        form_data['formData']['ssn_encrypted'] = encryption.encrypt(form_data['formData']['ssn'])
+                        form_data['formData'].pop('ssn', None)
+                        logger.info(f"🔒 Encrypted SSN in formData for employee {employee_id}")
+
+            elif step_id == 'direct-deposit':
+                # Encrypt bank account and routing number
+                if 'bank_account' in form_data and form_data['bank_account']:
+                    form_data['bank_account_encrypted'] = encryption.encrypt(form_data['bank_account'])
+                    form_data.pop('bank_account', None)
+                    logger.info(f"🔒 Encrypted bank account for employee {employee_id}")
+
+                if 'bank_routing' in form_data and form_data['bank_routing']:
+                    form_data['bank_routing_encrypted'] = encryption.encrypt(form_data['bank_routing'])
+                    form_data.pop('bank_routing', None)
+                    logger.info(f"🔒 Encrypted bank routing for employee {employee_id}")
+
+                # Also check nested structures (primaryAccount, additionalAccounts)
+                if 'primaryAccount' in form_data and isinstance(form_data['primaryAccount'], dict):
+                    if 'accountNumber' in form_data['primaryAccount'] and form_data['primaryAccount']['accountNumber']:
+                        form_data['primaryAccount']['accountNumber_encrypted'] = encryption.encrypt(form_data['primaryAccount']['accountNumber'])
+                        form_data['primaryAccount'].pop('accountNumber', None)
+
+                    if 'routingNumber' in form_data['primaryAccount'] and form_data['primaryAccount']['routingNumber']:
+                        form_data['primaryAccount']['routingNumber_encrypted'] = encryption.encrypt(form_data['primaryAccount']['routingNumber'])
+                        form_data['primaryAccount'].pop('routingNumber', None)
+
+                    logger.info(f"🔒 Encrypted primary account for employee {employee_id}")
+
+                # Encrypt additional accounts
+                if 'additionalAccounts' in form_data and isinstance(form_data['additionalAccounts'], list):
+                    for account in form_data['additionalAccounts']:
+                        if 'accountNumber' in account and account['accountNumber']:
+                            account['accountNumber_encrypted'] = encryption.encrypt(account['accountNumber'])
+                            account.pop('accountNumber', None)
+
+                        if 'routingNumber' in account and account['routingNumber']:
+                            account['routingNumber_encrypted'] = encryption.encrypt(account['routingNumber'])
+                            account.pop('routingNumber', None)
+
+                    logger.info(f"🔒 Encrypted {len(form_data['additionalAccounts'])} additional accounts for employee {employee_id}")
+
             # Check if data already exists for this token and step
             existing = self.client.table("onboarding_form_data").select("id").eq("token", token).eq("step_id", step_id).execute()
-            
+
             if existing.data:
                 # Update existing record
                 result = self.client.table("onboarding_form_data").update({
@@ -2986,7 +3038,7 @@ class EnhancedSupabaseService:
                     "step_id": step_id,
                     "form_data": form_data
                 }).execute()
-            
+
             return bool(result.data)
         except Exception as e:
             logger.error(f"Failed to save onboarding form data: {e}")
@@ -2997,27 +3049,89 @@ class EnhancedSupabaseService:
     def get_onboarding_form_data(self, token: str, step_id: str = None) -> Dict[str, Any]:
         """Get onboarding form data for a token and optional step"""
         try:
+            from .encryption_service import get_encryption_service
+            encryption = get_encryption_service()
+
             query = self.client.table("onboarding_form_data").select("*").eq("token", token)
-            
+
             if step_id:
                 query = query.eq("step_id", step_id)
-            
+
             result = query.execute()
-            
+
             if step_id and result.data:
                 # Return single step data
                 form_data = result.data[0].get("form_data", {}) if result.data else {}
-                # Decrypt banking data for direct deposit step
-                if step_id == 'direct-deposit' and form_data:
-                    form_data = self.decrypt_banking_data(form_data)
+
+                # Decrypt sensitive data based on step
+                if step_id in ['personal-info', 'i9-section1'] and form_data:
+                    # Decrypt SSN
+                    if 'ssn_encrypted' in form_data and form_data['ssn_encrypted']:
+                        form_data['ssn'] = encryption.decrypt(form_data['ssn_encrypted'])
+                        form_data.pop('ssn_encrypted', None)
+
+                    # Also check nested formData
+                    if 'formData' in form_data and isinstance(form_data['formData'], dict):
+                        if 'ssn_encrypted' in form_data['formData'] and form_data['formData']['ssn_encrypted']:
+                            form_data['formData']['ssn'] = encryption.decrypt(form_data['formData']['ssn_encrypted'])
+                            form_data['formData'].pop('ssn_encrypted', None)
+
+                elif step_id == 'direct-deposit' and form_data:
+                    # Decrypt bank account and routing
+                    if 'bank_account_encrypted' in form_data and form_data['bank_account_encrypted']:
+                        form_data['bank_account'] = encryption.decrypt(form_data['bank_account_encrypted'])
+                        form_data.pop('bank_account_encrypted', None)
+
+                    if 'bank_routing_encrypted' in form_data and form_data['bank_routing_encrypted']:
+                        form_data['bank_routing'] = encryption.decrypt(form_data['bank_routing_encrypted'])
+                        form_data.pop('bank_routing_encrypted', None)
+
+                    # Decrypt primary account
+                    if 'primaryAccount' in form_data and isinstance(form_data['primaryAccount'], dict):
+                        if 'accountNumber_encrypted' in form_data['primaryAccount']:
+                            form_data['primaryAccount']['accountNumber'] = encryption.decrypt(form_data['primaryAccount']['accountNumber_encrypted'])
+                            form_data['primaryAccount'].pop('accountNumber_encrypted', None)
+
+                        if 'routingNumber_encrypted' in form_data['primaryAccount']:
+                            form_data['primaryAccount']['routingNumber'] = encryption.decrypt(form_data['primaryAccount']['routingNumber_encrypted'])
+                            form_data['primaryAccount'].pop('routingNumber_encrypted', None)
+
+                    # Decrypt additional accounts
+                    if 'additionalAccounts' in form_data and isinstance(form_data['additionalAccounts'], list):
+                        for account in form_data['additionalAccounts']:
+                            if 'accountNumber_encrypted' in account:
+                                account['accountNumber'] = encryption.decrypt(account['accountNumber_encrypted'])
+                                account.pop('accountNumber_encrypted', None)
+
+                            if 'routingNumber_encrypted' in account:
+                                account['routingNumber'] = encryption.decrypt(account['routingNumber_encrypted'])
+                                account.pop('routingNumber_encrypted', None)
+
                 return form_data
             else:
                 # Return all steps data as a dictionary
                 form_data = {}
                 for record in result.data:
-                    form_data[record["step_id"]] = record["form_data"]
+                    step = record["step_id"]
+                    data = record["form_data"]
+
+                    # Decrypt based on step type
+                    if step in ['personal-info', 'i9-section1']:
+                        if 'ssn_encrypted' in data:
+                            data['ssn'] = encryption.decrypt(data['ssn_encrypted'])
+                            data.pop('ssn_encrypted', None)
+                    elif step == 'direct-deposit':
+                        if 'bank_account_encrypted' in data:
+                            data['bank_account'] = encryption.decrypt(data['bank_account_encrypted'])
+                            data.pop('bank_account_encrypted', None)
+                        if 'bank_routing_encrypted' in data:
+                            data['bank_routing'] = encryption.decrypt(data['bank_routing_encrypted'])
+                            data.pop('bank_routing_encrypted', None)
+
+                    form_data[step] = data
+
                 return form_data
-                
+
         except Exception as e:
             logger.error(f"Failed to get onboarding form data: {e}")
             logger.error(f"Token: {token}, Step: {step_id}")
