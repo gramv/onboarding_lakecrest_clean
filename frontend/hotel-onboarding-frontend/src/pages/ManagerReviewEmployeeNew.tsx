@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ManagerReviewInterface } from '@/components/manager/ManagerReviewInterface';
 import { useToast } from '@/hooks/use-toast';
+import { reviewDataService } from '@/services/managerReviewService';
 
 export default function ManagerReviewEmployeeNew() {
   const { employeeId } = useParams<{ employeeId: string }>();
