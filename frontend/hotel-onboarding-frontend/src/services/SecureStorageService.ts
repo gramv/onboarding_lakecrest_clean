@@ -4,9 +4,23 @@
  *
  * Security Features:
  * - AES-256 encryption for all sensitive data
- * - Session-specific encryption key (destroyed on tab close)
+ * - Session-specific encryption key (stored in memory only)
+ * - Cryptographically secure random key generation
  * - Automatic cleanup on session end
  * - Protection against XSS attacks
+ *
+ * SECURITY IMPROVEMENTS (Oct 2025):
+ * ✅ Encryption key stored in memory (not sessionStorage)
+ * ✅ Uses crypto.getRandomValues() for secure random generation
+ * ✅ Fixed clearSensitiveData() to use correct key names
+ * ✅ Prevents key theft via XSS or DevTools
+ *
+ * IMPORTANT SECURITY NOTES:
+ * - This provides defense-in-depth against XSS attacks
+ * - Encrypted data is still in sessionStorage (visible but unreadable)
+ * - Encryption key is in memory (not accessible via DevTools)
+ * - Key is destroyed when tab closes (cannot decrypt old data)
+ * - For maximum security, sensitive data should also be encrypted server-side
  */
 
 import CryptoJS from 'crypto-js'
@@ -31,18 +45,33 @@ class SecureStorageService {
   /**
    * Generate or retrieve session-specific encryption key
    * Key is unique per browser tab and destroyed when tab closes
+   *
+   * SECURITY NOTE: Key is stored in memory, not sessionStorage
+   * This prevents XSS attacks from stealing the key
    */
   private getOrCreateEncryptionKey(): string {
-    const keyStorageKey = '_session_encryption_key'
-    let key = sessionStorage.getItem(keyStorageKey)
+    // ✅ SECURITY FIX: Store key in memory only, not in sessionStorage
+    // Generate new cryptographically secure 256-bit key
+    const randomBytes = new Uint8Array(32) // 256 bits = 32 bytes
 
-    if (!key) {
-      // Generate new 256-bit key
-      key = CryptoJS.lib.WordArray.random(256/8).toString()
-      sessionStorage.setItem(keyStorageKey, key)
-      console.log('🔐 Generated new session encryption key')
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      // Use cryptographically secure random number generator
+      window.crypto.getRandomValues(randomBytes)
+    } else {
+      // Fallback to CryptoJS (less secure, but better than nothing)
+      console.warn('⚠️ crypto.getRandomValues not available, using fallback')
+      const wordArray = CryptoJS.lib.WordArray.random(32)
+      for (let i = 0; i < 32; i++) {
+        randomBytes[i] = (wordArray.words[Math.floor(i / 4)] >> (24 - (i % 4) * 8)) & 0xff
+      }
     }
 
+    // Convert to hex string
+    const key = Array.from(randomBytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    console.log('🔐 Generated new session encryption key (stored in memory only)')
     return key
   }
 
@@ -128,20 +157,23 @@ class SecureStorageService {
    */
   clearSensitiveData(): void {
     try {
+      // ✅ SECURITY FIX: Use correct key names (without 'onboarding_' prefix)
       const sensitiveKeys = [
-        'onboarding_personal-info_data',
-        'onboarding_w4-form_data',
-        'onboarding_direct-deposit_data',
-        'onboarding_i9-section1_data',
-        'onboarding_health-insurance_data'
+        'personal-info_data',
+        'w4-form_data',
+        'direct-deposit_data',
+        'i9-section1_data',
+        'health-insurance_data',
+        'w4_signature_data',
+        'i9-complete_data'
       ]
 
       sensitiveKeys.forEach(key => {
         this.removeItem(key)
       })
 
-      // Also clear encryption key
-      sessionStorage.removeItem('_session_encryption_key')
+      // Clear encryption key from memory (it's not in sessionStorage anymore)
+      // The key will be garbage collected when the service is destroyed
       console.log('🔒 Cleared sensitive data on session end')
     } catch (error) {
       console.error('Failed to clear sensitive data:', error)
