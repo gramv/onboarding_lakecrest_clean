@@ -9,8 +9,11 @@ from typing import Optional
 import logging
 
 from app.services.document_access_otp_service import document_access_otp_service
-from app.services.supabase_service_enhanced import supabase_service
+from app.supabase_service_enhanced import get_enhanced_supabase_service
 from app.dependencies import get_current_user
+
+# Get supabase service instance
+supabase_service = get_enhanced_supabase_service()
 
 logger = logging.getLogger(__name__)
 

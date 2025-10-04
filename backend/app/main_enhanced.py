@@ -831,6 +831,14 @@ try:
 except ImportError as e:
     logger.warning(f"Manager review router not available: {e}")
 
+# Include manager document access router (OTP verification)
+try:
+    from app.routers.manager_document_access_router import router as document_access_router
+    app.include_router(document_access_router)
+    logger.info("✅ Manager document access router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Manager document access router not available: {e}")
+
 # Include audit trail API router
 try:
     from .audit_api import audit_router
