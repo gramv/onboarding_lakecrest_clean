@@ -831,6 +831,14 @@ try:
 except ImportError as e:
     logger.warning(f"Manager review router not available: {e}")
 
+# Include audit trail API router
+try:
+    from .audit_api import audit_router
+    app.include_router(audit_router)
+    logger.info("✅ Audit trail router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Audit trail router not available: {e}")
+
 # Initialize enhanced services
 onboarding_orchestrator = None
 form_update_service = None
