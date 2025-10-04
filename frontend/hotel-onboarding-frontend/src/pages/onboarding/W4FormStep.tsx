@@ -17,6 +17,7 @@ import { generateCleanW4Pdf, addSignatureToExistingW4Pdf } from '@/utils/w4PdfGe
 import axios from 'axios'
 import { fetchStepDocumentMetadata, persistStepDocument, listStepDocuments, StepDocumentMetadata } from '@/services/documentService'
 import { uploadOnboardingDocument } from '@/services/onboardingDocuments'
+import { secureStorage } from '@/services/SecureStorageService'
 
 interface W4Translations {
   title: string
@@ -141,7 +142,7 @@ export default function W4FormStep({
               }
               if (w4Data.signature_data) {
                 // Store signature data for later use
-                sessionStorage.setItem('w4_signature_data', JSON.stringify(w4Data.signature_data))
+                secureStorage.setItem('w4_signature_data', w4Data.signature_data)
               }
             }
           } catch (dbError) {
@@ -149,13 +150,13 @@ export default function W4FormStep({
           }
         }
 
-        // Second, check session storage (may override database data)
-        const savedW4Data = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+        // Second, check encrypted storage (may override database data)
+        const savedW4Data = secureStorage.getItem(`${currentStep.id}_data`)
         console.log('W4FormStep - Loading saved data:', savedW4Data)
-        
+
         if (savedW4Data) {
           try {
-            const parsed = JSON.parse(savedW4Data)
+            const parsed = savedW4Data
             console.log('W4FormStep - Parsed data:', parsed)
             
             // Handle both nested structure (expected) and flat structure (from cloud)
@@ -217,8 +218,8 @@ export default function W4FormStep({
         }
         
         // Load existing W-4 data (backward compatibility check)
-        const existingW4Data = sessionStorage.getItem('onboarding_w4-form_data')
-        
+        const existingW4Data = secureStorage.getItem('w4-form_data')
+
         if (existingW4Data && !savedW4Data) {
           const parsed = JSON.parse(existingW4Data)
           const tempData = parsed.formData || parsed
@@ -240,10 +241,10 @@ export default function W4FormStep({
         }
         
         // Always try to autofill from personal info for empty fields
-        const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
-        
+        const personalInfoData = secureStorage.getItem('personal-info_data')
+
         if (personalInfoData) {
-          const parsed = JSON.parse(personalInfoData)
+          const parsed = personalInfoData
           const personalInfo = parsed.personalInfo || parsed
           
           if (personalInfo) {
@@ -585,9 +586,9 @@ export default function W4FormStep({
         showReview: true
       }
 
-      // Save to session storage
-      sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(completeData))
-      sessionStorage.setItem('onboarding_w4-form_data', JSON.stringify(completeData))
+      // Save to encrypted storage
+      secureStorage.setItem(`${currentStep.id}_data`, completeData)
+      secureStorage.setItem('w4-form_data', completeData)
 
       // Save to backend database
       await saveProgress(currentStep.id, completeData)
@@ -697,8 +698,8 @@ export default function W4FormStep({
     setDocumentMetadata(null)
     setMetadataError(null)
     setHasStoredDocument(false)
-    sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
-    sessionStorage.removeItem('onboarding_w4-form_data')
+    secureStorage.removeItem(`${currentStep.id}_data`)
+    secureStorage.removeItem('w4-form_data')
   }
 
   const renderLoadingIndicator = () => {

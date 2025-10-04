@@ -17,6 +17,7 @@ import { FormSection } from '@/components/ui/form-section'
 import axios from 'axios'
 import { getLatestPDFForStep, savePDFToStorage } from '@/services/pdfStorage'
 import { fetchStepDocumentMetadata, listStepDocuments, persistStepDocument, StepDocumentMetadata } from '@/services/documentService'
+import { secureStorage } from '@/services/SecureStorageService'
 
 export default function DirectDepositStep({
   currentStep,
@@ -51,10 +52,10 @@ export default function DirectDepositStep({
   const effectiveSessionToken = useMemo(() => sessionToken || sessionTokenState, [sessionToken, sessionTokenState])
 
   const loadLocalFormState = useCallback(() => {
-    const raw = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+    const raw = secureStorage.getItem(`${currentStep.id}_data`)
     if (!raw) return null
     try {
-      const parsed = JSON.parse(raw)
+      const parsed = raw // secureStorage already returns parsed data
 
       // ✅ FIX: Clean up old data with large files to prevent quota errors
       if (parsed) {
@@ -71,14 +72,14 @@ export default function DirectDepositStep({
             cleanData.formData = cleanFormData
           }
 
-          // Save cleaned data back to sessionStorage
+          // Save cleaned data back to encrypted storage
           try {
-            sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(cleanData))
-            console.log('✅ Cleaned data saved to sessionStorage')
+            secureStorage.setItem(`${currentStep.id}_data`, cleanData)
+            console.log('✅ Cleaned data saved to encrypted storage')
           } catch (saveErr) {
             console.error('Failed to save cleaned data:', saveErr)
             // If still too large, clear it completely
-            sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
+            secureStorage.removeItem(`${currentStep.id}_data`)
             console.log('🗑️ Removed corrupted sessionStorage data')
           }
 
@@ -92,7 +93,7 @@ export default function DirectDepositStep({
     } catch (err) {
       console.error('Failed to parse stored direct deposit state:', err)
       // Clear corrupted data
-      sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
+      secureStorage.removeItem(`${currentStep.id}_data`)
       return null
     }
   }, [currentStep.id])
@@ -111,13 +112,13 @@ export default function DirectDepositStep({
       const jsonString = JSON.stringify(cleanPayload)
       const sizeKB = new Blob([jsonString]).size / 1024
 
-      console.log(`💾 Saving Direct Deposit state to sessionStorage (${sizeKB.toFixed(2)} KB)`)
+      console.log(`💾 Saving Direct Deposit state to encrypted storage (${sizeKB.toFixed(2)} KB)`)
 
       if (sizeKB > 1000) {
-        console.warn(`⚠️ sessionStorage data is large (${sizeKB.toFixed(2)} KB). May cause issues.`)
+        console.warn(`⚠️ Encrypted storage data is large (${sizeKB.toFixed(2)} KB). May cause issues.`)
       }
 
-      sessionStorage.setItem(`onboarding_${currentStep.id}_data`, jsonString)
+      secureStorage.setItem(`${currentStep.id}_data`, cleanPayload)
       console.log('✅ Direct Deposit state saved successfully')
     } catch (err: any) {
       console.error('❌ Failed to persist direct deposit state:', err)
@@ -128,7 +129,7 @@ export default function DirectDepositStep({
 
         try {
           // Clear the current key
-          sessionStorage.removeItem(`onboarding_${currentStep.id}_data`)
+          secureStorage.removeItem(`${currentStep.id}_data`)
 
           // Save only essential data
           const minimalPayload = {
@@ -141,7 +142,7 @@ export default function DirectDepositStep({
             documentMetadata: payload.documentMetadata
           }
 
-          sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(minimalPayload))
+          secureStorage.setItem(`${currentStep.id}_data`, minimalPayload)
           console.log('✅ Saved minimal Direct Deposit state after quota error')
         } catch (retryErr) {
           console.error('❌ Failed to save even minimal state:', retryErr)
@@ -291,12 +292,12 @@ export default function DirectDepositStep({
   React.useEffect(() => {
     console.log('DirectDepositStep - Starting SSN retrieval...')
     try {
-      // First try PersonalInfoStep data (regular sessionStorage - where SSN is actually saved)
-      const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+      // First try PersonalInfoStep data (encrypted storage - where SSN is actually saved)
+      const personalInfoData = secureStorage.getItem('personal-info_data')
       console.log('DirectDepositStep - Personal info data exists:', !!personalInfoData)
 
       if (personalInfoData) {
-        const parsedData = JSON.parse(personalInfoData)
+        const parsedData = personalInfoData // secureStorage already returns parsed data
         console.log('DirectDepositStep - Parsed personal info structure:', Object.keys(parsedData))
 
         // SSN can be at parsedData.personalInfo.ssn or parsedData.ssn
@@ -311,12 +312,12 @@ export default function DirectDepositStep({
         }
       }
 
-      // Fallback to I9 Section 1 data (also regular sessionStorage)
-      const i9Section1Data = sessionStorage.getItem('onboarding_i9-section1_data')
+      // Fallback to I9 Section 1 data (also encrypted storage)
+      const i9Section1Data = secureStorage.getItem('i9-section1_data')
       console.log('DirectDepositStep - I9 Section 1 data exists:', !!i9Section1Data)
 
       if (i9Section1Data) {
-        const parsedData = JSON.parse(i9Section1Data)
+        const parsedData = i9Section1Data // secureStorage already returns parsed data
         const ssn = parsedData?.formData?.ssn || parsedData?.ssn || ''
 
         console.log('DirectDepositStep - I9 Section 1 parsed SSN:', ssn ? '****' + ssn.slice(-4) : 'NOT FOUND')
@@ -328,11 +329,11 @@ export default function DirectDepositStep({
       }
 
       // Additional fallback: check I9 complete step data
-      const i9CompleteData = sessionStorage.getItem('onboarding_i9-complete_data')
+      const i9CompleteData = secureStorage.getItem('i9-complete_data')
       console.log('DirectDepositStep - I9 complete data exists:', !!i9CompleteData)
 
       if (i9CompleteData) {
-        const parsedData = JSON.parse(i9CompleteData)
+        const parsedData = i9CompleteData // secureStorage already returns parsed data
         const ssn = parsedData?.personalInfo?.ssn || parsedData?.formData?.ssn || parsedData?.ssn || ''
 
         console.log('DirectDepositStep - I9 complete parsed SSN:', ssn ? '****' + ssn.slice(-4) : 'NOT FOUND')
@@ -343,7 +344,7 @@ export default function DirectDepositStep({
         }
       }
 
-      console.log('DirectDepositStep - ❌ SSN not found in any sessionStorage location')
+      console.log('DirectDepositStep - ❌ SSN not found in any encrypted storage location')
     } catch (e) {
       console.error('Failed to retrieve SSN from session data:', e)
     }
@@ -356,9 +357,9 @@ export default function DirectDepositStep({
     let lastName = employee?.lastName || (employee as any)?.last_name || ''
 
     try {
-      const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+      const personalInfoData = secureStorage.getItem('personal-info_data')
       if (personalInfoData) {
-        const parsedData = JSON.parse(personalInfoData)
+        const parsedData = personalInfoData // secureStorage already returns parsed data
         const personalInfo = parsedData.personalInfo || parsedData
 
         // Use names from PersonalInfoStep if available

@@ -13,6 +13,7 @@ import { useStepValidation } from '@/hooks/useStepValidation'
 import { healthInsuranceValidator } from '@/utils/stepValidators'
 import axios from 'axios'
 import { getApiUrl } from '@/config/api'
+import { secureStorage } from '@/services/SecureStorageService'
 
 export default function HealthInsuranceStep({
   currentStep,
@@ -57,11 +58,11 @@ export default function HealthInsuranceStep({
 
     let loadedFormData: any = {}
 
-    // Try to load saved data from session storage
-    const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+    // Try to load saved data from encrypted storage
+    const savedData = secureStorage.getItem(`${currentStep.id}_data`)
     if (savedData) {
       try {
-        const parsed = JSON.parse(savedData)
+        const parsed = savedData // secureStorage already returns parsed data
         console.log('HealthInsuranceStep - Found saved data:', parsed)
 
         // Check for different data structures
@@ -91,10 +92,10 @@ export default function HealthInsuranceStep({
     }
 
     // Load personal info from personal-info step (CRITICAL FIX)
-    const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+    const personalInfoData = secureStorage.getItem('personal-info_data')
     if (personalInfoData) {
       try {
-        const parsed = JSON.parse(personalInfoData)
+        const parsed = personalInfoData // secureStorage already returns parsed data
         const personalInfo = parsed.personalInfo || parsed.formData?.personalInfo || {}
 
         // Merge personal info into formData
@@ -147,13 +148,13 @@ export default function HealthInsuranceStep({
       setIsValid(true)
       setShowReview(true)
 
-      // Save to session storage with complete data
-      sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
+      // Save to encrypted storage with complete data
+      secureStorage.setItem(`${currentStep.id}_data`, {
         formData: completeData,  // Save complete data including personalInfo
         isValid: true,
         isSigned: false,
         showReview: true
-      }))
+      })
 
       console.log('✅ Saved complete data with personalInfo:', {
         hasPersonalInfo: !!completeData.personalInfo,
@@ -256,8 +257,8 @@ export default function HealthInsuranceStep({
       } : undefined
     }
 
-    // Save to session storage with signed status and complete data
-    sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
+    // Save to encrypted storage with signed status and complete data
+    secureStorage.setItem(`${currentStep.id}_data`, {
       formData: cleanData,  // Clean data without signature image
       isValid: true,
       isSigned: true,
@@ -266,7 +267,7 @@ export default function HealthInsuranceStep({
       signatureData: cleanData.signatureData,
       completedAt: completeData.completedAt,
       pdfUrl
-    }))
+    })
 
     // Save progress to update controller's step data
     await saveProgress(currentStep.id, cleanData)

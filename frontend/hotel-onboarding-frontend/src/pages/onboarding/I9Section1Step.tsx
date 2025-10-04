@@ -13,6 +13,7 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useStepValidation } from '@/hooks/useStepValidation'
 import { i9Section1Validator } from '@/utils/stepValidators'
 import { getApiUrl } from '@/config/api'
+import { secureStorage } from '@/services/SecureStorageService'
 
 export default function I9Section1Step({
   currentStep,
@@ -56,8 +57,8 @@ export default function I9Section1Step({
   useEffect(() => {
     const loadExistingData = async () => {
       try {
-        // First, check sessionStorage (may have cloud data already loaded by portal)
-        const savedI9Data = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+        // First, check encrypted storage (may have cloud data already loaded by portal)
+        const savedI9Data = secureStorage.getItem(`${currentStep.id}_data`)
         console.log('I9Section1Step - Loading saved data:', savedI9Data)
         
         if (savedI9Data) {
@@ -124,7 +125,7 @@ export default function I9Section1Step({
         
         // Only auto-fill from personal info if no I9 data exists
         if (!savedI9Data) {
-      const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+      const personalInfoData = secureStorage.getItem('personal-info_data')
       console.log('Personal info data from storage:', personalInfoData)
       
       if (personalInfoData) {
@@ -192,9 +193,9 @@ export default function I9Section1Step({
       pdfUrl: savedPdfUrl // Preserve any existing PDF URL
     }
     
-    // Save to session storage immediately
-    sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(dataToSave))
-    console.log('I9Section1Step - Saved to session storage with citizenship_status:', completeFormData.citizenship_status)
+    // Save to encrypted storage immediately
+    secureStorage.setItem(`${currentStep.id}_data`, dataToSave)
+    console.log('I9Section1Step - Saved to encrypted storage with citizenship_status:', completeFormData.citizenship_status)
     
     // Save via saveProgress for backend sync (general progress tracking)
     await saveProgress(currentStep.id, dataToSave)
@@ -235,17 +236,17 @@ export default function I9Section1Step({
     console.log('I9Section1Step - PDF generated, saving to session storage')
     setSavedPdfUrl(pdfData)
     
-    // Update session storage with PDF URL
-    const currentData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+    // Update encrypted storage with PDF URL
+    const currentData = secureStorage.getItem(`${currentStep.id}_data`)
     if (currentData) {
       try {
-        const parsed = JSON.parse(currentData)
+        const parsed = currentData
         const updatedData = {
           ...parsed,
           pdfUrl: pdfData,
           pdfGeneratedAt: new Date().toISOString()
         }
-        sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(updatedData))
+        secureStorage.setItem(`${currentStep.id}_data`, updatedData)
       } catch (e) {
         console.error('Failed to update session storage with PDF:', e)
       }
@@ -265,8 +266,8 @@ export default function I9Section1Step({
     
     setIsSigned(true)
     
-    // Save to session storage with signed status
-    sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(completeData))
+    // Save to encrypted storage with signed status
+    secureStorage.setItem(`${currentStep.id}_data`, completeData)
     
     // Save signature to cloud via dedicated I-9 endpoint
     if (employee?.id && !employee.id.startsWith('demo-')) {

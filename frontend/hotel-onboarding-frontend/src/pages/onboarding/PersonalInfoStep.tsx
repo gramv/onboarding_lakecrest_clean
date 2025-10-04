@@ -12,6 +12,7 @@ import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { scrollToTop } from '@/utils/scrollHelpers'
+import { secureStorage } from '@/services/SecureStorageService'
 
 export default function PersonalInfoStep({
   currentStep,
@@ -53,8 +54,8 @@ export default function PersonalInfoStep({
     onSave: async (data) => {
       // Save to both cloud and local storage
       await saveProgress(currentStep.id, data)
-      // Store in session storage as backup
-      sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(data))
+      // Store in encrypted storage as backup
+      secureStorage.setItem(`${currentStep.id}_data`, data)
     }
   })
 
@@ -63,17 +64,13 @@ export default function PersonalInfoStep({
     const loadExistingData = async () => {
       try {
         let dataToUse = null
-        
-        // Try to load from session storage first
-        const savedData = sessionStorage.getItem(`onboarding_${currentStep.id}_data`)
+
+        // Try to load from encrypted storage first
+        const savedData = secureStorage.getItem(`${currentStep.id}_data`)
         console.log('PersonalInfoStep - Loading saved data:', savedData)
         if (savedData) {
-          try {
-            dataToUse = JSON.parse(savedData)
-            console.log('PersonalInfoStep - Parsed data from session:', dataToUse)
-          } catch (e) {
-            console.error('Failed to parse session data:', e)
-          }
+          dataToUse = savedData
+          console.log('PersonalInfoStep - Loaded data from encrypted storage:', dataToUse)
         }
         
         // ALWAYS check cloud data if we have an employee ID (not just when no local data)
@@ -94,8 +91,8 @@ export default function PersonalInfoStep({
                 if (cloudHasData || !dataToUse) {
                   // Use cloud data if it has content or if we have no local data
                   dataToUse = result.data
-                  // Update session storage with cloud data
-                  sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(result.data))
+                  // Update encrypted storage with cloud data
+                  secureStorage.setItem(`${currentStep.id}_data`, result.data)
                 }
               }
             }
@@ -202,7 +199,7 @@ export default function PersonalInfoStep({
       emergencyContacts: emergencyContactsData,
       activeTab
     }
-    sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(updatedFormData))
+    secureStorage.setItem(`${currentStep.id}_data`, updatedFormData)
     // Also save to backend (this will trigger sync status updates in the portal)
     await saveProgress(currentStep.id, updatedFormData)
   }, [emergencyContactsData, activeTab, currentStep.id, saveProgress])
@@ -218,8 +215,8 @@ export default function PersonalInfoStep({
       activeTab
     }
 
-    // Save to session storage immediately (no data loss)
-    sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(updatedFormData))
+    // Save to encrypted storage immediately (no data loss)
+    secureStorage.setItem(`${currentStep.id}_data`, updatedFormData)
 
     // Clear existing timer
     if (saveTimerRef.current) {
@@ -261,7 +258,7 @@ export default function PersonalInfoStep({
       emergencyContacts: emergencyContactsData,
       activeTab: newTab
     }
-    sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(updatedFormData))
+    secureStorage.setItem(`${currentStep.id}_data`, updatedFormData)
   }, [personalInfoData, emergencyContactsData, currentStep.id, unlocksEmergencyTab])
 
   const translations = {
