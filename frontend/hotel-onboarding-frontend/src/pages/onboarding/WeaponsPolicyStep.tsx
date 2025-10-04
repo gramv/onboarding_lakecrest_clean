@@ -12,6 +12,7 @@ import { FormSection } from '@/components/ui/form-section'
 import { getApiUrl } from '@/config/api'
 import axios from 'axios'
 import PDFViewer from '@/components/PDFViewer'
+import { secureStorage } from '@/services/SecureStorageService'
 
 interface WeaponsPolicyData {
   hasReadPolicy: boolean
@@ -57,6 +58,19 @@ export default function WeaponsPolicyStep({
   const [showReview, setShowReview] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [remotePdfUrl, setRemotePdfUrl] = useState<string | null>(null)
+
+  // ✅ FIX: Get personal info from encrypted storage for PDF generation
+  const personalInfoForPdf = React.useMemo(() => {
+    try {
+      const personalInfoData = secureStorage.getItem('personal-info_data')
+      if (personalInfoData) {
+        return personalInfoData.personalInfo || personalInfoData
+      }
+    } catch (e) {
+      console.warn('Failed to retrieve personal info for PDF:', e)
+    }
+    return null
+  }, [])
 
   // Auto-save data
   const autoSaveData = {
@@ -430,7 +444,8 @@ export default function WeaponsPolicyStep({
               formData={{
                 policyRead: formData.hasReadPolicy,
                 acknowledgments: formData.acknowledgments,
-                acknowledgmentStatements: t.acknowledgmentStatements
+                acknowledgmentStatements: t.acknowledgmentStatements,
+                personalInfo: personalInfoForPdf // ✅ FIX: Pass personal info from encrypted storage
               }}
               title={language === 'es' ? 'Revisar Reconocimiento de Política' : 'Review Policy Acknowledgment'}
               description={language === 'es'

@@ -11,6 +11,7 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { getApiUrl } from '@/config/api'
 import PDFViewer from '@/components/PDFViewer'
 import axios from 'axios'
+import { secureStorage } from '@/services/SecureStorageService'
 
 export default function TraffickingAwarenessStep({
   currentStep,
@@ -35,6 +36,19 @@ export default function TraffickingAwarenessStep({
   const [isLoadingPdf, setIsLoadingPdf] = useState(false)
   const [trainingProgress, setTrainingProgress] = useState<any>(null)
   const [sessionToken, setSessionToken] = useState<string>('')
+
+  // ✅ FIX: Get personal info from encrypted storage for PDF generation
+  const personalInfoForPdf = React.useMemo(() => {
+    try {
+      const personalInfoData = secureStorage.getItem('personal-info_data')
+      if (personalInfoData) {
+        return personalInfoData.personalInfo || personalInfoData
+      }
+    } catch (e) {
+      console.warn('Failed to retrieve personal info for PDF:', e)
+    }
+    return null
+  }, [])
 
   // Auto-save data
   const autoSaveData = {
@@ -398,7 +412,10 @@ export default function TraffickingAwarenessStep({
             <div className="max-w-4xl mx-auto">
               <ReviewAndSign
                 formType="human-trafficking"
-                formData={certificateData}
+                formData={{
+                  ...certificateData,
+                  personalInfo: personalInfoForPdf // ✅ FIX: Pass personal info from encrypted storage
+                }}
                 formTitle={t.certificateTitle}
                 documentName="Human Trafficking Awareness Training Certificate"
                 signerName={employee?.firstName + ' ' + employee?.lastName || 'Employee'}

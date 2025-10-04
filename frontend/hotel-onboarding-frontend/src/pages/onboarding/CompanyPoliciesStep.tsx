@@ -21,6 +21,7 @@ import { fetchStepDocumentMetadata, listStepDocuments, StepDocumentMetadata } fr
 import StepNavigator from '@/components/navigation/StepNavigator'
 import { StepStatus } from '@/types/onboarding'
 import { cn } from '@/lib/utils'
+import { secureStorage } from '@/services/SecureStorageService'
 
 // Helper component to render formatted text with bold markdown and HTML tables
 const FormattedPolicyText = ({ text, className = '' }: { text: string; className?: string }) => {
@@ -403,11 +404,11 @@ export default function CompanyPoliciesStep({
 
   // Get user initials for validation
   const getUserInitials = () => {
-    // Try to get from session storage first
-    const personalInfoData = sessionStorage.getItem('onboarding_personal-info_data')
+    // Try to get from encrypted storage first
+    const personalInfoData = secureStorage.getItem('personal-info_data')
     if (personalInfoData) {
       try {
-        const parsed = JSON.parse(personalInfoData)
+        const parsed = personalInfoData // secureStorage already returns parsed data
         const firstName = parsed.personalInfo?.firstName || ''
         const lastName = parsed.personalInfo?.lastName || ''
         if (firstName && lastName) {
@@ -417,14 +418,27 @@ export default function CompanyPoliciesStep({
         console.warn('Failed to parse personal info data:', e)
       }
     }
-    
+
     // Fallback to employee prop
     if (employee?.firstName && employee?.lastName) {
       return (employee.firstName.charAt(0) + employee.lastName.charAt(0)).toUpperCase()
     }
-    
+
     return ''
   }
+
+  // ✅ FIX: Get personal info from encrypted storage for PDF generation
+  const personalInfoForPdf = React.useMemo(() => {
+    try {
+      const personalInfoData = secureStorage.getItem('personal-info_data')
+      if (personalInfoData) {
+        return personalInfoData.personalInfo || personalInfoData
+      }
+    } catch (e) {
+      console.warn('Failed to retrieve personal info for PDF:', e)
+    }
+    return null
+  }, [])
 
   const expectedInitials = getUserInitials()
 
@@ -1352,6 +1366,7 @@ export default function CompanyPoliciesStep({
                     eeoInitials,
                     sexualHarassmentInitials,
                     acknowledgmentChecked,
+                    personalInfo: personalInfoForPdf, // ✅ FIX: Pass personal info from encrypted storage
                     ...formData
                   }}
                   signerName={employee?.firstName + ' ' + employee?.lastName || 'Employee'}
