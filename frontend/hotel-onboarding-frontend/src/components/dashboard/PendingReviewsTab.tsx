@@ -98,7 +98,8 @@ export function PendingReviewsTab() {
   }
 
   const handleReviewEmployee = (employeeId: string) => {
-    navigate(`/manager/review/${employeeId}`)
+    // Navigate to new review interface with OTP verification
+    navigate(`/manager/review-new/${employeeId}`)
   }
 
   if (loading) {
@@ -303,12 +304,13 @@ function EmployeeReviewCard({ employee, onReview, getUrgencyBadge }: EmployeeRev
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={() => onReview(employee.id)}
             className="ml-4"
+            title="Secure review with email verification"
           >
             <Eye className="h-4 w-4 mr-2" />
-            Review
+            Review & Complete I-9
           </Button>
         </div>
       </CardContent>
