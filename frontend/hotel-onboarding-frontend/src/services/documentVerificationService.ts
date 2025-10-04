@@ -1,159 +1,104 @@
 /**
  * Document Verification Service
- * Handles verification of ALL employee documents by manager
+ * Handles sequential manager review and approval of employee documents
  */
 
 export interface DocumentVerificationStatus {
   documentType: string;
   documentName: string;
-  status: 'pending' | 'verified' | 'rejected' | 'missing';
-  verifiedBy?: string;
-  verifiedAt?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'in_review';
+  approvedBy?: string;
+  approvedAt?: string;
   notes?: string;
-  required: boolean;
+  pdfUrl?: string;
+  uploadedDocsUrls?: string[]; // For I-9 verification docs
+  order: number; // Sequential order
+  canReview: boolean; // Can only review if previous is approved
 }
 
 export interface AllDocumentsStatus {
   employeeId: string;
   employeeName: string;
+  propertyName: string;
   documents: DocumentVerificationStatus[];
-  overallStatus: 'complete' | 'incomplete' | 'pending';
+  currentStep: number; // Which document is currently being reviewed
+  overallStatus: 'not_started' | 'in_progress' | 'complete' | 'rejected';
   completionPercentage: number;
   lastUpdated: string;
 }
 
-// All document types that need manager verification
-export const DOCUMENT_TYPES = {
-  // Federal Forms
-  I9_SECTION_1: {
-    type: 'i9_section_1',
-    name: 'I-9 Section 1 (Employee)',
-    required: true,
-    category: 'federal'
+// Sequential document review workflow
+export const DOCUMENT_WORKFLOW = [
+  {
+    order: 1,
+    type: 'company_policies',
+    name: 'Company Policies Acknowledgment',
+    description: 'Verify employee signature on company policies',
+    path: 'forms/company_policies',
+    verificationSteps: [
+      'Check employee signature exists',
+      'Verify date is correct',
+      'Confirm all pages are signed'
+    ]
   },
-  I9_SECTION_2: {
-    type: 'i9_section_2',
-    name: 'I-9 Section 2 (Employer)',
-    required: true,
-    category: 'federal'
+  {
+    order: 2,
+    type: 'i9',
+    name: 'I-9 Employment Eligibility Verification',
+    description: 'Review Section 1, compare with uploaded documents, complete Section 2',
+    path: 'forms/i9',
+    uploadPath: 'uploads/i9_verification',
+    verificationSteps: [
+      'Review Section 1 (employee completed)',
+      'Compare with uploaded documents (DL/Passport/SSN)',
+      'Verify document authenticity',
+      'Complete Section 2',
+      'Sign as employer representative'
+    ]
   },
-  I9_DOCUMENTS: {
-    type: 'i9_documents',
-    name: 'I-9 Verification Documents',
-    required: true,
-    category: 'federal'
-  },
-  W4_FEDERAL: {
-    type: 'w4_federal',
+  {
+    order: 3,
+    type: 'w4',
     name: 'W-4 Federal Tax Withholding',
-    required: true,
-    category: 'federal'
+    description: 'Review W-4 and verify SSN',
+    path: 'forms/w4',
+    uploadPath: 'uploads/i9_verification/ssn_card',
+    verificationSteps: [
+      'Review W-4 form',
+      'Verify SSN matches SSN card',
+      'Check withholding allowances',
+      'Confirm signature and date'
+    ]
   },
-  
-  // State Forms
-  W4_STATE: {
-    type: 'w4_state',
-    name: 'State Tax Withholding',
-    required: false,
-    category: 'state'
-  },
-  
-  // Benefits
-  HEALTH_INSURANCE: {
-    type: 'health_insurance',
-    name: 'Health Insurance Enrollment',
-    required: false,
-    category: 'benefits'
-  },
-  DENTAL_INSURANCE: {
-    type: 'dental_insurance',
-    name: 'Dental Insurance Enrollment',
-    required: false,
-    category: 'benefits'
-  },
-  VISION_INSURANCE: {
-    type: 'vision_insurance',
-    name: 'Vision Insurance Enrollment',
-    required: false,
-    category: 'benefits'
-  },
-  RETIREMENT_401K: {
-    type: 'retirement_401k',
-    name: '401(k) Enrollment',
-    required: false,
-    category: 'benefits'
-  },
-  
-  // Direct Deposit
-  DIRECT_DEPOSIT: {
+  {
+    order: 4,
     type: 'direct_deposit',
     name: 'Direct Deposit Authorization',
-    required: false,
-    category: 'payroll'
+    description: 'Review direct deposit form with embedded voided check',
+    path: 'forms/direct_deposit',
+    verificationSteps: [
+      'Review direct deposit form',
+      'Verify routing number matches voided check',
+      'Verify account number matches voided check',
+      'Confirm check is properly voided',
+      'Check account type (Checking/Savings)'
+    ]
   },
-  VOIDED_CHECK: {
-    type: 'voided_check',
-    name: 'Voided Check (for Direct Deposit)',
-    required: false,
-    category: 'payroll'
-  },
-  
-  // Company Policies
-  EMPLOYEE_HANDBOOK: {
-    type: 'employee_handbook',
-    name: 'Employee Handbook Acknowledgment',
-    required: true,
-    category: 'policies'
-  },
-  CODE_OF_CONDUCT: {
-    type: 'code_of_conduct',
-    name: 'Code of Conduct Agreement',
-    required: true,
-    category: 'policies'
-  },
-  CONFIDENTIALITY: {
-    type: 'confidentiality',
-    name: 'Confidentiality Agreement',
-    required: false,
-    category: 'policies'
-  },
-  
-  // Emergency Contact
-  EMERGENCY_CONTACT: {
-    type: 'emergency_contact',
-    name: 'Emergency Contact Information',
-    required: true,
-    category: 'personal'
-  },
-  
-  // Background Check
-  BACKGROUND_CHECK: {
-    type: 'background_check',
-    name: 'Background Check Authorization',
-    required: false,
-    category: 'compliance'
-  },
-  DRUG_TEST: {
-    type: 'drug_test',
-    name: 'Drug Test Consent',
-    required: false,
-    category: 'compliance'
-  },
-  
-  // Uniform/Equipment
-  UNIFORM_AGREEMENT: {
-    type: 'uniform_agreement',
-    name: 'Uniform Agreement',
-    required: false,
-    category: 'equipment'
-  },
-  EQUIPMENT_RECEIPT: {
-    type: 'equipment_receipt',
-    name: 'Equipment Receipt',
-    required: false,
-    category: 'equipment'
+  {
+    order: 5,
+    type: 'health_insurance',
+    name: 'Health Insurance Enrollment',
+    description: 'Review health insurance enrollment form',
+    path: 'forms/health_insurance',
+    verificationSteps: [
+      'Review enrollment selections',
+      'Verify dependent information (if applicable)',
+      'Confirm coverage start date',
+      'Check signature and date'
+    ]
   }
-};
+];
+
 
 export class DocumentVerificationService {
   /**
@@ -162,7 +107,7 @@ export class DocumentVerificationService {
   static async getAllDocumentsStatus(employeeId: string): Promise<AllDocumentsStatus> {
     try {
       const response = await fetch(
-        `/api/manager/review/employees/${employeeId}/all-documents`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/documents-status`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -182,16 +127,51 @@ export class DocumentVerificationService {
   }
 
   /**
-   * Verify a specific document
+   * Get specific document for review
    */
-  static async verifyDocument(
+  static async getDocumentForReview(
     employeeId: string,
-    documentType: string,
-    notes?: string
-  ): Promise<void> {
+    documentType: string
+  ): Promise<{
+    pdfUrl: string;
+    uploadedDocsUrls?: string[];
+    formData?: any;
+    metadata?: any;
+  }> {
     try {
       const response = await fetch(
-        `/api/manager/review/employees/${employeeId}/verify-document`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/document/${documentType}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${documentType} document`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching ${documentType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a document (generates final PDF and replaces original)
+   */
+  static async approveDocument(
+    employeeId: string,
+    documentType: string,
+    formData?: any,
+    signature?: string,
+    notes?: string
+  ): Promise<{ success: boolean; finalPdfUrl: string }> {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/document/${documentType}/approve`,
         {
           method: 'POST',
           headers: {
@@ -199,26 +179,29 @@ export class DocumentVerificationService {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({
-            document_type: documentType,
-            status: 'verified',
+            form_data: formData,
+            signature,
             notes
           })
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to verify document');
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to approve document');
       }
 
-      console.log(`✅ Document verified: ${documentType}`);
+      const result = await response.json();
+      console.log(`✅ Document approved: ${documentType}`);
+      return result;
     } catch (error) {
-      console.error('Error verifying document:', error);
+      console.error('Error approving document:', error);
       throw error;
     }
   }
 
   /**
-   * Reject a specific document
+   * Reject a document (sends back to employee for correction)
    */
   static async rejectDocument(
     employeeId: string,
@@ -227,7 +210,7 @@ export class DocumentVerificationService {
   ): Promise<void> {
     try {
       const response = await fetch(
-        `/api/manager/review/employees/${employeeId}/verify-document`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/document/${documentType}/reject`,
         {
           method: 'POST',
           headers: {
@@ -235,15 +218,14 @@ export class DocumentVerificationService {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({
-            document_type: documentType,
-            status: 'rejected',
-            notes: reason
+            reason
           })
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to reject document');
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to reject document');
       }
 
       console.log(`❌ Document rejected: ${documentType}`);
@@ -254,76 +236,75 @@ export class DocumentVerificationService {
   }
 
   /**
-   * Verify all documents at once
+   * Get current document to review (based on workflow order)
    */
-  static async verifyAllDocuments(
-    employeeId: string,
-    notes?: string
-  ): Promise<void> {
-    try {
-      const response = await fetch(
-        `/api/manager/review/employees/${employeeId}/verify-all-documents`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ notes })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to verify all documents');
-      }
-
-      console.log(`✅ All documents verified for employee: ${employeeId}`);
-    } catch (error) {
-      console.error('Error verifying all documents:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get document categories
-   */
-  static getDocumentCategories(): string[] {
-    const categories = new Set<string>();
-    
-    Object.values(DOCUMENT_TYPES).forEach(doc => {
-      categories.add(doc.category);
-    });
-
-    return Array.from(categories);
-  }
-
-  /**
-   * Get documents by category
-   */
-  static getDocumentsByCategory(category: string) {
-    return Object.values(DOCUMENT_TYPES).filter(
-      doc => doc.category === category
+  static getCurrentDocument(status: AllDocumentsStatus): DocumentVerificationStatus | null {
+    const pendingDoc = status.documents.find(doc =>
+      doc.status === 'pending' || doc.status === 'in_review'
     );
+    return pendingDoc || null;
+  }
+
+  /**
+   * Get next document in workflow
+   */
+  static getNextDocument(status: AllDocumentsStatus): DocumentVerificationStatus | null {
+    const currentDoc = this.getCurrentDocument(status);
+    if (!currentDoc) return null;
+
+    const nextDoc = status.documents.find(doc =>
+      doc.order === currentDoc.order + 1
+    );
+    return nextDoc || null;
+  }
+
+  /**
+   * Check if can review document (previous must be approved)
+   */
+  static canReviewDocument(status: AllDocumentsStatus, documentType: string): boolean {
+    const doc = status.documents.find(d => d.documentType === documentType);
+    if (!doc) return false;
+
+    // First document can always be reviewed
+    if (doc.order === 1) return true;
+
+    // Check if previous document is approved
+    const previousDoc = status.documents.find(d => d.order === doc.order - 1);
+    return previousDoc?.status === 'approved';
   }
 
   /**
    * Calculate completion percentage
    */
   static calculateCompletion(documents: DocumentVerificationStatus[]): number {
-    const requiredDocs = documents.filter(doc => doc.required);
-    const verifiedDocs = requiredDocs.filter(doc => doc.status === 'verified');
-    
-    if (requiredDocs.length === 0) return 100;
-    
-    return Math.round((verifiedDocs.length / requiredDocs.length) * 100);
+    const totalDocs = documents.length;
+    const approvedDocs = documents.filter(doc => doc.status === 'approved');
+
+    if (totalDocs === 0) return 0;
+
+    return Math.round((approvedDocs.length / totalDocs) * 100);
   }
 
   /**
-   * Check if all required documents are verified
+   * Check if all documents are approved
    */
-  static areAllRequiredDocsVerified(documents: DocumentVerificationStatus[]): boolean {
-    const requiredDocs = documents.filter(doc => doc.required);
-    return requiredDocs.every(doc => doc.status === 'verified');
+  static areAllDocsApproved(documents: DocumentVerificationStatus[]): boolean {
+    return documents.every(doc => doc.status === 'approved');
+  }
+
+  /**
+   * Get workflow step by document type
+   */
+  static getWorkflowStep(documentType: string) {
+    return DOCUMENT_WORKFLOW.find(step => step.type === documentType);
+  }
+
+  /**
+   * Get document display name
+   */
+  static getDocumentName(documentType: string): string {
+    const step = this.getWorkflowStep(documentType);
+    return step?.name || documentType;
   }
 }
 

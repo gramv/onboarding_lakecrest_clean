@@ -863,6 +863,14 @@ try:
 except ImportError as e:
     logger.warning(f"Edit tracking router not available: {e}")
 
+# Include document approval router (sequential workflow)
+try:
+    from app.routers.manager_document_approval_router import router as document_approval_router
+    app.include_router(document_approval_router)
+    logger.info("✅ Document approval router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Document approval router not available: {e}")
+
 # Include audit trail API router
 try:
     from .audit_api import audit_router
