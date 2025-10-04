@@ -7426,14 +7426,32 @@ async def get_onboarding_welcome_data(token: str):
             # Get employee to find property and manager
             employee = await supabase_service.get_employee_by_id(employee_id)
             if employee:
+                # 🔒 SECURITY: Check if onboarding is already completed
+                if employee.onboarding_status == 'completed':
+                    return error_response(
+                        message="Onboarding already completed",
+                        error_code=ErrorCode.FORBIDDEN,
+                        status_code=403,
+                        detail="This onboarding has been completed and the link is no longer active. If you need to make changes, please contact your manager."
+                    )
+
                 property_id = employee.property_id
                 manager_id = employee.manager_id
-                
+
                 # Try to get existing session for this employee
                 sessions = await supabase_service.get_onboarding_sessions_by_employee(employee_id)
                 if sessions:
                     # Use the most recent active session
                     for s in sessions:
+                        # 🔒 SECURITY: Check if session is still active
+                        if hasattr(s, 'is_active') and s.is_active == False:
+                            return error_response(
+                                message="Onboarding session has been closed",
+                                error_code=ErrorCode.FORBIDDEN,
+                                status_code=403,
+                                detail="This onboarding session has been closed. Contact your manager if you need to make changes."
+                            )
+
                         if s.status in [OnboardingStatus.IN_PROGRESS, OnboardingStatus.NOT_STARTED]:
                             session = s
                             logger.info(f"Found existing session {s.id} for employee {employee_id}")
@@ -18046,6 +18064,31 @@ async def complete_employee_onboarding(
             logger.info(f"✅ Updated employee onboarding status to completed with metadata")
         except Exception as update_error:
             logger.error(f"Failed to update employee status: {update_error}")
+
+        # 🔒 SECURITY: Revoke onboarding token to prevent re-access
+        try:
+            # Update onboarding_sessions to mark as inactive
+            revoke_result = supabase_service.client.table('onboarding_sessions')\
+                .update({
+                    'is_active': False,
+                    'revoked_at': completed_at,
+                    'revoked_reason': 'onboarding_completed',
+                    'status': 'completed'
+                })\
+                .eq('employee_id', employee_id)\
+                .eq('is_active', True)\
+                .execute()
+
+            if revoke_result.data:
+                logger.info(f"🔒 Revoked onboarding token for employee {employee_id}")
+                logger.info(f"🔒 Token revoked at: {completed_at}")
+                logger.info(f"🔒 Reason: onboarding_completed")
+            else:
+                logger.warning(f"⚠️ No active onboarding session found to revoke for employee {employee_id}")
+        except Exception as revoke_error:
+            logger.error(f"❌ Failed to revoke onboarding token: {revoke_error}")
+            # Don't fail the entire request if token revocation fails
+            # The trigger should handle it anyway
 
         # Get manager info
         manager = None
