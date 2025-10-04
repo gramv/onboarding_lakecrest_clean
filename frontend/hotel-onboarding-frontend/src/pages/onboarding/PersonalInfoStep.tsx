@@ -31,6 +31,7 @@ export default function PersonalInfoStep({
   const [activeTab, setActiveTab] = useState('personal')
   const [dataLoaded, setDataLoaded] = useState(false)
   const tabOverrideRef = useRef(false)
+  const dataLoadedRef = useRef(false) // ✅ FIX: Track if data has been loaded to prevent infinite loop
 
   // ✅ PERFORMANCE FIX: Add completion guard flags
   const [isCompleting, setIsCompleting] = useState(false)
@@ -62,6 +63,11 @@ export default function PersonalInfoStep({
   // Load existing data on mount
   useEffect(() => {
     const loadExistingData = async () => {
+      // ✅ FIX: Prevent infinite loop - only load data once
+      if (dataLoadedRef.current) {
+        return
+      }
+
       try {
         let dataToUse = null
 
@@ -133,7 +139,9 @@ export default function PersonalInfoStep({
           setPersonalInfoValid(true)
           setEmergencyContactsValid(true)
         }
-        
+
+        // ✅ FIX: Mark data as loaded to prevent re-loading
+        dataLoadedRef.current = true
         setDataLoaded(true)
       } catch (error) {
         console.error('Failed to load existing data:', error)
