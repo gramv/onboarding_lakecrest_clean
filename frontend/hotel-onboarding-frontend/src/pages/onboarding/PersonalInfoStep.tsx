@@ -141,7 +141,7 @@ export default function PersonalInfoStep({
       }
     }
     loadExistingData()
-  }, [currentStep.id, progress.completedSteps, employee])
+  }, [currentStep.id, progress.completedSteps, employee?.id]) // ✅ FIX: Use employee.id instead of employee object
 
   // Check completion status
   const isStepComplete = personalInfoValid && emergencyContactsValid
