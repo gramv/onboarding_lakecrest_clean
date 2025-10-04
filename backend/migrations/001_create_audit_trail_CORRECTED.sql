@@ -2,6 +2,7 @@
 -- Document Access Audit Trail Migration
 -- Created: 2025-10-03
 -- Purpose: Track all document access for compliance
+-- CORRECTED: Uses actual schema (users table, not managers table)
 -- ============================================
 
 -- Create document_access_log table
@@ -132,5 +133,9 @@ BEGIN
   RAISE NOTICE '✅ Indexes created for fast queries';
   RAISE NOTICE '✅ RLS policies enabled';
   RAISE NOTICE '✅ Ready to log document access';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Schema used:';
+  RAISE NOTICE '  - users table (with role and property_id columns)';
+  RAISE NOTICE '  - No managers table needed';
 END $$;
 
