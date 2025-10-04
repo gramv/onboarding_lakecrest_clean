@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Edit2, Save, X, AlertCircle, CheckCircle, FileText, Clock } from 'lucide-react';
 import OTPVerificationModal from './OTPVerificationModal';
+import SessionStorageService from '@/services/sessionStorageService';
 
 interface FieldData {
   value: string;
@@ -30,13 +31,36 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [sessionExpires, setSessionExpires] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  
+
   const [employeeData, setEmployeeData] = useState<any>(null);
   const [formData, setFormData] = useState<Record<string, FieldData>>({});
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'i9' | 'w4' | 'insurance'>('i9');
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const existingSession = SessionStorageService.getSession(employeeId);
+
+    if (existingSession) {
+      console.log('✅ Found existing session, restoring...');
+      setSessionToken(existingSession.token);
+      setSessionExpires(existingSession.expiresAt);
+
+      // Restore progress
+      const savedProgress = SessionStorageService.getProgress(employeeId);
+      if (savedProgress) {
+        console.log('✅ Restoring saved progress...');
+        setFormData(savedProgress.formData);
+        setEditedFields(new Set(savedProgress.editedFields));
+        setActiveTab(savedProgress.activeTab as any);
+      }
+    } else {
+      // No session, show OTP modal
+      setShowOTPModal(true);
+    }
+  }, [employeeId]);
 
   // Session countdown
   useEffect(() => {
@@ -65,10 +89,26 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     }
   }, [sessionToken]);
 
+  // Auto-save progress when form data or edited fields change
+  useEffect(() => {
+    if (sessionToken && Object.keys(formData).length > 0) {
+      SessionStorageService.autoSaveProgress(
+        employeeId,
+        formData,
+        Array.from(editedFields),
+        activeTab
+      );
+    }
+  }, [formData, editedFields, activeTab, sessionToken, employeeId]);
+
   const handleOTPVerified = (token: string, expires: string) => {
     setSessionToken(token);
     setSessionExpires(expires);
     setShowOTPModal(false);
+
+    // Save session to localStorage
+    SessionStorageService.saveSession(employeeId, token, expires);
+    console.log('✅ Session saved to localStorage');
   };
 
   const loadEmployeeData = async () => {
