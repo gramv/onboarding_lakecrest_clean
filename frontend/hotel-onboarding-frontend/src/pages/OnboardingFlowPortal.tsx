@@ -624,19 +624,42 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
 
   // Error state
   if (error || !session) {
+    // Check if this is a completion message (not an error)
+    const isCompletionMessage = error?.includes('🎉') || error?.includes('Onboarding Complete')
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
           <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-<h2 className="text-2xl font-bold text-heading-primary text-gray-900 mb-2">Onboarding Error</h2>
-            <p className="text-gray-600 mb-6">{error || 'Unable to load onboarding session'}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-            >
-              Try Again
-            </button>
+            {isCompletionMessage ? (
+              <>
+                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-green-600 mb-2">Onboarding Complete!</h2>
+                <p className="text-gray-600 mb-6 whitespace-pre-line">{error?.replace('🎉 Onboarding Complete!\n\n', '') || 'You have already completed your onboarding.'}</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800">
+                    <strong>What's next?</strong><br />
+                    Your manager has been notified and will review your documents. You'll receive further instructions via email.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-heading-primary text-gray-900 mb-2">Onboarding Error</h2>
+                <p className="text-gray-600 mb-6">{error || 'Unable to load onboarding session'}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                >
+                  Try Again
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
