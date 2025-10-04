@@ -25,21 +25,16 @@ export default function ManagerReviewEmployeeNew() {
   const loadEmployeeInfo = async () => {
     try {
       setLoading(true);
-      
+
       // Get manager email from localStorage or auth context
       const email = localStorage.getItem('userEmail') || '';
       setManagerEmail(email);
-      
-      // Get employee name from API
-      if (employeeId) {
-        const response = await fetch(`/api/manager/review/employees/${employeeId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
 
-        if (response.ok) {
-          const data = await response.json();
+      // Get employee name from API using the service
+      if (employeeId) {
+        const data = await reviewDataService.getEmployeeReviewData(employeeId);
+
+        if (data.success) {
           const personalInfo = data.employee_info?.personal_info || {};
           const firstName = personalInfo.firstName || personalInfo.first_name || '';
           const lastName = personalInfo.lastName || personalInfo.last_name || '';
@@ -48,11 +43,8 @@ export default function ManagerReviewEmployeeNew() {
       }
     } catch (err) {
       console.error('Error loading employee info:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load employee information',
-        variant: 'destructive'
-      });
+      // Don't show error toast - employee name will just be "Employee"
+      // The OTP verification will handle showing the employee data
     } finally {
       setLoading(false);
     }
