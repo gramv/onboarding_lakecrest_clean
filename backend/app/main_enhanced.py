@@ -839,6 +839,30 @@ try:
 except ImportError as e:
     logger.warning(f"Manager document access router not available: {e}")
 
+# Include manager review data router
+try:
+    from app.routers.manager_review_data_router import router as review_data_router
+    app.include_router(review_data_router)
+    logger.info("✅ Manager review data router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Manager review data router not available: {e}")
+
+# Include employer profile router
+try:
+    from app.routers.employer_profile_router import router as employer_profile_router
+    app.include_router(employer_profile_router)
+    logger.info("✅ Employer profile router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Employer profile router not available: {e}")
+
+# Include edit tracking router
+try:
+    from app.routers.edit_tracking_router import router as edit_tracking_router
+    app.include_router(edit_tracking_router)
+    logger.info("✅ Edit tracking router loaded successfully")
+except ImportError as e:
+    logger.warning(f"Edit tracking router not available: {e}")
+
 # Include audit trail API router
 try:
     from .audit_api import audit_router
