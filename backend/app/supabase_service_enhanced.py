@@ -3024,6 +3024,36 @@ class EnhancedSupabaseService:
                                 account.pop('routingNumber', None)
 
                         logger.info(f"🔒 Encrypted {len(form_data['additionalAccounts'])} additional accounts for employee {employee_id}")
+
+                    # 🔧 FIX: Also check inside formData wrapper (nested structure from frontend)
+                    if 'formData' in form_data and isinstance(form_data['formData'], dict):
+                        nested_data = form_data['formData']
+
+                        # Encrypt primaryAccount inside formData
+                        if 'primaryAccount' in nested_data and isinstance(nested_data['primaryAccount'], dict):
+                            if 'accountNumber' in nested_data['primaryAccount'] and nested_data['primaryAccount']['accountNumber']:
+                                nested_data['primaryAccount']['accountNumber_encrypted'] = encryption.encrypt(nested_data['primaryAccount']['accountNumber'])
+                                nested_data['primaryAccount'].pop('accountNumber', None)
+                                logger.info(f"🔒 Encrypted formData.primaryAccount.accountNumber for employee {employee_id}")
+
+                            if 'routingNumber' in nested_data['primaryAccount'] and nested_data['primaryAccount']['routingNumber']:
+                                nested_data['primaryAccount']['routingNumber_encrypted'] = encryption.encrypt(nested_data['primaryAccount']['routingNumber'])
+                                nested_data['primaryAccount'].pop('routingNumber', None)
+                                logger.info(f"🔒 Encrypted formData.primaryAccount.routingNumber for employee {employee_id}")
+
+                        # Encrypt additionalAccounts inside formData
+                        if 'additionalAccounts' in nested_data and isinstance(nested_data['additionalAccounts'], list):
+                            for account in nested_data['additionalAccounts']:
+                                if 'accountNumber' in account and account['accountNumber']:
+                                    account['accountNumber_encrypted'] = encryption.encrypt(account['accountNumber'])
+                                    account.pop('accountNumber', None)
+
+                                if 'routingNumber' in account and account['routingNumber']:
+                                    account['routingNumber_encrypted'] = encryption.encrypt(account['routingNumber'])
+                                    account.pop('routingNumber', None)
+
+                            if nested_data['additionalAccounts']:
+                                logger.info(f"🔒 Encrypted {len(nested_data['additionalAccounts'])} additional accounts in formData for employee {employee_id}")
             else:
                 # Encryption not enabled - data will be stored as-is
                 logger.debug(f"Encryption not enabled, storing data as-is for step {step_id}")
