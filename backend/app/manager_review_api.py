@@ -3,9 +3,9 @@ Manager Review API Endpoints
 Handles manager review workflow for completed employee onboarding
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 import logging
 
@@ -13,6 +13,8 @@ from .auth import get_current_user, get_current_manager
 from .models import User, UserRole
 from .property_access_control import get_property_access_controller
 from .supabase_service_enhanced import EnhancedSupabaseService
+from .config.document_expiration import get_expiration_time, get_expiration_description
+from .audit_service import get_audit_service
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +140,7 @@ async def get_pending_reviews(
 @router.get("/employees/{employee_id}/documents")
 async def get_employee_documents(
     employee_id: str,
+    request: Request,
     current_user: User = Depends(get_current_manager),
     supabase_service: EnhancedSupabaseService = Depends(get_supabase_service)
 ):
@@ -178,36 +181,97 @@ async def get_employee_documents(
         
         # Get all documents for this employee
         documents = await supabase_service.get_employee_documents(employee_id)
-        
+
+        # Get audit service for logging
+        audit = get_audit_service(supabase_service)
+
         # Format response with friendly names and metadata
         formatted_documents = []
-        
+
         document_type_mapping = {
             'i9_section1': 'I-9 Employment Eligibility (Section 1)',
+            'i9': 'I-9 Employment Eligibility',
             'w4': 'W-4 Tax Withholding',
             'direct_deposit': 'Direct Deposit Authorization',
             'health_insurance': 'Health Insurance Enrollment',
             'company_policies': 'Company Policies Acknowledgment',
             'weapons_policy': 'Weapons Policy Acknowledgment',
+            'trafficking_awareness': 'Human Trafficking Awareness',
             'final_review': 'Final Review & Signature'
         }
-        
+
         for doc in documents:
             doc_type = doc.get('document_type', 'unknown')
+            doc_metadata = doc.get('metadata', {})
+
+            # Get document path from metadata
+            doc_path = doc_metadata.get('path') or doc_metadata.get('storage_path')
+            bucket = doc_metadata.get('bucket', 'onboarding-documents')
+
+            # Generate fresh signed URL with expiration
+            signed_url = None
+            expires_in = None
+            expires_at = None
+
+            if doc_path:
+                try:
+                    # Get expiration time for this document type (manager role)
+                    expires_in = get_expiration_time(doc_type, 'manager')
+                    expires_at_dt = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+                    expires_at = expires_at_dt.isoformat()
+
+                    # Generate signed URL
+                    signed_result = supabase_service.admin_client.storage.from_(bucket).create_signed_url(
+                        doc_path,
+                        expires_in
+                    )
+                    signed_url = signed_result.get('signedURL') if isinstance(signed_result, dict) else None
+
+                    # Log document access to audit trail
+                    await audit.log_document_access(
+                        document_id=doc.get('id'),
+                        document_path=doc_path,
+                        document_type=doc_type,
+                        access_type='generate_url',
+                        accessed_by=current_user.id,
+                        request=request,
+                        property_id=emp_property_id,
+                        employee_id=employee_id,
+                        user_role='manager',
+                        expires_at=expires_at_dt,
+                        metadata={
+                            'manager_review': True,
+                            'expiration_seconds': expires_in,
+                            'bucket': bucket
+                        }
+                    )
+
+                    logger.info(f"Generated signed URL for {doc_type}: expires in {get_expiration_description(expires_in)}")
+
+                except Exception as url_err:
+                    logger.warning(f"Failed to generate signed URL for {doc_type}: {url_err}")
+                    # Fallback to stored URL if available
+                    signed_url = doc.get('pdf_url')
+            else:
+                # Fallback to stored URL if no path found
+                signed_url = doc.get('pdf_url')
+
             formatted_documents.append({
                 'id': doc.get('id'),
                 'type': doc_type,
                 'name': document_type_mapping.get(doc_type, doc_type.replace('_', ' ').title()),
                 'signed_at': doc.get('signed_at') or doc.get('created_at'),
-                'pdf_url': doc.get('pdf_url'),
+                'pdf_url': signed_url,
+                'expires_in': expires_in,
+                'expires_at': expires_at,
                 'status': 'completed',
-                'metadata': doc.get('metadata', {})
+                'metadata': doc_metadata
             })
-        
+
         # Sort by signed_at date
         formatted_documents.sort(key=lambda x: x.get('signed_at', ''), reverse=False)
-        
-        logger.info(f"Retrieved {len(formatted_documents)} documents for employee {employee_id}")
+
+        logger.info(f"Retrieved {len(formatted_documents)} documents for employee {employee_id} with fresh signed URLs")
 
         # Extract employee info (handle both dict and Employee object)
         if isinstance(employee, dict):
