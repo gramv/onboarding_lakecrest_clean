@@ -7,6 +7,9 @@ import React, { useState, useEffect } from 'react';
 import { Eye, Edit2, Save, X, AlertCircle, CheckCircle, FileText, Clock } from 'lucide-react';
 import OTPVerificationModal from './OTPVerificationModal';
 import SessionStorageService from '@/services/sessionStorageService';
+import DocumentVerificationService, { AllDocumentsStatus } from '@/services/documentVerificationService';
+import DocumentWorkflowStepper from './DocumentWorkflowStepper';
+import DocumentReviewModal from './DocumentReviewModal';
 
 interface FieldData {
   value: string;
@@ -38,6 +41,11 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'i9' | 'w4' | 'insurance'>('i9');
+
+  // New workflow state
+  const [documentsStatus, setDocumentsStatus] = useState<AllDocumentsStatus | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -82,10 +90,11 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     return () => clearInterval(interval);
   }, [sessionExpires]);
 
-  // Load employee data after OTP verification
+  // Load employee data and documents status after OTP verification
   useEffect(() => {
     if (sessionToken) {
       loadEmployeeData();
+      loadDocumentsStatus();
     }
   }, [sessionToken]);
 
@@ -109,6 +118,35 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     // Save session to localStorage
     SessionStorageService.saveSession(employeeId, token, expires);
     console.log('✅ Session saved to localStorage');
+  };
+
+  const loadDocumentsStatus = async () => {
+    try {
+      setLoading(true);
+      const status = await DocumentVerificationService.getAllDocumentsStatus(employeeId);
+      setDocumentsStatus(status);
+      console.log('✅ Documents status loaded:', status);
+    } catch (err: any) {
+      console.error('Error loading documents status:', err);
+      setError(err.message || 'Failed to load documents status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStepClick = (documentType: string) => {
+    setSelectedDocument(documentType);
+    setShowReviewModal(true);
+  };
+
+  const handleDocumentApproved = () => {
+    // Reload documents status to update workflow
+    loadDocumentsStatus();
+  };
+
+  const handleDocumentRejected = () => {
+    // Reload documents status to update workflow
+    loadDocumentsStatus();
   };
 
   const loadEmployeeData = async () => {
@@ -358,6 +396,18 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
+        ) : documentsStatus ? (
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Document Approval Workflow
+            </h2>
+
+            <DocumentWorkflowStepper
+              documents={documentsStatus.documents}
+              currentStep={documentsStatus.currentStep}
+              onStepClick={handleStepClick}
+            />
+          </div>
         ) : (
           <div className="bg-white rounded-lg shadow-lg p-8">
             {/* Form fields will be rendered here based on activeTab */}
@@ -471,6 +521,24 @@ const FormField: React.FC<FormFieldProps> = ({ fieldName, field, onEdit, isEdite
           )}
         </div>
       </div>
+
+      {/* Document Review Modal */}
+      {selectedDocument && (
+        <DocumentReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            setShowReviewModal(false);
+            setSelectedDocument(null);
+          }}
+          employeeId={employeeId}
+          documentType={selectedDocument}
+          documentName={
+            documentsStatus?.documents.find(d => d.documentType === selectedDocument)?.documentName || ''
+          }
+          onApprove={handleDocumentApproved}
+          onReject={handleDocumentRejected}
+        />
+      )}
     </div>
   );
 };
