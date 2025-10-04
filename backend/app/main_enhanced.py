@@ -7430,7 +7430,7 @@ async def get_onboarding_welcome_data(token: str):
                 if employee.onboarding_status == 'completed':
                     return error_response(
                         message="Onboarding already completed",
-                        error_code=ErrorCode.FORBIDDEN,
+                        error_code=ErrorCode.AUTHORIZATION_ERROR,
                         status_code=403,
                         detail="This onboarding has been completed and the link is no longer active. If you need to make changes, please contact your manager."
                     )
@@ -7447,7 +7447,7 @@ async def get_onboarding_welcome_data(token: str):
                         if hasattr(s, 'is_active') and s.is_active == False:
                             return error_response(
                                 message="Onboarding session has been closed",
-                                error_code=ErrorCode.FORBIDDEN,
+                                error_code=ErrorCode.AUTHORIZATION_ERROR,
                                 status_code=403,
                                 detail="This onboarding session has been closed. Contact your manager if you need to make changes."
                             )
