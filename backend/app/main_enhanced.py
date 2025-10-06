@@ -18591,8 +18591,9 @@ async def send_step_invitation(
             employee_department = ''
 
         # Get HR contact info
-        hr_contact_name = current_user.name or 'HR Department'
-        hr_contact_email = current_user.email or 'hr@company.com'
+        # current_user is a Pydantic model, use attribute access
+        hr_contact_name = getattr(current_user, 'name', None) or getattr(current_user, 'full_name', None) or 'HR Department'
+        hr_contact_email = getattr(current_user, 'email', None) or 'hr@company.com'
 
         # Send invitation email
         subject = f"Action Required: Complete {step_name} - {property_name}"
