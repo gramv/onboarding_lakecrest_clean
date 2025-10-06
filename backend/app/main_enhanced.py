@@ -18579,9 +18579,16 @@ async def send_step_invitation(
         invitation_link = f"{frontend_url}/onboard?token={token_data['token']}&mode=single&step={step_id}"
 
         # Get property and employee details for email
-        property_name = property_obj.get('name', 'Our Team')
-        employee_position = employee.get('position', 'Team Member') if employee else 'Team Member'
-        employee_department = employee.get('department', '') if employee else ''
+        # property_obj is a Pydantic model, use attribute access
+        property_name = property_obj.name if hasattr(property_obj, 'name') else 'Our Team'
+
+        # employee is also a Pydantic model
+        if employee:
+            employee_position = employee.position if hasattr(employee, 'position') else 'Team Member'
+            employee_department = employee.department if hasattr(employee, 'department') else ''
+        else:
+            employee_position = 'Team Member'
+            employee_department = ''
 
         # Get HR contact info
         hr_contact_name = current_user.name or 'HR Department'
