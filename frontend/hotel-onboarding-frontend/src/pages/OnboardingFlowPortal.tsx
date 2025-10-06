@@ -347,8 +347,8 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
         body: JSON.stringify({
           token,
           personal_info: {
-            first_name: personalInfo.firstName,
-            last_name: personalInfo.lastName,
+            firstName: personalInfo.firstName,  // ✅ FIX: Backend expects camelCase
+            lastName: personalInfo.lastName,
             email: personalInfo.email,
             phone: personalInfo.phone,
             ssn: personalInfo.ssn.replace(/\D/g, '') // Remove formatting
@@ -357,17 +357,35 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
       })
 
       if (!response.ok) {
-        throw new Error('Failed to save personal information')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.message || errorData.detail || 'Failed to save personal information'
+        console.error('❌ API Error:', errorData)
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
       console.log('✅ Personal info saved:', result)
 
-      // Update session with new employee data
-      if (result.employee && session) {
+      // Update session with collected personal info
+      // Backend returns: { data: { stored: true, personal_info: {...} } }
+      const personalInfoData = result.data?.personal_info || result.personal_info
+
+      if (personalInfoData && session) {
+        // Create employee object from personal info
+        const employeeData = {
+          ...session.employee,
+          firstName: personalInfoData.firstName,
+          lastName: personalInfoData.lastName,
+          email: personalInfoData.email,
+          phone: personalInfoData.phone,
+          // SSN is stored separately, will be retrieved by DirectDepositStep
+        }
+
+        console.log('📝 Updating session with employee data:', employeeData)
+
         setSession({
           ...session,
-          employee: result.employee
+          employee: employeeData
         })
       }
 

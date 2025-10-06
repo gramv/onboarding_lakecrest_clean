@@ -88,6 +88,7 @@ export function PersonalInfoModal({
   
   const [errors, setErrors] = useState<Partial<Record<keyof PersonalInfo, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -172,17 +173,21 @@ export function PersonalInfoModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validate()) {
       return
     }
-    
+
     setIsSubmitting(true)
+    setSubmitError(null)
+
     try {
       await onSubmit(formData)
-    } catch (error) {
+      // Success - modal will close automatically
+    } catch (error: any) {
       console.error('Failed to submit personal info:', error)
-      // Error handling is done by parent component
+      const errorMessage = error?.message || 'Failed to save information. Please try again.'
+      setSubmitError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -202,6 +207,16 @@ export function PersonalInfoModal({
       submitDisabled={isSubmitting}
     >
       <div className="space-y-4">
+        {/* Submit Error */}
+        {submitError && (
+          <Alert className="bg-red-50 border-red-200">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-sm text-red-800">
+              {submitError}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Help Text */}
         <Alert className="bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-600" />
