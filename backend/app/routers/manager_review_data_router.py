@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import logging
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from app.supabase_service_enhanced import get_enhanced_supabase_service
 from app.dependencies import get_current_user
@@ -35,6 +36,17 @@ class EmployeeReviewData(BaseModel):
     health_insurance_data: Optional[Dict[str, Any]] = None
     employer_profile: Optional[Dict[str, Any]] = None
     ocr_data: Optional[Dict[str, Any]] = None
+
+
+class QuickEmployerProfileRequest(BaseModel):
+    employerName: str
+    employerTitle: str
+    businessName: str
+    businessAddress: str
+    city: str
+    state: str
+    zipCode: str
+    ein: str
 
 
 # =====================================================
@@ -214,14 +226,14 @@ async def get_employee_review_data(
         # Get employer profile for auto-fill
         employer_profile = None
         try:
-            profile_result = supabase_service.client.table("employer_profiles")\
+            # Use admin_client to bypass RLS for employer profiles
+            profile_result = supabase_service.admin_client.table("employer_profiles")\
                 .select("*")\
                 .eq("property_id", property_id)\
                 .eq("is_active", True)\
-                .single()\
                 .execute()
             if profile_result.data:
-                employer_profile = profile_result.data
+                employer_profile = profile_result.data[0] if profile_result.data else None
         except Exception as e:
             logger.warning(f"No employer profile found for property {property_id}: {e}")
         
@@ -290,75 +302,89 @@ async def get_i9_section_2_data(
         if not employee.data or employee.data.get('property_id') != property_id:
             raise HTTPException(status_code=404, detail="Employee not found")
         
-        # Get I-9 Section 1
-        i9_section_1 = supabase_service.client.table("i9_forms")\
-            .select("*")\
-            .eq("employee_id", employee_id)\
-            .eq("section", "section_1")\
-            .single()\
-            .execute()
-        
-        # Get I-9 documents
-        documents = supabase_service.client.table("onboarding_documents")\
-            .select("*")\
-            .eq("employee_id", employee_id)\
-            .eq("document_type", "i9_verification")\
-            .execute()
-        
-        # Get employer profile
-        employer_profile = supabase_service.client.table("employer_profiles")\
-            .select("*")\
-            .eq("property_id", property_id)\
-            .eq("is_active", True)\
-            .single()\
-            .execute()
+        # Get I-9 Section 1 (may not exist yet)
+        i9_section_1 = None
+        try:
+            i9_section_1_response = supabase_service.client.table("i9_forms")\
+                .select("*")\
+                .eq("employee_id", employee_id)\
+                .eq("section", "section_1")\
+                .execute()
+            i9_section_1 = i9_section_1_response.data[0] if i9_section_1_response.data else None
+        except Exception as e:
+            logger.warning(f"Could not fetch I-9 Section 1: {e}")
+
+        # Try to get I-9 documents (table may not exist)
+        documents_data = []
+        try:
+            documents_response = supabase_service.client.table("onboarding_documents")\
+                .select("*")\
+                .eq("employee_id", employee_id)\
+                .eq("document_type", "i9_verification")\
+                .execute()
+            documents_data = documents_response.data if documents_response.data else []
+        except Exception as e:
+            logger.warning(f"Could not fetch onboarding_documents: {e}")
+
+        # Get employer profile (may not exist)
+        employer_profile = None
+        try:
+            employer_profile_response = supabase_service.client.table("employer_profiles")\
+                .select("*")\
+                .eq("property_id", property_id)\
+                .eq("is_active", True)\
+                .execute()
+            employer_profile = employer_profile_response.data[0] if employer_profile_response.data else None
+        except Exception as e:
+            logger.warning(f"Could not fetch employer profile: {e}")
         
         # Build I-9 Section 2 form data
+        employee_data = employee.data if employee.data else {}
         form_data = {
             "employee_first_day": {
-                "value": employee.data.get('start_date'),
+                "value": employee_data.get('start_date'),
                 "source": "employee_record",
                 "editable": True
             }
         }
         
         # Add document data from I-9 documents
-        if documents.data:
+        if documents_data:
             # Assume first document is List A or List B
-            doc = documents.data[0]
+            doc = documents_data[0]
             doc_metadata = doc.get('metadata', {})
-            
+
             form_data["document_title"] = {
                 "value": doc_metadata.get('document_type', ''),
                 "source": "uploaded_document",
                 "editable": True,
                 "confidence": doc_metadata.get('ocr_confidence')
             }
-            
+
             form_data["issuing_authority"] = {
                 "value": doc_metadata.get('issuing_authority', ''),
                 "source": "uploaded_document",
                 "editable": True,
                 "confidence": doc_metadata.get('ocr_confidence')
             }
-            
+
             form_data["document_number"] = {
                 "value": doc_metadata.get('document_number', ''),
                 "source": "uploaded_document",
                 "editable": True,
                 "confidence": doc_metadata.get('ocr_confidence')
             }
-            
+
             form_data["expiration_date"] = {
                 "value": doc_metadata.get('expiration_date', ''),
                 "source": "uploaded_document",
                 "editable": True,
                 "confidence": doc_metadata.get('ocr_confidence')
             }
-        
+
         # Add employer information (auto-filled, not editable)
-        if employer_profile.data:
-            profile = employer_profile.data
+        if employer_profile:
+            profile = employer_profile
             
             form_data["employer_business_name"] = {
                 "value": profile.get('i9_business_name') or profile.get('business_legal_name'),
@@ -386,11 +412,11 @@ async def get_i9_section_2_data(
         
         return {
             "success": True,
-            "employee": employee.data,
-            "i9_section_1": i9_section_1.data if i9_section_1.data else None,
-            "documents": documents.data or [],
+            "employee": employee_data,
+            "i9_section_1": i9_section_1,
+            "documents": documents_data,
             "form_data": form_data,
-            "has_employer_profile": employer_profile.data is not None
+            "has_employer_profile": employer_profile is not None
         }
         
     except HTTPException:
@@ -399,3 +425,67 @@ async def get_i9_section_2_data(
         logger.error(f"Error getting I-9 Section 2 data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.post("/employer-profile/quick-save")
+async def quick_save_employer_profile(
+    payload: QuickEmployerProfileRequest,
+    current_user = Depends(get_current_user)
+):
+    """Persist minimal employer profile data so future reviews auto-fill"""
+    try:
+        if current_user.role not in ['manager', 'hr', 'admin']:
+            raise HTTPException(status_code=403, detail="Only managers can update employer profile")
+
+        property_id = current_user.property_id
+        if not property_id:
+            raise HTTPException(status_code=400, detail="Property ID not found for manager")
+
+        try:
+            existing_profile = supabase_service.client.table('employer_profiles') \
+                .select('id') \
+                .eq('property_id', property_id) \
+                .eq('is_active', True) \
+                .execute()
+            existing_id = existing_profile.data[0].get('id') if existing_profile.data else None
+        except Exception:
+            existing_id = None
+
+        profile_payload = {
+            "property_id": property_id,
+            "i9_employer_name": payload.employerName,
+            "i9_employer_title": payload.employerTitle,
+            "i9_business_name": payload.businessName,
+            "i9_business_address": payload.businessAddress,
+            "city": payload.city,
+            "state": payload.state,
+            "zip_code": payload.zipCode,
+            "ein": payload.ein,
+            "business_legal_name": payload.businessName,
+            "dba_name": payload.businessName,
+            "street_address": payload.businessAddress,
+            "is_active": True,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
+        if existing_id:
+            profile_payload['id'] = existing_id
+        else:
+            profile_payload['id'] = str(uuid4())
+            profile_payload['created_at'] = datetime.utcnow().isoformat()
+
+        logger.info(f"[EMPLOYER-SAVE] Saving profile for property {property_id}: {profile_payload}")
+        result = supabase_service.admin_client.table('employer_profiles') \
+            .upsert(profile_payload, on_conflict='property_id') \
+            .execute()
+        logger.info(f"[EMPLOYER-SAVE] Save result: {result.data}")
+
+        return {
+            "success": True,
+            "profile": profile_payload
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save employer profile: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save employer profile")

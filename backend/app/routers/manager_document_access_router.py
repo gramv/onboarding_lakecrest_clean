@@ -101,7 +101,7 @@ async def request_document_access_otp(
         return {
             "success": True,
             "message": result['message'],
-            "expires_at": result['expires_at']
+            "expires_at": result.get('expires_at')
         }
         
     except HTTPException:
@@ -155,7 +155,7 @@ async def verify_document_access_otp(
         return {
             "success": True,
             "session_token": result['session_token'],
-            "expires_at": result['expires_at'],
+            "expires_at": result.get('expires_at'),
             "message": result['message']
         }
         
@@ -181,10 +181,8 @@ async def validate_document_access_session(
     """
     try:
         manager_id = current_user.id
-        
+
         # Find active session
-        from datetime import datetime, timezone
-        
         session = supabase_service.client.table("document_access_sessions")\
             .select("*")\
             .eq("manager_id", manager_id)\
@@ -193,33 +191,32 @@ async def validate_document_access_session(
             .eq("is_active", True)\
             .single()\
             .execute()
-        
+
         if not session.data:
             return {
                 "valid": False,
-                "message": "Session not found or expired"
+                "message": "Session not found or inactive"
             }
         
-        # Check if expired
-        expires_at = datetime.fromisoformat(session.data['expires_at'].replace('Z', '+00:00'))
-        if datetime.now(timezone.utc) > expires_at:
-            # Mark session as inactive
-            supabase_service.client.table("document_access_sessions")\
-                .update({"is_active": False, "ended_at": datetime.now(timezone.utc).isoformat()})\
-                .eq("id", session.data['id'])\
-                .execute()
-            
-            return {
-                "valid": False,
-                "message": "Session has expired"
-            }
-        
-        # Calculate remaining time
-        remaining_seconds = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+        expires_at_value = session.data.get('expires_at')
+        if expires_at_value:
+            expires_at = datetime.fromisoformat(expires_at_value.replace('Z', '+00:00'))
+            if datetime.now(timezone.utc) > expires_at:
+                supabase_service.client.table("document_access_sessions")\
+                    .update({"is_active": False, "ended_at": datetime.now(timezone.utc).isoformat()})\
+                    .eq("id", session.data['id'])\
+                    .execute()
+                return {
+                    "valid": False,
+                    "message": "Session has expired"
+                }
+            remaining_seconds = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+        else:
+            remaining_seconds = None
         
         return {
             "valid": True,
-            "expires_at": session.data['expires_at'],
+            "expires_at": expires_at_value,
             "remaining_seconds": remaining_seconds,
             "message": "Session is active"
         }
@@ -289,7 +286,6 @@ async def get_active_sessions(
             .select("*, employees(personal_info)")\
             .eq("manager_id", manager_id)\
             .eq("is_active", True)\
-            .gt("expires_at", datetime.now(timezone.utc).isoformat())\
             .order("created_at", desc=True)\
             .execute()
         
@@ -304,14 +300,18 @@ async def get_active_sessions(
                 if first and last:
                     employee_name = f"{first} {last}"
             
-            expires_at = datetime.fromisoformat(session['expires_at'].replace('Z', '+00:00'))
-            remaining_seconds = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+            expires_at_value = session.get('expires_at')
+            if expires_at_value:
+                expires_at = datetime.fromisoformat(expires_at_value.replace('Z', '+00:00'))
+                remaining_seconds = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+            else:
+                remaining_seconds = None
             
             active_sessions.append({
                 "employee_id": session['employee_id'],
                 "employee_name": employee_name,
                 "session_token": session['session_token'],
-                "expires_at": session['expires_at'],
+                "expires_at": expires_at_value,
                 "remaining_seconds": remaining_seconds,
                 "created_at": session['created_at']
             })

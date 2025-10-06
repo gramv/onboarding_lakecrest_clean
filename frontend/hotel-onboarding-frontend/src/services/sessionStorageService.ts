@@ -6,7 +6,6 @@
 interface OTPSession {
   token: string;
   employeeId: string;
-  expiresAt: string;
   createdAt: string;
   lastActivity: string;
 }
@@ -21,17 +20,14 @@ interface ReviewProgress {
 
 const SESSION_KEY_PREFIX = 'otp_session_';
 const PROGRESS_KEY_PREFIX = 'review_progress_';
-const SESSION_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
-
 export class SessionStorageService {
   /**
    * Save OTP session to localStorage
    */
-  static saveSession(employeeId: string, token: string, expiresAt: string): void {
+  static saveSession(employeeId: string, token: string): void {
     const session: OTPSession = {
       token,
       employeeId,
-      expiresAt,
       createdAt: new Date().toISOString(),
       lastActivity: new Date().toISOString()
     };
@@ -57,16 +53,6 @@ export class SessionStorageService {
     try {
       const session: OTPSession = JSON.parse(sessionData);
       
-      // Check if session is expired
-      const now = new Date().getTime();
-      const expires = new Date(session.expiresAt).getTime();
-      
-      if (now >= expires) {
-        console.log('⚠️ Session expired, removing...');
-        this.clearSession(employeeId);
-        return null;
-      }
-
       // Update last activity
       session.lastActivity = new Date().toISOString();
       localStorage.setItem(
@@ -93,17 +79,8 @@ export class SessionStorageService {
   /**
    * Get time remaining in session (seconds)
    */
-  static getTimeRemaining(employeeId: string): number {
-    const session = this.getSession(employeeId);
-    
-    if (!session) {
-      return 0;
-    }
-
-    const now = new Date().getTime();
-    const expires = new Date(session.expiresAt).getTime();
-    
-    return Math.max(0, Math.floor((expires - now) / 1000));
+  static getTimeRemaining(_: string): number {
+    return Number.MAX_SAFE_INTEGER;
   }
 
   /**
@@ -214,23 +191,8 @@ export class SessionStorageService {
   /**
    * Extend session (update expiry time)
    */
-  static extendSession(employeeId: string, additionalMinutes: number = 30): boolean {
-    const session = this.getSession(employeeId);
-    
-    if (!session) {
-      return false;
-    }
-
-    const newExpiry = new Date(Date.now() + additionalMinutes * 60 * 1000);
-    session.expiresAt = newExpiry.toISOString();
-    session.lastActivity = new Date().toISOString();
-
-    localStorage.setItem(
-      `${SESSION_KEY_PREFIX}${employeeId}`,
-      JSON.stringify(session)
-    );
-
-    console.log('⏰ Session extended:', { employeeId, newExpiry: session.expiresAt });
+  static extendSession(): boolean {
+    console.warn('extendSession is deprecated: sessions persist until manually cleared.');
     return true;
   }
 

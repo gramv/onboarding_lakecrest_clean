@@ -4,20 +4,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit2, Save, X, AlertCircle, CheckCircle, FileText, Clock } from 'lucide-react';
+import { Eye, AlertCircle, CheckCircle } from 'lucide-react';
 import OTPVerificationModal from './OTPVerificationModal';
 import SessionStorageService from '@/services/sessionStorageService';
 import DocumentVerificationService, { AllDocumentsStatus } from '@/services/documentVerificationService';
 import DocumentWorkflowStepper from './DocumentWorkflowStepper';
 import DocumentReviewModal from './DocumentReviewModal';
-
-interface FieldData {
-  value: string;
-  source: 'employee' | 'ocr' | 'employer_profile' | 'uploaded_document';
-  editable: boolean;
-  confidence?: number;
-  original_value?: string;
-}
+import { I9ReviewModal } from './i9';
+import { W4ReviewModal } from './w4/W4ReviewModal';
+import { HealthInsuranceReviewModal } from './health_insurance/HealthInsuranceReviewModal';
+import { CompleteReviewModal } from './CompleteReviewModal';
 
 interface ManagerReviewInterfaceProps {
   employeeId: string;
@@ -32,20 +28,18 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
 }) => {
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [sessionExpires, setSessionExpires] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
-  const [employeeData, setEmployeeData] = useState<any>(null);
-  const [formData, setFormData] = useState<Record<string, FieldData>>({});
-  const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'i9' | 'w4' | 'insurance'>('i9');
 
   // New workflow state
   const [documentsStatus, setDocumentsStatus] = useState<AllDocumentsStatus | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showI9Modal, setShowI9Modal] = useState(false);
+  const [showW4Modal, setShowW4Modal] = useState(false);
+  const [showHealthInsuranceModal, setShowHealthInsuranceModal] = useState(false);
+  const [showCompleteReviewModal, setShowCompleteReviewModal] = useState(false);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -54,70 +48,33 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     if (existingSession) {
       console.log('✅ Found existing session, restoring...');
       setSessionToken(existingSession.token);
-      setSessionExpires(existingSession.expiresAt);
 
-      // Restore progress
-      const savedProgress = SessionStorageService.getProgress(employeeId);
-      if (savedProgress) {
-        console.log('✅ Restoring saved progress...');
-        setFormData(savedProgress.formData);
-        setEditedFields(new Set(savedProgress.editedFields));
-        setActiveTab(savedProgress.activeTab as any);
-      }
+      // Session restored
+      console.log('✅ Session restored');
     } else {
       // No session, show OTP modal
       setShowOTPModal(true);
     }
   }, [employeeId]);
 
-  // Session countdown
-  useEffect(() => {
-    if (!sessionExpires) return;
 
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const expires = new Date(sessionExpires).getTime();
-      const remaining = Math.max(0, Math.floor((expires - now) / 1000));
-      
-      setTimeRemaining(remaining);
-      
-      if (remaining === 0) {
-        setSessionToken(null);
-        setError('Session expired. Please verify again to continue.');
-      }
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [sessionExpires]);
-
-  // Load employee data and documents status after OTP verification
+  // Load documents status after OTP verification
   useEffect(() => {
     if (sessionToken) {
-      loadEmployeeData();
       loadDocumentsStatus();
     }
   }, [sessionToken]);
 
-  // Auto-save progress when form data or edited fields change
-  useEffect(() => {
-    if (sessionToken && Object.keys(formData).length > 0) {
-      SessionStorageService.autoSaveProgress(
-        employeeId,
-        formData,
-        Array.from(editedFields),
-        activeTab
-      );
-    }
-  }, [formData, editedFields, activeTab, sessionToken, employeeId]);
 
-  const handleOTPVerified = (token: string, expires: string) => {
+
+  const handleOTPVerified = (token: string) => {
     setSessionToken(token);
-    setSessionExpires(expires);
     setShowOTPModal(false);
 
-    // Save session to localStorage
-    SessionStorageService.saveSession(employeeId, token, expires);
-    console.log('✅ Session saved to localStorage');
+    // Save session to sessionStorage (no expiration check - lasts until browser closed)
+    SessionStorageService.saveSession(employeeId, token);
+    console.log('✅ Session saved to sessionStorage');
   };
 
   const loadDocumentsStatus = async () => {
@@ -134,9 +91,53 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     }
   };
 
+  // Check if all documents are approved
+  const allDocumentsApproved = documentsStatus?.documents.every(
+    doc => doc.status === 'approved'
+  ) || false;
+
+  // Debug logging
+  useEffect(() => {
+    if (documentsStatus) {
+      console.log('[COMPLETE-REVIEW] Documents status:', documentsStatus.documents.map(d => ({
+        type: d.documentType,
+        status: d.status
+      })));
+      console.log('[COMPLETE-REVIEW] All approved?', allDocumentsApproved);
+    }
+  }, [documentsStatus, allDocumentsApproved]);
+
   const handleStepClick = (documentType: string) => {
     setSelectedDocument(documentType);
+
+    if (documentType === 'i9') {
+      setShowI9Modal(true);
+      setShowReviewModal(false);
+      setShowW4Modal(false);
+      setShowHealthInsuranceModal(false);
+      return;
+    }
+
+    if (documentType === 'w4') {
+      setShowW4Modal(true);
+      setShowReviewModal(false);
+      setShowI9Modal(false);
+      setShowHealthInsuranceModal(false);
+      return;
+    }
+
+    if (documentType === 'health_insurance') {
+      setShowHealthInsuranceModal(true);
+      setShowReviewModal(false);
+      setShowI9Modal(false);
+      setShowW4Modal(false);
+      return;
+    }
+
     setShowReviewModal(true);
+    setShowI9Modal(false);
+    setShowW4Modal(false);
+    setShowHealthInsuranceModal(false);
   };
 
   const handleDocumentApproved = () => {
@@ -149,132 +150,7 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     loadDocumentsStatus();
   };
 
-  const loadEmployeeData = async () => {
-    setLoading(true);
-    setError(null);
 
-    try {
-      const response = await fetch(`/api/manager/review/employees/${employeeId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to load employee data');
-      }
-
-      setEmployeeData(data);
-      
-      // Load I-9 Section 2 data with auto-fill
-      if (activeTab === 'i9') {
-        await loadI9Section2Data();
-      }
-      
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadI9Section2Data = async () => {
-    try {
-      const response = await fetch(
-        `/api/manager/review/employees/${employeeId}/i9-section-2-data`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok && data.form_data) {
-        setFormData(data.form_data);
-      }
-    } catch (err) {
-      console.error('Error loading I-9 data:', err);
-    }
-  };
-
-  const handleFieldEdit = (fieldName: string, newValue: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: {
-        ...prev[fieldName],
-        value: newValue
-      }
-    }));
-    
-    setEditedFields(prev => new Set(prev).add(fieldName));
-  };
-
-  const trackEdit = async (fieldName: string, originalValue: string, editedValue: string) => {
-    try {
-      await fetch('/api/manager/edits/track', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          employee_id: employeeId,
-          form_type: activeTab === 'i9' ? 'i9_section_2' : activeTab === 'w4' ? 'w4' : 'health_insurance',
-          field_name: fieldName,
-          field_label: fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          original_value: originalValue,
-          edited_value: editedValue,
-          ocr_confidence: formData[fieldName]?.confidence,
-          edit_reason: 'manager_review',
-          edit_notes: 'Corrected during manager review'
-        })
-      });
-    } catch (err) {
-      console.error('Error tracking edit:', err);
-    }
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Track all edits
-      for (const fieldName of editedFields) {
-        const field = formData[fieldName];
-        if (field.original_value && field.value !== field.original_value) {
-          await trackEdit(fieldName, field.original_value, field.value);
-        }
-      }
-
-      // Save the form data
-      // TODO: Implement save endpoint
-      
-      setEditedFields(new Set());
-      
-    } catch (err: any) {
-      setError(err.message || 'Failed to save changes');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getConfidenceColor = (confidence?: number): string => {
-    if (!confidence) return 'text-gray-500';
-    if (confidence >= 0.9) return 'text-green-600';
-    if (confidence >= 0.7) return 'text-yellow-600';
-    return 'text-red-600';
-  };
 
   if (!sessionToken) {
     return (
@@ -325,61 +201,19 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Session Timer */}
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg">
-                <Clock className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">
-                  Session: {formatTime(timeRemaining)}
+              {/* Session Active Indicator */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-900">
+                  Session Active
                 </span>
               </div>
 
-              {/* Save Button */}
-              {editedFields.size > 0 && (
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300"
-                >
-                  <Save className="w-4 h-4" />
-                  Save Changes ({editedFields.size})
-                </button>
-              )}
+
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-4 mt-4">
-            <button
-              onClick={() => setActiveTab('i9')}
-              className={`px-4 py-2 font-semibold border-b-2 ${
-                activeTab === 'i9'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              I-9 Section 2
-            </button>
-            <button
-              onClick={() => setActiveTab('w4')}
-              className={`px-4 py-2 font-semibold border-b-2 ${
-                activeTab === 'w4'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              W-4
-            </button>
-            <button
-              onClick={() => setActiveTab('insurance')}
-              className={`px-4 py-2 font-semibold border-b-2 ${
-                activeTab === 'insurance'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Health Insurance
-            </button>
-          </div>
+
         </div>
       </div>
 
@@ -408,122 +242,57 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
               onStepClick={handleStepClick}
             />
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            {/* Form fields will be rendered here based on activeTab */}
-            <div className="space-y-6">
-              {Object.entries(formData).map(([fieldName, field]) => (
-                <FormField
-                  key={fieldName}
-                  fieldName={fieldName}
-                  field={field}
-                  onEdit={handleFieldEdit}
-                  isEdited={editedFields.has(fieldName)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Form Field Component
-interface FormFieldProps {
-  fieldName: string;
-  field: FieldData;
-  onEdit: (fieldName: string, value: string) => void;
-  isEdited: boolean;
-}
-
-const FormField: React.FC<FormFieldProps> = ({ fieldName, field, onEdit, isEdited }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(field.value);
-
-  const handleSave = () => {
-    onEdit(fieldName, value);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setValue(field.value);
-    setIsEditing(false);
-  };
-
-  const getSourceBadge = (source: string) => {
-    const badges = {
-      employee: { label: 'Employee', color: 'bg-blue-100 text-blue-800' },
-      ocr: { label: 'OCR', color: 'bg-purple-100 text-purple-800' },
-      employer_profile: { label: 'Auto-filled', color: 'bg-green-100 text-green-800' },
-      uploaded_document: { label: 'Document', color: 'bg-yellow-100 text-yellow-800' }
-    };
-
-    const badge = badges[source as keyof typeof badges] || badges.employee;
-
-    return (
-      <span className={`text-xs px-2 py-1 rounded ${badge.color}`}>
-        {badge.label}
-      </span>
-    );
-  };
-
-  return (
-    <div className={`border rounded-lg p-4 ${isEdited ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'}`}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <label className="font-medium text-gray-900">
-              {fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </label>
-            {getSourceBadge(field.source)}
-            {field.confidence && (
-              <span className={`text-xs ${field.confidence >= 0.9 ? 'text-green-600' : field.confidence >= 0.7 ? 'text-yellow-600' : 'text-red-600'}`}>
-                {Math.round(field.confidence * 100)}% confidence
-              </span>
-            )}
-          </div>
-          
-          {isEditing ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                autoFocus
-              />
-              <button
-                onClick={handleSave}
-                className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <Save className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleCancel}
-                className="p-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-gray-700">{field.value || '(empty)'}</p>
-              {field.editable && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        ) : null}
       </div>
 
-      {/* Document Review Modal */}
-      {selectedDocument && (
+      {showI9Modal && selectedDocument === 'i9' && (
+        <I9ReviewModal
+          employeeId={employeeId}
+          onClose={() => {
+            setShowI9Modal(false);
+            setSelectedDocument(null);
+          }}
+          onComplete={() => {
+            setShowI9Modal(false);
+            setSelectedDocument(null);
+            loadDocumentsStatus();
+          }}
+        />
+      )}
+
+      {showW4Modal && selectedDocument === 'w4' && (
+        <W4ReviewModal
+          isOpen={showW4Modal}
+          employeeId={employeeId}
+          onClose={() => {
+            setShowW4Modal(false);
+            setSelectedDocument(null);
+          }}
+          onComplete={() => {
+            setShowW4Modal(false);
+            setSelectedDocument(null);
+            loadDocumentsStatus();
+          }}
+        />
+      )}
+
+      {showHealthInsuranceModal && selectedDocument === 'health_insurance' && (
+        <HealthInsuranceReviewModal
+          isOpen={showHealthInsuranceModal}
+          employeeId={employeeId}
+          onClose={() => {
+            setShowHealthInsuranceModal(false);
+            setSelectedDocument(null);
+          }}
+          onComplete={() => {
+            setShowHealthInsuranceModal(false);
+            setSelectedDocument(null);
+            loadDocumentsStatus();
+          }}
+        />
+      )}
+
+      {showReviewModal && selectedDocument && selectedDocument !== 'i9' && selectedDocument !== 'w4' && selectedDocument !== 'health_insurance' && (
         <DocumentReviewModal
           isOpen={showReviewModal}
           onClose={() => {
@@ -539,9 +308,74 @@ const FormField: React.FC<FormFieldProps> = ({ fieldName, field, onEdit, isEdite
           onReject={handleDocumentRejected}
         />
       )}
+
+      {/* Complete Review Modal */}
+      {showCompleteReviewModal && (
+        <CompleteReviewModal
+          isOpen={showCompleteReviewModal}
+          employeeId={employeeId}
+          employeeName={employeeName}
+          onClose={() => setShowCompleteReviewModal(false)}
+          onComplete={() => {
+            setShowCompleteReviewModal(false);
+            loadDocumentsStatus();
+          }}
+        />
+      )}
+
+      {/* Complete Review Button - Shows when all documents are approved and modal is NOT open */}
+      {(() => {
+        console.log('[COMPLETE-REVIEW-RENDER] Checking render conditions:', {
+          allDocumentsApproved,
+          hasDocumentsStatus: !!documentsStatus,
+          modalOpen: showCompleteReviewModal,
+          shouldRender: allDocumentsApproved && documentsStatus && !showCompleteReviewModal
+        });
+
+        if (allDocumentsApproved && documentsStatus && !showCompleteReviewModal) {
+          console.log('[COMPLETE-REVIEW-RENDER] ✅ RENDERING BUTTON!');
+        } else {
+          console.log('[COMPLETE-REVIEW-RENDER] ❌ NOT rendering button');
+        }
+
+        return null;
+      })()}
+      {allDocumentsApproved && documentsStatus && !showCompleteReviewModal ? (
+        <div
+          className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-green-500 shadow-2xl p-6 z-[9999]"
+          style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999 }}
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-7 h-7 text-green-600" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  ✅ All Documents Approved!
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Ready to activate employee and complete review
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                console.log('[COMPLETE-REVIEW] Button clicked!');
+                setShowCompleteReviewModal(true);
+              }}
+              className="px-8 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-3 transition-all transform hover:scale-105 shadow-lg font-semibold text-lg"
+            >
+              <CheckCircle className="w-6 h-6" />
+              <span>Complete Review & Activate Employee</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
 
 export default ManagerReviewInterface;
-

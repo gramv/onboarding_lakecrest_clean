@@ -2251,5 +2251,305 @@ class EmailService:
             logger.error(f"Failed to send signed document with attachments: {e}")
             return False
 
+    async def send_onboarding_completion_email(
+        self,
+        employee_email: str,
+        employee_name: str,
+        employee_number: str,
+        position: str,
+        department: str,
+        start_date: str,  # "Monday, October 7, 2025"
+        start_time: str,  # "9:00 AM"
+        property_name: str,
+        property_address: str,
+        manager_name: str,
+        manager_email: str,
+        manager_phone: str = None,
+        dress_code: str = "Business casual",
+        parking_details: str = "Employee parking available on-site",
+        cc_manager: bool = True
+    ) -> bool:
+        """
+        Send onboarding completion email to employee
+        Beautiful, professional email welcoming them to the team
+        """
+        try:
+            logger.info(f"[EMAIL] Sending onboarding completion email to {employee_email}")
+
+            subject = f"🎉 Congratulations! Your Onboarding is Complete - Welcome to {property_name}"
+
+            # Format manager phone
+            phone_display = f"<strong>Phone:</strong> {manager_phone}" if manager_phone else ""
+
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🎉 Welcome to the Team!</h1>
+                        <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Your onboarding is complete</p>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div style="padding: 40px 30px;">
+
+                        <!-- Greeting -->
+                        <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+                            Dear <strong>{employee_name}</strong>,
+                        </p>
+
+                        <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+                            Congratulations! We're thrilled to inform you that your onboarding process has been successfully completed.
+                            You are now officially part of the <strong>{property_name}</strong> team!
+                        </p>
+
+                        <!-- Employment Details Box -->
+                        <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                            <h2 style="color: #667eea; margin: 0 0 15px 0; font-size: 18px;">📋 Your Employment Details</h2>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Position:</strong></td>
+                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{position}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Department:</strong></td>
+                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{department}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Employee Number:</strong></td>
+                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{employee_number}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Start Date:</strong></td>
+                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{start_date}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Start Time:</strong></td>
+                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{start_time}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Work Location:</strong></td>
+                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{property_address}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- What's Next Section -->
+                        <div style="margin: 30px 0;">
+                            <h2 style="color: #333333; font-size: 20px; margin: 0 0 15px 0;">✨ What's Next?</h2>
+                            <ul style="color: #333333; font-size: 15px; line-height: 1.8; padding-left: 20px;">
+                                <li>✓ All your onboarding documents have been reviewed and approved</li>
+                                <li>✓ Your employee profile has been activated</li>
+                                <li>✓ You're all set to begin your new role!</li>
+                            </ul>
+                        </div>
+
+                        <!-- First Day Information -->
+                        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                            <h2 style="color: #856404; margin: 0 0 15px 0; font-size: 18px;">📅 First Day Information</h2>
+
+                            <div style="margin: 15px 0;">
+                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                    <strong>📅 Date:</strong> {start_date}
+                                </p>
+                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                    <strong>🕐 Time:</strong> {start_time} (Please arrive 15 minutes early)
+                                </p>
+                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                    <strong>📍 Location:</strong> {property_address}
+                                </p>
+                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                    <strong>🚪 Report to:</strong> {manager_name} (Your Manager)
+                                </p>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <p style="margin: 10px 0 5px 0; color: #333333; font-size: 15px;"><strong>What to Bring:</strong></p>
+                                <ul style="color: #333333; font-size: 14px; line-height: 1.6; margin: 5px 0; padding-left: 20px;">
+                                    <li>Valid government-issued photo ID</li>
+                                    <li>Social Security card (for I-9 verification)</li>
+                                    <li>Any additional documents requested by your manager</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <p style="margin: 10px 0 5px 0; color: #333333; font-size: 15px;"><strong>What to Expect:</strong></p>
+                                <ul style="color: #333333; font-size: 14px; line-height: 1.6; margin: 5px 0; padding-left: 20px;">
+                                    <li>Welcome orientation and facility tour</li>
+                                    <li>Meet your team members</li>
+                                    <li>Review of your role and responsibilities</li>
+                                    <li>Setup of your work station and access credentials</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Manager Contact -->
+                        <div style="background-color: #e7f3ff; border-left: 4px solid #2196F3; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                            <h2 style="color: #1976D2; margin: 0 0 15px 0; font-size: 18px;">👤 Your Manager</h2>
+                            <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                <strong>Name:</strong> {manager_name}
+                            </p>
+                            <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                <strong>Email:</strong> <a href="mailto:{manager_email}" style="color: #2196F3; text-decoration: none;">{manager_email}</a>
+                            </p>
+                            {f'<p style="margin: 5px 0; color: #333333; font-size: 15px;">{phone_display}</p>' if manager_phone else ''}
+                            <p style="margin: 15px 0 0 0; color: #666666; font-size: 14px; font-style: italic;">
+                                Feel free to reach out if you have any questions before your start date!
+                            </p>
+                        </div>
+
+                        <!-- Important Reminders -->
+                        <div style="background-color: #fff; border: 2px dashed #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                            <h2 style="color: #667eea; margin: 0 0 15px 0; font-size: 18px;">⚠️ Important Reminders</h2>
+                            <ul style="color: #333333; font-size: 14px; line-height: 1.8; padding-left: 20px;">
+                                <li>Please arrive <strong>15 minutes early</strong> on your first day</li>
+                                <li><strong>Dress code:</strong> {dress_code}</li>
+                                <li><strong>Parking:</strong> {parking_details}</li>
+                                <li>If you need to reschedule, contact your manager <strong>immediately</strong></li>
+                            </ul>
+                        </div>
+
+                        <!-- Closing -->
+                        <div style="margin: 30px 0;">
+                            <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+                                We're excited to have you join our team and look forward to seeing you on <strong>{start_date}</strong>!
+                            </p>
+                            <p style="font-size: 16px; color: #333333; line-height: 1.6; margin-top: 20px;">
+                                <strong>Welcome aboard! 🎉</strong>
+                            </p>
+                            <p style="font-size: 16px; color: #333333; line-height: 1.6; margin-top: 20px;">
+                                Best regards,<br>
+                                <strong>The {property_name} Team</strong>
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background-color: #f8f9fa; padding: 20px 30px; border-top: 1px solid #e0e0e0; text-align: center;">
+                        <p style="margin: 0; color: #666666; font-size: 12px;">
+                            🔒 This is an automated message from the Hotel Onboarding System.
+                        </p>
+                    </div>
+
+                </div>
+            </body>
+            </html>
+            """
+
+            # Plain text version
+            text_content = f"""
+🎉 Congratulations! Your Onboarding is Complete - Welcome to {property_name}
+
+Dear {employee_name},
+
+Congratulations! We're thrilled to inform you that your onboarding process has been
+successfully completed. You are now officially part of the {property_name} team!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+YOUR EMPLOYMENT DETAILS
+
+Position: {position}
+Department: {department}
+Employee Number: {employee_number}
+Start Date: {start_date}
+Start Time: {start_time}
+Work Location: {property_address}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT'S NEXT?
+
+✓ All your onboarding documents have been reviewed and approved
+✓ Your employee profile has been activated
+✓ You're all set to begin your new role!
+
+FIRST DAY INFORMATION
+
+📅 Date: {start_date}
+🕐 Time: {start_time} (Please arrive 15 minutes early)
+📍 Location: {property_address}
+🚪 Report to: {manager_name} (Your Manager)
+
+What to Bring:
+• Valid government-issued photo ID
+• Social Security card (for I-9 verification)
+• Any additional documents requested by your manager
+
+What to Expect:
+• Welcome orientation and facility tour
+• Meet your team members
+• Review of your role and responsibilities
+• Setup of your work station and access credentials
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+YOUR MANAGER
+
+Name: {manager_name}
+Email: {manager_email}
+{f'Phone: {manager_phone}' if manager_phone else ''}
+
+Feel free to reach out if you have any questions before your start date!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT REMINDERS
+
+• Please arrive 15 minutes early on your first day
+• Dress code: {dress_code}
+• Parking: {parking_details}
+• If you need to reschedule, contact your manager immediately
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+We're excited to have you join our team and look forward to seeing you on {start_date}!
+
+Welcome aboard! 🎉
+
+Best regards,
+The {property_name} Team
+
+---
+🔒 This is an automated message from the Hotel Onboarding System.
+            """
+
+            # Send email with optional CC to manager
+            if cc_manager and manager_email:
+                cc_emails = [manager_email]
+                success = await self.send_email_with_cc(
+                    employee_email,
+                    cc_emails,
+                    subject,
+                    html_content,
+                    text_content
+                )
+            else:
+                success = await self.send_email(
+                    employee_email,
+                    subject,
+                    html_content,
+                    text_content
+                )
+
+            if success:
+                logger.info(f"[EMAIL] ✅ Onboarding completion email sent to {employee_email}")
+            else:
+                logger.error(f"[EMAIL] ❌ Failed to send onboarding completion email to {employee_email}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"[EMAIL] Error sending onboarding completion email: {e}")
+            return False
+
 # Create global email service instance
 email_service = EmailService()

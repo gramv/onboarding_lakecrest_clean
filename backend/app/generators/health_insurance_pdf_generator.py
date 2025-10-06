@@ -70,10 +70,55 @@ class HealthInsurancePDFGenerator(BasePDFGenerator):
             else:
                 hi_form_data = {}
                 logger.info(f"🔍 PDF Generator - No form data available, using empty dict")
-            
+
+            # Shallow copy so we can enrich without mutating source references
+            hi_form_data = {**hi_form_data}
+
+            # Enrich with employer profile / property metadata for top-of-form fields
+            property_id = None
+            property_name = None
+            if pdf_data and getattr(pdf_data, 'property_id', None):
+                property_id = pdf_data.property_id
+                property_name = getattr(pdf_data, 'property_name', None)
+
+            employer_profile = None
+            if property_id:
+                try:
+                    employer_profile = await self.supabase.get_active_employer_profile(property_id)
+                except Exception as profile_error:
+                    self.logger.debug(f"Could not load employer profile for property {property_id}: {profile_error}")
+
+            if employer_profile:
+                if not property_name:
+                    property_name = employer_profile.get('business_legal_name') or employer_profile.get('dba_name')
+
+                if employer_profile.get('health_insurance_provider'):
+                    hi_form_data.setdefault('healthInsuranceProvider', employer_profile['health_insurance_provider'])
+
+                if employer_profile.get('health_insurance_group_number'):
+                    hi_form_data.setdefault('healthInsuranceGroupNumber', employer_profile['health_insurance_group_number'])
+
+                if employer_profile.get('health_insurance_contact'):
+                    hi_form_data.setdefault('healthInsuranceContact', employer_profile['health_insurance_contact'])
+
+            if property_name:
+                hi_form_data.setdefault('propertyName', property_name)
+
+            # Include hire date so managers don't need to retype it
+            start_date = None
+            if pdf_data and pdf_data.form_data:
+                start_date = pdf_data.form_data.get('job-details', {}).get('startDate')
+            if not start_date and pdf_data:
+                start_date = getattr(pdf_data, 'hire_date', None)
+            if not start_date and form_data:
+                start_date = form_data.get('startDate')
+
+            if start_date:
+                hi_form_data.setdefault('dateOfHire', start_date)
+
             # Extract personal info from form_data if provided (during normal onboarding)
             personal_info = hi_form_data.get('personalInfo', {})
-            
+
             # Prepare data for PDF generation
             # Prioritize form_data when health insurance data is provided
             if form_data and ('medicalPlan' in form_data or 'personalInfo' in form_data):

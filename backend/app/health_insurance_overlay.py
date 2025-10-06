@@ -724,6 +724,20 @@ class HealthInsuranceFormOverlay:
                 ["Email Address", "Email"]
             ):
                 actions.append({"field": "Email", "action": "text", "pg": 1})
+
+            property_name = form_data.get('propertyName') or form_data.get('property_name')
+            if property_name and (
+                self._set_text_field(page1, "Property Name", property_name)
+                or self._set_text_by_mapping(page1, mapping, "Property Name", property_name)
+            ):
+                actions.append({"field": "Property Name", "action": "text", "pg": 1})
+
+            date_of_hire = form_data.get('dateOfHire') or form_data.get('hireDate')
+            if date_of_hire and (
+                self._set_text_field(page1, "New Hire  Date of Hire", self._fmt_date(date_of_hire))
+                or self._set_text_by_mapping(page1, mapping, "New Hire  Date of Hire", self._fmt_date(date_of_hire))
+            ):
+                actions.append({"field": "Date of Hire", "action": "text", "pg": 1})
             
             # Set effective date
             if (self._set_text_field(page1, "Effective Date", self._fmt_date(effective_date)) or

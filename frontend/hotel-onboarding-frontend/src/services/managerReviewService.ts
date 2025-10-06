@@ -167,6 +167,195 @@ export const reviewDataService = {
     }
 
     return response.json();
+  },
+
+  async getI9ReviewDetail(employeeId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/i9/detail`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to load I-9 review data');
+    }
+
+    return response.json();
+  },
+
+  async saveVerifiedI9(employeeId: string, pdfBytesBase64: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/i9/save-verified`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ pdfBytes: pdfBytesBase64 })
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to save verified I-9');
+    }
+
+    return response.json();
+  },
+
+  async completeI9Review(employeeId: string, payload: any) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/i9/complete`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to complete I-9 review');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Get W-4 review detail (PDF + SSN card)
+   */
+  async getW4ReviewDetail(employeeId: string) {
+    const response = await fetch(`${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/w4/detail`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to load W-4 review data');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Complete W-4 with employer information
+   */
+  async completeW4(employeeId: string, data: {
+    employerName: string;
+    employerAddress: string;
+    employerEIN: string;
+    firstDayOfEmployment: string;
+    signature: { dataUrl: string; timestamp: string };
+    ssnVerified: boolean;
+    notes?: string;
+  }) {
+    const response = await fetch(`${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/w4/complete`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to complete W-4');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Get Health Insurance review detail
+   */
+  async getHealthInsuranceDetail(employeeId: string) {
+    const response = await fetch(`${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/health_insurance/detail`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to load Health Insurance data');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Complete Health Insurance with employer information
+   */
+  async completeHealthInsurance(employeeId: string, data: {
+    propertyName: string;
+    deadlineToSubmit: string;
+    reasonForRequest: string;
+    dateOfHire?: string;
+    qualifyingEventDescription?: string;
+    notes?: string;
+  }) {
+    const response = await fetch(`${API_BASE_URL}/api/manager/review/employees/${employeeId}/documents/health_insurance/complete`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to complete Health Insurance');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Complete manager review and activate employee
+   */
+  async completeReview(employeeId: string, data: {
+    startDate: string;
+    startTime: string;
+    employeeNumber: string;
+    dressCode?: string;
+    parkingDetails?: string;
+    notes?: string;
+  }) {
+    const response = await fetch(`${API_BASE_URL}/api/manager/review/employees/${employeeId}/complete-review`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to complete review');
+    }
+
+    return response.json();
+  },
+
+  async saveEmployerProfileQuick(payload: {
+    employerName: string;
+    employerTitle: string;
+    businessName: string;
+    businessAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    ein: string;
+  }) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/manager/review/employer-profile/quick-save`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to save employer profile');
+    }
+
+    return response.json();
   }
 };
 
@@ -360,4 +549,3 @@ export default {
   employerProfile: employerProfileService,
   editTracking: editTrackingService
 };
-

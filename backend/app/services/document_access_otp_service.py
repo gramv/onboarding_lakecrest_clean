@@ -197,13 +197,11 @@ class DocumentAccessOTPService:
             
             # Create document access session
             session_token = secrets.token_urlsafe(32)
-            session_expires = datetime.now(timezone.utc) + timedelta(minutes=30)
-            
             session_record = {
                 "manager_id": manager_id,
                 "employee_id": employee_id,
                 "session_token": session_token,
-                "expires_at": session_expires.isoformat(),
+                "expires_at": None,
                 "is_active": True,
                 "verification_method": "email",
                 "verified_at": datetime.now(timezone.utc).isoformat(),
@@ -227,8 +225,8 @@ class DocumentAccessOTPService:
             return {
                 "success": True,
                 "session_token": session_token,
-                "expires_at": session_expires.isoformat(),
-                "message": "Access granted for 30 minutes"
+                "expires_at": None,
+                "message": "Secure session activated"
             }
             
         except Exception as e:

@@ -11499,11 +11499,17 @@ async def generate_i9_complete_pdf(employee_id: str, request: Request):
 
         property_id = await get_property_id_for_employee(employee_id, employee, property_id_hint)
         property_record = None
+        employer_profile = None
         if property_id:
             try:
                 property_record = await supabase_service.get_property_by_id(property_id)
             except Exception as prop_err:
                 logger.debug(f"Unable to load property {property_id} for employee {employee_id}: {prop_err}")
+
+            try:
+                employer_profile = await supabase_service.get_active_employer_profile(property_id)
+            except Exception as profile_err:
+                logger.debug(f"Unable to load employer profile for property {property_id}: {profile_err}")
 
         def fetch_property_attr(attr: str, default: str = ""):
             if not property_record:
@@ -11571,6 +11577,39 @@ async def generate_i9_complete_pdf(employee_id: str, request: Request):
             employer_data['first_day_employment'] = (documents_data.get('firstDayEmployment') or datetime.now().strftime('%m/%d/%Y'))
         else:
             logger.warning("⚠️ No documents data found for Section 2 pre-fill")
+
+        if employer_profile:
+            business_name = (
+                employer_profile.get('i9_business_name')
+                or employer_profile.get('business_legal_name')
+                or employer_profile.get('dba_name')
+            )
+            if business_name:
+                employer_data['business_name'] = business_name
+
+            address_line = employer_profile.get('i9_business_address')
+            if not address_line:
+                street_parts = [
+                    employer_profile.get('street_address'),
+                    employer_profile.get('suite_apt'),
+                ]
+                address_line = ", ".join([part for part in street_parts if part])
+            if address_line:
+                employer_data['business_address'] = address_line
+
+            if employer_profile.get('city'):
+                employer_data['business_city'] = employer_profile['city']
+            if employer_profile.get('state'):
+                employer_data['business_state'] = employer_profile['state']
+            if employer_profile.get('zip_code'):
+                employer_data['business_zip'] = employer_profile['zip_code']
+
+            employer_contact_name = employer_profile.get('i9_employer_name') or employer_profile.get('contact_name')
+            if employer_contact_name:
+                employer_data['employer_name'] = employer_contact_name
+
+            if employer_profile.get('i9_employer_title'):
+                employer_data['employer_title'] = employer_profile['i9_employer_title']
 
         employer_data.setdefault('business_name', fetch_property_attr('name', 'Hotel'))
         employer_data.setdefault('business_address', fetch_property_attr('address', '123 Hotel Street'))
@@ -12490,6 +12529,15 @@ async def generate_w4_pdf(employee_id: str, request: Request):
             if not employee:
                 return not_found_response("Employee not found")
         
+        # Determine property for employer auto-fill
+        property_id = await get_property_id_for_employee(employee_id, employee)
+        employer_profile = None
+        if property_id:
+            try:
+                employer_profile = await supabase_service.get_active_employer_profile(property_id)
+            except Exception as profile_error:
+                logger.debug(f"Unable to load employer profile for property {property_id}: {profile_error}")
+
         # Use form data from request if provided (for preview)
         if employee_data_from_request:
             form_data = employee_data_from_request
@@ -12588,7 +12636,37 @@ async def generate_w4_pdf(employee_id: str, request: Request):
             # Signature date
             "signature_date": w4_data.get("completed_at", datetime.utcnow().isoformat())
         }
-        
+
+        # Employer information for manager section
+        if employer_profile:
+            employer_name_address = employer_profile.get('w4_employer_name_address')
+            if not employer_name_address:
+                address_line = employer_profile.get('street_address') or ''
+                suite = employer_profile.get('suite_apt') or ''
+                city = employer_profile.get('city') or ''
+                state = employer_profile.get('state') or ''
+                zip_code = employer_profile.get('zip_code') or ''
+                line1 = ", ".join([part for part in [address_line.strip(), suite.strip()] if part])
+                line2 = ", ".join([part for part in [city.strip(), state.strip(), zip_code.strip()] if part])
+                employer_name = employer_profile.get('business_legal_name') or employer_profile.get('dba_name')
+                employer_name_address = "\n".join([part for part in [employer_name, line1, line2] if part])
+
+            if employer_name_address:
+                pdf_data['employer_name_address'] = employer_name_address
+
+            if employer_profile.get('ein'):
+                pdf_data['employer_identification_number'] = employer_profile['ein']
+
+        # Include employee hire date for employer section if available
+        hire_date = None
+        if isinstance(employee, dict):
+            hire_date = employee.get('start_date') or employee.get('hire_date')
+        else:
+            hire_date = getattr(employee, 'start_date', None) or getattr(employee, 'hire_date', None)
+
+        if hire_date:
+            pdf_data['first_date_employment'] = hire_date
+
         # Initialize PDF filler for W-4
         from .pdf_forms import PDFFormFiller
         pdf_filler = PDFFormFiller()
@@ -12612,9 +12690,6 @@ async def generate_w4_pdf(employee_id: str, request: Request):
         # Save PDF to Supabase storage
         pdf_url = None
         try:
-            # Get property_id using helper function
-            property_id = await get_property_id_for_employee(employee_id, employee)
-            
             # Check if signature_data exists and has actual signature
             if signature_data and signature_data.get('signature'):
                 logger.info(f"Saving signed W-4 PDF for employee {employee_id}")

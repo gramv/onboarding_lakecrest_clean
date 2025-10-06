@@ -1368,7 +1368,7 @@ class EnhancedSupabaseService:
         """Get property by ID"""
         try:
             result = self.admin_client.table("properties").select("*").eq("id", property_id).execute()
-            
+
             if result.data:
                 prop_data = result.data[0]
                 return Property(
@@ -1388,6 +1388,31 @@ class EnhancedSupabaseService:
         except Exception as e:
             logger.error(f"Failed to get property by ID {property_id}: {e}")
             return None
+
+    async def get_active_employer_profile(self, property_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch the active employer profile for a property."""
+        if not property_id:
+            return None
+
+        try:
+            result = (
+                self.admin_client
+                .table("employer_profiles")
+                .select("*")
+                .eq("property_id", property_id)
+                .eq("is_active", True)
+                .order("updated_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+
+            if result.data:
+                return result.data[0]
+
+        except Exception as e:
+            logger.warning(f"Failed to load employer profile for property {property_id}: {e}")
+
+        return None
     
     async def get_manager_properties(self, manager_id: str) -> List[Property]:
         """Get properties assigned to a manager with fallback logic"""

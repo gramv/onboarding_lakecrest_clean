@@ -9,7 +9,12 @@ export enum HealthInsuranceErrorType {
   UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 }
 
-export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
+export enum ErrorSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
 
 export interface HealthInsuranceError extends Error {
   type: HealthInsuranceErrorType;

@@ -4,13 +4,13 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Mail, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { documentAccessService } from '@/services/managerReviewService';
 
 interface OTPVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onVerified: (sessionToken: string, expiresAt: string) => void;
+  onVerified: (sessionToken: string) => void;
   employeeId: string;
   employeeName: string;
   managerEmail: string;
@@ -28,8 +28,7 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [, setExpiresAt] = useState<string | null>(null);
   
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -39,26 +38,6 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
       requestOTP();
     }
   }, [isOpen]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!expiresAt) return;
-
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const expires = new Date(expiresAt).getTime();
-      const remaining = Math.max(0, Math.floor((expires - now) / 1000));
-      
-      setTimeRemaining(remaining);
-      
-      if (remaining === 0) {
-        setError('Verification code expired. Please request a new one.');
-        setStep('request');
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [expiresAt]);
 
   const requestOTP = async () => {
     setLoading(true);
@@ -98,7 +77,7 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
 
       // Call onVerified after a brief delay to show success message
       setTimeout(() => {
-        onVerified(data.session_token, data.expires_at);
+        onVerified(data.session_token);
       }, 1500);
 
     } catch (err: any) {
@@ -123,14 +102,9 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit when all digits entered
-    if (index === 5 && value) {
-      const fullOtp = [...newOtp];
-      fullOtp[5] = value;
-      if (fullOtp.every(digit => digit !== '')) {
-        setOtp(fullOtp);
-        setTimeout(() => verifyOTP(), 100);
-      }
+    // Auto-submit when all 6 digits are entered
+    if (newOtp.every(digit => digit !== '')) {
+      setTimeout(() => verifyOTP(), 200);
     }
   };
 
@@ -233,14 +207,6 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                 ))}
               </div>
 
-              {/* Timer */}
-              {timeRemaining > 0 && (
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4">
-                  <Clock className="w-4 h-4" />
-                  <span>Code expires in {formatTime(timeRemaining)}</span>
-                </div>
-              )}
-
               {/* Error */}
               {error && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
@@ -279,7 +245,7 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                 Verified Successfully!
               </h3>
               <p className="text-gray-600">
-                You now have access to view documents for 30 minutes.
+                Loading documents...
               </p>
             </div>
           )}

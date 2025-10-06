@@ -356,12 +356,12 @@ W4_FORM_FIELDS = {
     "step4c_extra_withholding": "topmostSubform[0].Page1[0].f1_12[0]",  # Extra withholding
     
     # Step 5: Employee Signature (EXACT IRS field names)
-    "employee_signature_date": "topmostSubform[0].Page1[0].f1_14[0]",  # Date field
-    
-    # Employer Section (Bottom of form - EXACT IRS field names)
-    "employer_name_address": "topmostSubform[0].Page1[0].f1_15[0]",  # Employer's name and address
-    "first_date_employment": "topmostSubform[0].Page1[0].EmployerSection[0].f1_14[0]",  # First date of employment
-    "employer_identification_number": "topmostSubform[0].Page1[0].EmployerSection[0].f1_15[0]"  # EIN
+    # NOTE: Employee signature date is NOT a fillable field - it's a manual write-in line
+
+    # Employer Section (Bottom of form - EXACT IRS field names verified from PDF)
+    "employer_name_address": "topmostSubform[0].Page1[0].f1_13[0]",  # Employer's name and address
+    "first_date_employment": "topmostSubform[0].Page1[0].f1_14[0]",  # First date of employment
+    "employer_identification_number": "topmostSubform[0].Page1[0].f1_15[0]"  # EIN
 }
 
 # Health Insurance Plan Configuration (from onboarding packet)
@@ -508,36 +508,58 @@ class PDFFormFiller:
         """Fill I-9 form with employee and optionally employer data - OFFICIAL TEMPLATE ONLY"""
         if not HAS_PYMUPDF:
             raise Exception("PyMuPDF required for official I-9 template - fallback forms violate federal compliance")
-            
+
         try:
             # Open the official I-9 PDF
             doc = fitz.open(self.form_templates["i9"])
-            
+
             # Fill employee section (Section 1)
             if employee_data:
                 self._fill_i9_section1(doc, employee_data)
-            
+
             # Fill employer section (Section 2) if provided
             if employer_data:
                 self._fill_i9_section2(doc, employer_data)
-            
+
             # Fill Supplement A if preparer/translator data provided
             if employee_data and any(key.startswith('preparer_') for key in employee_data.keys()):
                 self._fill_i9_supplement_a(doc, employee_data)
-            
+
             # Fill Supplement B if reverification data provided
             if employee_data and any(key.startswith('reverify_') or key in ['rehire_date', 'termination_date', 'new_name'] for key in employee_data.keys()):
                 self._fill_i9_supplement_b(doc, employee_data)
-            
+
             # Save to bytes
             pdf_bytes = doc.write()
             doc.close()
-            
+
             return pdf_bytes
-            
+
         except Exception as e:
             print(f"Error filling I-9 form: {e}")
             raise Exception(f"Failed to generate official I-9 form: {e} - No fallback allowed for federal compliance")
+
+    def fill_i9_section2_on_existing(self, existing_pdf_bytes: bytes, employer_data: Dict[str, Any]) -> bytes:
+        """Fill Section 2 (employer portion) on an existing I-9 PDF that already has Section 1 filled"""
+        if not HAS_PYMUPDF:
+            raise Exception("PyMuPDF required for official I-9 template - fallback forms violate federal compliance")
+
+        try:
+            # Open the existing PDF (already has Section 1 filled by employee)
+            doc = fitz.open(stream=existing_pdf_bytes, filetype="pdf")
+
+            # Fill employer section (Section 2) only
+            self._fill_i9_section2(doc, employer_data)
+
+            # Save to bytes
+            pdf_bytes = doc.write()
+            doc.close()
+
+            return pdf_bytes
+
+        except Exception as e:
+            print(f"Error filling I-9 Section 2 on existing PDF: {e}")
+            raise Exception(f"Failed to fill I-9 Section 2: {e}")
     
     def fill_w4_form(self, employee_data: Dict[str, Any]) -> bytes:
         """Fill W-4 form with employee data - OFFICIAL TEMPLATE ONLY"""
@@ -1225,7 +1247,8 @@ class PDFFormFiller:
                 'List C Expiration Date 1': list_c_expiration if not list_a_title else '',
                 'Additional Information': employer_data.get('additional_info', ''),
                 'Employers Business or Org Name': employer_data.get('business_name'),
-                'Employers Business or Org Address': employer_data.get('business_address'),
+                # Combine full address: street, city, state, zip
+                'Employers Business or Org Address': f"{employer_data.get('business_address', '')}, {employer_data.get('business_city', '')}, {employer_data.get('business_state', '')} {employer_data.get('business_zip', '')}".strip(', '),
                 'City': employer_data.get('business_city'),
                 'State': employer_data.get('business_state'),
                 'ZIP Code': employer_data.get('business_zip'),
@@ -1392,6 +1415,88 @@ class PDFFormFiller:
         except Exception as e:
             print(f"Error filling I-9 Supplement B: {e}")
     
+    def fill_w4_employer_section(self, pdf_bytes: bytes, employer_data: Dict[str, Any], signature_data_url: Optional[str] = None) -> bytes:
+        """
+        Fill employer section of W-4 form with employer information and optional manager signature
+
+        Args:
+            pdf_bytes: Original W-4 PDF bytes
+            employer_data: Dict with employer_name_address, employer_identification_number, first_date_employment
+            signature_data_url: Optional manager signature as data URL
+
+        Returns:
+            Updated PDF bytes with employer information
+        """
+        try:
+            import fitz
+            import base64
+            from io import BytesIO
+            from PIL import Image
+
+            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+            # Fill employer fields
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                widgets = list(page.widgets())
+
+                for widget in widgets:
+                    field_name = widget.field_name
+
+                    # Employer Name and Address (f1_15[0])
+                    if field_name == W4_FORM_FIELDS["employer_name_address"]:
+                        value = employer_data.get('employer_name_address')
+                        if value:
+                            self._set_widget_value(widget, value)
+                            print(f"✓ Filled employer name/address: {value}")
+
+                    # Employer EIN
+                    elif field_name == W4_FORM_FIELDS["employer_identification_number"]:
+                        value = employer_data.get('employer_identification_number')
+                        if value:
+                            self._set_widget_value(widget, value)
+                            print(f"✓ Filled employer EIN: {value}")
+
+                    # First Date of Employment
+                    elif field_name == W4_FORM_FIELDS["first_date_employment"]:
+                        value = employer_data.get('first_date_employment')
+                        if value:
+                            formatted_date = self._format_date(value)
+                            self._set_widget_value(widget, formatted_date)
+                            print(f"✓ Filled first day of employment: {formatted_date}")
+
+            # Add manager signature if provided
+            if signature_data_url:
+                # Extract base64 data
+                if ',' in signature_data_url:
+                    signature_base64 = signature_data_url.split(',')[1]
+                else:
+                    signature_base64 = signature_data_url
+
+                signature_bytes = base64.b64decode(signature_base64)
+
+                # Insert signature on page 1 (employer section)
+                # Position near employer name field (adjust as needed)
+                page = doc[0]
+
+                # Signature position (adjust based on W-4 layout)
+                # This is approximate - may need adjustment
+                rect = fitz.Rect(350, 750, 550, 800)  # x0, y0, x1, y1
+
+                # Insert signature image
+                page.insert_image(rect, stream=signature_bytes, keep_proportion=True)
+                print(f"✓ Added manager signature to W-4")
+
+            # Save and return
+            pdf_bytes_output = doc.tobytes()
+            doc.close()
+
+            return pdf_bytes_output
+
+        except Exception as e:
+            print(f"Error filling W-4 employer section: {e}")
+            raise Exception(f"Failed to fill W-4 employer section: {e}")
+
     def _fill_w4_fields(self, doc, employee_data: Dict[str, Any]):
         """Fill W-4 form fields using EXACT IRS 2025 field mappings for legal compliance"""
         try:
@@ -1421,7 +1526,22 @@ class PDFFormFiller:
                 # Step 5: Signature Date (IRS date format)
                 W4_FORM_FIELDS["employee_signature_date"]: self._format_date(employee_data.get('signature_date', datetime.now().strftime('%Y-%m-%d')))
             }
-            
+
+            # Optional employer section fields (manager review auto-fill)
+            employer_field_mappings = {}
+
+            employer_name_address = employee_data.get('employer_name_address')
+            if employer_name_address:
+                employer_field_mappings[W4_FORM_FIELDS["employer_name_address"]] = employer_name_address
+
+            employer_ein = employee_data.get('employer_identification_number')
+            if employer_ein:
+                employer_field_mappings[W4_FORM_FIELDS["employer_identification_number"]] = employer_ein
+
+            first_employment_date = employee_data.get('first_date_employment')
+            if first_employment_date:
+                employer_field_mappings[W4_FORM_FIELDS["first_date_employment"]] = self._format_date(first_employment_date)
+
             # DEBUG: Log which date field we're filling
             print(f"DEBUG: Employee signature date field: {W4_FORM_FIELDS['employee_signature_date']}")
             print(f"DEBUG: Employee signature date value: {field_mappings[W4_FORM_FIELDS['employee_signature_date']]}")
@@ -1452,23 +1572,26 @@ class PDFFormFiller:
                     if field_name and ("f1_14" in field_name or "f1_15" in field_name):
                         print(f"DEBUG: Found date/employer field: '{field_name}' at rect: {list(widget.rect)}")
                     
-                    # CRITICAL: Skip employer section fields - these should only be filled by manager
+                    # Employer section fields: fill when values supplied, otherwise skip
+                    if field_name in employer_field_mappings:
+                        value = employer_field_mappings[field_name]
+                        if value not in (None, ''):
+                            self._set_widget_value(widget, value)
+                            print(f"✓ Filled employer field '{field_name}' with value '{value}'")
+                        continue
+
                     if field_name and ("EmployerSection" in field_name or field_name.endswith("f1_15[0]")):
-                            print(f"⚠ SKIPPING EMPLOYER FIELD: '{field_name}' - Reserved for manager approval")
-                            continue
-                    
-                    # Also skip if this is the employer's date field that might be confused with employee date
-                    if field_name == "topmostSubform[0].Page1[0].EmployerSection[0].f1_14[0]":
-                        print(f"⚠ SKIPPING EMPLOYER DATE FIELD: '{field_name}' - First date of employment for manager only")
+                        print(f"⚠ SKIPPING EMPLOYER FIELD: '{field_name}' - No auto-fill value available")
                         continue
-                    
-                    # CRITICAL: The employee signature date field should be in Step 5, not employer section
-                    # Based on PDF analysis, both f1_14[0] and f1_15[0] at y=730 are in employer section
-                    # Skip the f1_15[0] field which is "First date of employment"
-                    if field_name == "topmostSubform[0].Page1[0].f1_15[0]":
-                        print(f"⚠ SKIPPING FIRST DATE OF EMPLOYMENT: '{field_name}' - This is for manager only")
+
+                    if field_name == "topmostSubform[0].Page1[0].EmployerSection[0].f1_14[0]" and field_name not in employer_field_mappings:
+                        print(f"⚠ SKIPPING EMPLOYER DATE FIELD: '{field_name}' - No value provided")
                         continue
-                    
+
+                    if field_name == "topmostSubform[0].Page1[0].f1_15[0]" and field_name not in employer_field_mappings:
+                        print(f"⚠ SKIPPING FIRST DATE OF EMPLOYMENT: '{field_name}' - No value provided")
+                        continue
+
                     if field_name in field_mappings:
                         field_value = field_mappings[field_name]
                         self._set_widget_value(widget, field_value)
@@ -1600,7 +1723,11 @@ class PDFFormFiller:
                 rect = fitz.Rect(50, 402, 250, 452)  # x1, y1, x2, y2 (width:200, height:50)
             elif signature_type == "employer_i9":
                 # I-9 employer signature position (Section 2)
-                rect = fitz.Rect(350, 750, 500, 780)
+                # Moved 1 inch (72 points) up, made thicker and bigger
+                # Then moved 0.5 inch (36 points) to the left
+                # Original: (350, 750, 500, 780) - width:150, height:30
+                # New: width:200, height:50, moved up 72 points, left 36 points
+                rect = fitz.Rect(314, 678, 514, 728)  # 1 inch above, 0.5 inch left, thicker and bigger
             elif signature_type == "employee_w4":
                 # W-4 employee signature position
                 # The actual signature line is in Step 5, around y:690 from bottom-left origin
@@ -2525,6 +2652,72 @@ class PDFFormFiller:
         doc.build(story)
         buffer.seek(0)
         return buffer.read()
+
+    def fill_health_insurance_employer_section(self, pdf_bytes: bytes, employer_data: dict) -> bytes:
+        """
+        Fill employer section of Health Insurance form
+
+        Args:
+            pdf_bytes: Original Health Insurance PDF (with employee data already filled)
+            employer_data: Dict with keys:
+                - property_name: Property/hotel name
+                - deadline_to_submit: Deadline date (MM/DD/YYYY)
+                - reason_for_request: "new_hire", "open_enrollment", or "qualifying_event"
+                - date_of_hire: Hire date (MM/DD/YYYY) - for new_hire
+                - qualifying_event_description: Event description - for qualifying_event
+
+        Returns:
+            bytes: PDF with employer section filled
+        """
+        import fitz
+
+        print(f"\n{'='*60}")
+        print("FILLING HEALTH INSURANCE EMPLOYER SECTION")
+        print(f"{'='*60}")
+
+        # Open the PDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        page = doc[0]  # Health Insurance is on page 1
+
+        # Get all widgets
+        widgets = list(page.widgets())
+
+        # Fill employer fields
+        for widget in widgets:
+            field_name = widget.field_name
+            if not field_name:
+                continue
+
+            # Property Name
+            if field_name == "Property Name":
+                widget.field_value = employer_data.get('property_name', '')
+                widget.update()
+                print(f"✓ Filled Property Name: {employer_data.get('property_name')}")
+
+            # Deadline to Submit
+            elif field_name == "Deadline to Submit":
+                widget.field_value = employer_data.get('deadline_to_submit', '')
+                widget.update()
+                print(f"✓ Filled Deadline to Submit: {employer_data.get('deadline_to_submit')}")
+
+            # Reason for Request - New Hire
+            elif field_name == "New Hire  Date of Hire":
+                if employer_data.get('reason_for_request') == 'new_hire':
+                    widget.field_value = employer_data.get('date_of_hire', '')
+                    widget.update()
+                    print(f"✓ Filled New Hire Date: {employer_data.get('date_of_hire')}")
+
+            # Reason for Request - Qualifying Event
+            elif field_name == "Qualifying Event  If so state event  date":
+                if employer_data.get('reason_for_request') == 'qualifying_event':
+                    widget.field_value = employer_data.get('qualifying_event_description', '')
+                    widget.update()
+                    print(f"✓ Filled Qualifying Event: {employer_data.get('qualifying_event_description')}")
+
+        print(f"{'='*60}\n")
+
+        # Return the modified PDF as bytes
+        return doc.tobytes()
 
 # PDF Form Service Instance
 pdf_form_service = PDFFormFiller()
