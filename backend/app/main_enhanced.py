@@ -19252,7 +19252,11 @@ async def notify_single_step_completion(request: Request):
         employee_data = None
         employee_name = "Employee"
         employee_email = None
-        
+        employee_phone = None
+        employee_position = None
+        employee_department = None
+        employee_hire_date = None
+
         # Try to get employee from database first
         if not (employee_id.startswith('test-') or employee_id.startswith('temp_')):
             try:
@@ -19261,15 +19265,33 @@ async def notify_single_step_completion(request: Request):
                     employee_data = employee if isinstance(employee, dict) else {
                         'first_name': getattr(employee, 'first_name', ''),
                         'last_name': getattr(employee, 'last_name', ''),
-                        'email': getattr(employee, 'email', '')
+                        'email': getattr(employee, 'email', ''),
+                        'phone': getattr(employee, 'phone', ''),
+                        'position': getattr(employee, 'position', ''),
+                        'department': getattr(employee, 'department', ''),
+                        'hire_date': getattr(employee, 'hire_date', ''),
+                        'personal_info': getattr(employee, 'personal_info', {})
                     }
                     employee_name = f"{employee_data.get('first_name', '')} {employee_data.get('last_name', '')}".strip() or "Employee"
                     employee_email = employee_data.get('email')
+                    employee_phone = employee_data.get('phone') or employee_data.get('personal_info', {}).get('phone')
+                    employee_position = employee_data.get('position')
+                    employee_department = employee_data.get('department')
+                    employee_hire_date = employee_data.get('hire_date')
+
+                    # Try to get from personal_info if not in main fields
+                    if not employee_email:
+                        employee_email = employee_data.get('personal_info', {}).get('email')
+                    if not employee_name or employee_name == "Employee":
+                        first_name = employee_data.get('personal_info', {}).get('first_name', '')
+                        last_name = employee_data.get('personal_info', {}).get('last_name', '')
+                        if first_name or last_name:
+                            employee_name = f"{first_name} {last_name}".strip()
             except Exception as e:
                 logger.warning(f"Could not fetch employee {employee_id}: {e}")
         
         # If no employee data, check session for personal info
-        if not employee_data and session_id:
+        if (not employee_name or employee_name == "Employee") and session_id:
             try:
                 # Check onboarding_form_data for personal info
                 personal_info_response = supabase_service.client.table('onboarding_form_data')\
@@ -19277,11 +19299,12 @@ async def notify_single_step_completion(request: Request):
                     .eq('employee_id', employee_id)\
                     .eq('step_id', 'personal-info')\
                     .execute()
-                
+
                 if personal_info_response.data:
                     form_data = personal_info_response.data[0].get('form_data', {})
                     employee_name = f"{form_data.get('firstName', '')} {form_data.get('lastName', '')}".strip() or "Employee"
-                    employee_email = form_data.get('email')
+                    employee_email = employee_email or form_data.get('email')
+                    employee_phone = employee_phone or form_data.get('phone')
             except Exception as e:
                 logger.warning(f"Could not fetch personal info: {e}")
         
@@ -19331,46 +19354,97 @@ async def notify_single_step_completion(request: Request):
         safe_employee_name = employee_name.replace(' ', '_').replace('/', '_')
         filename = f"signed_{step_id}_{safe_employee_name}_{timestamp}.pdf"
         
-        # Prepare email content
+        # Prepare email content with enhanced employee details
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <style>
                 body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
-                .content {{ padding: 20px; background-color: #f9fafb; }}
-                .info-box {{ background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #e5e7eb; }}
-                .footer {{ background-color: #e5e7eb; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px; }}
+                .container {{ max-width: 650px; margin: 0 auto; padding: 20px; background: #ffffff; }}
+                .header {{ background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ padding: 30px; background-color: #f9fafb; }}
+                .info-section {{ background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+                .info-section h3 {{ margin-top: 0; color: #059669; font-size: 18px; }}
+                .info-row {{ display: flex; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }}
+                .info-row:last-child {{ border-bottom: none; }}
+                .info-label {{ font-weight: 600; color: #6b7280; min-width: 140px; }}
+                .info-value {{ color: #111827; }}
+                .highlight-box {{ background: #ecfdf5; border: 1px solid #10b981; padding: 15px; border-radius: 6px; margin: 20px 0; }}
+                .footer {{ background-color: #e5e7eb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-radius: 0 0 8px 8px; }}
+                .badge {{ display: inline-block; padding: 4px 12px; background: #10b981; color: white; border-radius: 12px; font-size: 12px; font-weight: 600; }}
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>📋 Single-Step Form Completed</h1>
+                    <h1 style="margin: 0; font-size: 28px;">✅ Single-Step Form Completed</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">{step_name}</p>
                 </div>
                 <div class="content">
-                    <p>A single-step onboarding form has been completed via invitation link.</p>
-                    
-                    <div class="info-box">
-                        <h3>Form Details:</h3>
-                        <ul>
-                            <li><strong>Employee:</strong> {employee_name}</li>
-                            <li><strong>Employee Email:</strong> {employee_email or 'Not provided'}</li>
-                            <li><strong>Form Type:</strong> {step_name}</li>
-                            <li><strong>Property:</strong> {property_name}</li>
-                            <li><strong>Completed At:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</li>
-                            <li><strong>Session ID:</strong> {session_id or 'N/A'}</li>
-                        </ul>
+                    <div class="highlight-box">
+                        <p style="margin: 0; font-size: 16px;"><strong>🎉 Great news!</strong> An employee has successfully completed their {step_name} form through a single-step invitation.</p>
                     </div>
-                    
-                    <p><strong>Attachment:</strong> The signed PDF document is attached to this email.</p>
-                    
-                    <p>This form was completed through a single-step invitation link. The employee may not have completed the full onboarding process.</p>
+
+                    <div class="info-section">
+                        <h3>👤 Employee Information</h3>
+                        <div class="info-row">
+                            <div class="info-label">Name:</div>
+                            <div class="info-value"><strong>{employee_name}</strong></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Email:</div>
+                            <div class="info-value">{employee_email or '<em>Not provided</em>'}</div>
+                        </div>
+                        {f'''<div class="info-row">
+                            <div class="info-label">Phone:</div>
+                            <div class="info-value">{employee_phone}</div>
+                        </div>''' if employee_phone else ''}
+                        {f'''<div class="info-row">
+                            <div class="info-label">Position:</div>
+                            <div class="info-value"><span class="badge">{employee_position}</span></div>
+                        </div>''' if employee_position else ''}
+                        {f'''<div class="info-row">
+                            <div class="info-label">Department:</div>
+                            <div class="info-value">{employee_department}</div>
+                        </div>''' if employee_department else ''}
+                        {f'''<div class="info-row">
+                            <div class="info-label">Hire Date:</div>
+                            <div class="info-value">{employee_hire_date}</div>
+                        </div>''' if employee_hire_date else ''}
+                    </div>
+
+                    <div class="info-section">
+                        <h3>📋 Form Details</h3>
+                        <div class="info-row">
+                            <div class="info-label">Form Type:</div>
+                            <div class="info-value"><strong>{step_name}</strong></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Property:</div>
+                            <div class="info-value">{property_name}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Completed At:</div>
+                            <div class="info-value">{datetime.now().strftime('%B %d, %Y at %I:%M %p')}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Session ID:</div>
+                            <div class="info-value" style="font-family: monospace; font-size: 11px;">{session_id or 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box" style="background: #fef3c7; border-color: #f59e0b;">
+                        <p style="margin: 0;"><strong>📎 Attachment:</strong> The signed PDF document is attached to this email for your records.</p>
+                    </div>
+
+                    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                        <strong>Note:</strong> This form was completed through a single-step invitation link. The employee may not have completed the full onboarding process. Please review the attached document and take any necessary follow-up actions.
+                    </p>
                 </div>
                 <div class="footer">
-                    <p>This is an automated notification from the Hotel Onboarding System</p>
+                    <p style="margin: 0;">🔒 This is an automated notification from the Hotel Onboarding System</p>
+                    <p style="margin: 5px 0 0 0;">Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
                 </div>
             </div>
         </body>
@@ -19378,24 +19452,51 @@ async def notify_single_step_completion(request: Request):
         """
         
         text_content = f"""
-        Single-Step Form Completed
-        
-        A single-step onboarding form has been completed via invitation link.
-        
-        Form Details:
-        - Employee: {employee_name}
-        - Employee Email: {employee_email or 'Not provided'}
-        - Form Type: {step_name}
-        - Property: {property_name}
-        - Completed At: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
-        - Session ID: {session_id or 'N/A'}
-        
-        The signed PDF document is attached to this email.
-        
-        This form was completed through a single-step invitation link. The employee may not have completed the full onboarding process.
-        
-        ---
-        This is an automated notification from the Hotel Onboarding System
+        ✅ SINGLE-STEP FORM COMPLETED
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        {step_name}
+
+        🎉 Great news! An employee has successfully completed their {step_name} form through a single-step invitation.
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        👤 EMPLOYEE INFORMATION:
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        Name:           {employee_name}
+        Email:          {employee_email or 'Not provided'}
+        {f'Phone:          {employee_phone}' if employee_phone else ''}
+        {f'Position:       {employee_position}' if employee_position else ''}
+        {f'Department:     {employee_department}' if employee_department else ''}
+        {f'Hire Date:      {employee_hire_date}' if employee_hire_date else ''}
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        📋 FORM DETAILS:
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        Form Type:      {step_name}
+        Property:       {property_name}
+        Completed At:   {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+        Session ID:     {session_id or 'N/A'}
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        📎 ATTACHMENT:
+        The signed PDF document is attached to this email for your records.
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        NOTE:
+        This form was completed through a single-step invitation link. The employee may not
+        have completed the full onboarding process. Please review the attached document and
+        take any necessary follow-up actions.
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        🔒 This is an automated notification from the Hotel Onboarding System
+        Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
         """
         
         # Send email to HR with PDF attachment (with global CC)
