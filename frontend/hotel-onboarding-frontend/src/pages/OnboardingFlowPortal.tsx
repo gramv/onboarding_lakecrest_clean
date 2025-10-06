@@ -12,6 +12,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { SyncIndicator, SyncBadge } from '@/components/ui/sync-indicator'
 import { useSyncStatus } from '@/hooks/useSyncStatus'
 import { getApiUrl } from '@/config/api'
+import { PersonalInfoModal } from '@/components/modals/PersonalInfoModal'
 
 // Import the new infrastructure
 import { OnboardingFlowController, StepProps, NavigationValidationResult } from '../controllers/OnboardingFlowController'
@@ -70,6 +71,10 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
   const [isSingleStepMode, setIsSingleStepMode] = useState(mode === 'single')
   const [singleStepTarget, setSingleStepTarget] = useState<string | null>(requestedStep)
   const [singleStepMeta, setSingleStepMeta] = useState<Record<string, any> | null>(null)
+
+  // Personal info modal state for single-step invitations
+  const [showPersonalInfoModal, setShowPersonalInfoModal] = useState(false)
+  const [personalInfoCollected, setPersonalInfoCollected] = useState(false)
   
   // Sync status hook
   const { syncStatus, lastSyncTime, syncError, startSync, syncSuccess, syncError: reportSyncError, syncOffline, isOnline } = useSyncStatus()
@@ -173,6 +178,16 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
             })
 
             setSession(sessionData)
+
+            // ✅ Check if we need to show personal info modal
+            // Show modal if: single-step mode AND needs_personal_info flag is true
+            if (metadata.needs_personal_info === true) {
+              console.log('📋 Personal info needed - showing modal')
+              setShowPersonalInfoModal(true)
+            } else {
+              console.log('✅ Employee exists or personal info not needed')
+              setPersonalInfoCollected(true)
+            }
             syncControllerSnapshot()
 
             // Attempt to load any locally cached data for the target step
@@ -316,6 +331,55 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
     const interval = setInterval(updateSaveStatus, 5000) // Reduced frequency from 1s to 5s
     return () => clearInterval(interval)
   }, [session, currentStep, flowController])
+
+  // Handle personal info modal submission
+  const handlePersonalInfoSubmit = useCallback(async (personalInfo: any) => {
+    try {
+      console.log('📤 Submitting personal info:', { ...personalInfo, ssn: '***' })
+
+      const apiBase = getApiUrl()
+      const response = await fetch(`${apiBase}/onboarding/single-step/collect-info`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          token,
+          personal_info: {
+            first_name: personalInfo.firstName,
+            last_name: personalInfo.lastName,
+            email: personalInfo.email,
+            phone: personalInfo.phone,
+            ssn: personalInfo.ssn.replace(/\D/g, '') // Remove formatting
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save personal information')
+      }
+
+      const result = await response.json()
+      console.log('✅ Personal info saved:', result)
+
+      // Update session with new employee data
+      if (result.employee && session) {
+        setSession({
+          ...session,
+          employee: result.employee
+        })
+      }
+
+      // Close modal and mark as collected
+      setShowPersonalInfoModal(false)
+      setPersonalInfoCollected(true)
+
+    } catch (error) {
+      console.error('❌ Failed to save personal info:', error)
+      throw error // Re-throw to let modal handle the error
+    }
+  }, [token, session])
 
   const handlePreviousStep = useCallback(() => {
     setValidationMessages([])
@@ -837,8 +901,18 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
                 </div>
               )}
 
-              {/* Step Content */}
-              {renderedContent}
+              {/* Step Content - Only show if personal info is collected (or not needed) */}
+              {(!isSingleStepMode || personalInfoCollected) ? (
+                renderedContent
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-600">
+                    {language === 'en'
+                      ? 'Please provide your information to continue...'
+                      : 'Por favor proporcione su información para continuar...'}
+                  </p>
+                </div>
+              )}
 
               {/* Navigation - Always visible for both regular and single-step modes */}
               {progress && (() => {
@@ -889,6 +963,26 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
 
         </div>
       </main>
+
+      {/* Personal Info Modal - Only shows in single-step mode when personal info is needed */}
+      {isSingleStepMode && showPersonalInfoModal && (
+        <PersonalInfoModal
+          isOpen={showPersonalInfoModal}
+          onClose={() => {
+            // Allow closing modal but warn user
+            if (window.confirm(language === 'en'
+              ? 'Are you sure? This information is required to complete the form.'
+              : '¿Está seguro? Esta información es necesaria para completar el formulario.')) {
+              setShowPersonalInfoModal(false)
+              setPersonalInfoCollected(true) // Allow proceeding anyway
+            }
+          }}
+          onSubmit={handlePersonalInfoSubmit}
+          language={language}
+          recipientEmail={singleStepMeta?.recipientEmail}
+          recipientName={singleStepMeta?.recipientName}
+        />
+      )}
     </div>
   )
 }
