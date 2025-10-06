@@ -275,22 +275,26 @@ export class OnboardingFlowController {
       return
     }
 
+    console.log('🔵 Enabling single-step mode:', { stepId, metadata })
     this.isSingleStepMode = true
     this.singleStepTarget = stepId
     this.singleStepMetadata = metadata || null
     this.steps = [targetStep]
     this.currentStepIndex = 0
+    console.log('✅ Single-step mode enabled, steps count:', this.steps.length)
   }
 
   /**
    * Disable single-step mode and restore the full onboarding flow
    */
   disableSingleStepMode(): void {
+    console.log('🔴 Disabling single-step mode')
     this.isSingleStepMode = false
     this.singleStepTarget = null
     this.singleStepMetadata = null
     this.steps = [...this.baseSteps]
     this.currentStepIndex = 0
+    console.log('✅ Single-step mode disabled, restored to full flow with', this.steps.length, 'steps')
   }
 
   getIsSingleStepMode(): boolean {
@@ -310,8 +314,11 @@ export class OnboardingFlowController {
    */
   async initializeOnboarding(token: string): Promise<OnboardingFlowSession> {
     try {
-      // Always reset to full flow when initializing a standard session
+      // ✅ FIX: Always reset to full flow when initializing a standard session
+      // This prevents single-step mode state from leaking into regular onboarding
+      console.log('🔄 OnboardingFlowController.initializeOnboarding - Disabling single-step mode')
       this.disableSingleStepMode()
+      console.log('✅ Single-step mode disabled, steps count:', this.steps.length)
 
       // Handle demo/test mode with fallback data
       if (token === 'demo-token') {

@@ -64,6 +64,9 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
   const token = searchParams.get('token') || (testMode ? 'demo-token' : null)
   const mode = searchParams.get('mode')
   const requestedStep = searchParams.get('step')
+
+  // ✅ FIX: Strictly enforce single-step mode ONLY when URL explicitly has mode=single
+  // This prevents state leak where regular onboarding thinks it's in single-step mode
   const [isSingleStepMode, setIsSingleStepMode] = useState(mode === 'single')
   const [singleStepTarget, setSingleStepTarget] = useState<string | null>(requestedStep)
   const [singleStepMeta, setSingleStepMeta] = useState<Record<string, any> | null>(null)
@@ -95,11 +98,21 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
       try {
         setLoading(true)
         const apiBase = getApiUrl()
+
+        // ✅ FIX: Strictly check mode from URL params - don't rely on state
         const singleStepRequested = mode === 'single'
+
+        console.log('🔍 OnboardingFlowPortal - Initialization:', {
+          mode,
+          singleStepRequested,
+          token: token?.substring(0, 20) + '...',
+          requestedStep
+        })
 
         // Clear old session data when using a new token
         const lastToken = sessionStorage.getItem('current_onboarding_token')
         if (lastToken && lastToken !== token) {
+          console.log('🧹 Clearing old session data for new token')
           // Clear all onboarding-related sessionStorage
           const keysToRemove: string[] = []
           for (let i = 0; i < sessionStorage.length; i++) {
@@ -113,6 +126,7 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
         sessionStorage.setItem('current_onboarding_token', token)
 
         if (singleStepRequested) {
+          console.log('📋 Initializing SINGLE-STEP mode')
           try {
             const response = await fetch(`${apiBase}/onboarding/single-step/${token}`)
             if (!response.ok) {
@@ -123,6 +137,13 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
             const data = result?.data || result
 
             const targetStep = data?.sessionData?.stepId || requestedStep || data?._metadata?.target_step || 'direct-deposit'
+
+            console.log('✅ Single-step session data:', {
+              targetStep,
+              hasEmployee: !!data?.employee,
+              hasProperty: !!data?.property,
+              needsPersonalInfo: data?._metadata?.needs_personal_info
+            })
 
             const sessionData = await flowController.initializeSingleStepSession(token, {
               stepId: targetStep,
@@ -136,6 +157,7 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
               metadata: data?._metadata
             })
 
+            // ✅ FIX: Explicitly set single-step mode to TRUE
             setIsSingleStepMode(true)
             setSingleStepTarget(targetStep)
             const metadata = data?._metadata || {}
@@ -174,11 +196,21 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
           return
         }
 
+        // ✅ FIX: Regular onboarding flow - explicitly disable single-step mode
+        console.log('📚 Initializing REGULAR onboarding mode')
         const sessionData = await flowController.initializeOnboarding(token)
+
+        // ✅ CRITICAL: Explicitly set single-step mode to FALSE for regular onboarding
         setIsSingleStepMode(false)
         setSingleStepTarget(null)
         setSingleStepMeta(null)
         setSession(sessionData)
+
+        console.log('✅ Regular onboarding session initialized:', {
+          employeeId: sessionData.employee?.id,
+          totalSteps: flowController.steps.length,
+          isSingleStepMode: false
+        })
 
         // Load saved data from cloud first, then merge with local
         if (sessionData.savedFormData && Object.keys(sessionData.savedFormData).length > 0) {
@@ -809,29 +841,49 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
               {renderedContent}
 
               {/* Navigation - Always visible for both regular and single-step modes */}
-              {progress && (
-                <NavigationButtons
-                  showPrevious={progress.currentStepIndex > 0}
-                  showNext={progress.currentStepIndex < progress.totalSteps - 1}
-                  showSave={false} // Auto-save handles this
-                  nextButtonText={
-                    progress.currentStepIndex === progress.totalSteps - 1
-                      ? 'Submit'
-                      : 'Next'
-                  }
-                  onPrevious={handlePreviousStep}
-                  onNext={handleNextStep}
-                  saving={saveStatus.saving}
-                  hasErrors={validationMessages.some(msg => msg.type === 'error')}
-                  language={language}
-                  disabled={saveStatus.saving || !canAdvanceFromCurrentStep || !currentStepCanProceed}
-                  stepStatus={currentStepStatus}
-                  sticky
-                  currentStep={progress.currentStepIndex}
-                  totalSteps={progress.totalSteps}
-                  progress={progress.percentComplete}
-                />
-              )}
+              {progress && (() => {
+                // ✅ FIX: Calculate showNext with safety check for regular onboarding
+                // In single-step mode: totalSteps = 1, so showNext should be false (no next step)
+                // In regular mode: totalSteps > 1, so showNext should be true (unless on last step)
+                const isLastStep = progress.currentStepIndex === progress.totalSteps - 1
+
+                // Safety check: In regular onboarding mode, if we have more than 1 step total,
+                // always show Next button unless we're on the actual last step
+                const shouldShowNext = isSingleStepMode
+                  ? false  // Single-step mode: never show Next (form completes on submit)
+                  : !isLastStep  // Regular mode: show Next unless on last step
+
+                console.log('🔘 Navigation buttons:', {
+                  isSingleStepMode,
+                  currentStepIndex: progress.currentStepIndex,
+                  totalSteps: progress.totalSteps,
+                  isLastStep,
+                  shouldShowNext,
+                  currentStepId: currentStep?.id
+                })
+
+                return (
+                  <NavigationButtons
+                    showPrevious={progress.currentStepIndex > 0 && !isSingleStepMode}
+                    showNext={shouldShowNext}
+                    showSave={false} // Auto-save handles this
+                    nextButtonText={
+                      isLastStep ? 'Submit' : 'Next'
+                    }
+                    onPrevious={handlePreviousStep}
+                    onNext={handleNextStep}
+                    saving={saveStatus.saving}
+                    hasErrors={validationMessages.some(msg => msg.type === 'error')}
+                    language={language}
+                    disabled={saveStatus.saving || !canAdvanceFromCurrentStep || !currentStepCanProceed}
+                    stepStatus={currentStepStatus}
+                    sticky
+                    currentStep={progress.currentStepIndex}
+                    totalSteps={progress.totalSteps}
+                    progress={progress.percentComplete}
+                  />
+                )
+              })()}
             </CardContent>
           </Card>
 
