@@ -19339,22 +19339,39 @@ async def notify_single_step_completion(request: Request):
             except Exception as e:
                 logger.warning(f"Failed to derive property from session {session_id}: {e}")
 
-        # Prepare email details
-        hr_email = body.get('hr_email')
-        if not hr_email and session_id:
-            try:
-                invitation_lookup = supabase_service.client.table('step_invitations').select('sent_by').eq('session_id', session_id).limit(1).execute()
-                if invitation_lookup.data:
-                    sent_by_id = invitation_lookup.data[0].get('sent_by')
-                    if sent_by_id:
-                        user_response = supabase_service.client.table('users').select('email').eq('id', sent_by_id).limit(1).execute()
-                        if user_response.data and user_response.data[0].get('email'):
-                            hr_email = user_response.data[0]['email']
-            except Exception as e:
-                logger.warning(f"Failed to derive HR email for session {session_id}: {e}")
+        # Get notification recipients from global_email_recipients table
+        # These are the people configured in the "Notifications" tab in HR dashboard
+        notification_recipients = []
+        try:
+            ensure_global_recipients_table()
+            recipients_response = supabase_service.client.table('global_email_recipients').select('email,is_active').execute()
+            notification_recipients = [r['email'] for r in (recipients_response.data or []) if r.get('is_active', True)]
+            logger.info(f"Found {len(notification_recipients)} notification recipients from global_email_recipients table")
+        except Exception as e:
+            logger.warning(f"Failed to fetch notification recipients: {e}")
 
-        if not hr_email:
-            hr_email = "tech.nj@lakecrest.com"  # Fallback HR email
+        # If no recipients configured, fall back to the person who sent the invitation
+        if not notification_recipients:
+            logger.warning("No notification recipients configured in global_email_recipients table, falling back to invitation sender")
+            hr_email = body.get('hr_email')
+            if not hr_email and session_id:
+                try:
+                    invitation_lookup = supabase_service.client.table('step_invitations').select('sent_by').eq('session_id', session_id).limit(1).execute()
+                    if invitation_lookup.data:
+                        sent_by_id = invitation_lookup.data[0].get('sent_by')
+                        if sent_by_id:
+                            user_response = supabase_service.client.table('users').select('email').eq('id', sent_by_id).limit(1).execute()
+                            if user_response.data and user_response.data[0].get('email'):
+                                hr_email = user_response.data[0]['email']
+                                notification_recipients = [hr_email]
+                except Exception as e:
+                    logger.warning(f"Failed to derive HR email for session {session_id}: {e}")
+
+            if not notification_recipients:
+                # Last resort fallback
+                notification_recipients = ["tech.nj@lakecrest.com"]
+                logger.warning("Using fallback email: tech.nj@lakecrest.com")
+
         subject = f"Single-Step Form Completed: {step_name} - {employee_name}"
         
         # Generate filename for the attachment
@@ -19507,36 +19524,40 @@ async def notify_single_step_completion(request: Request):
         Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
         """
         
-        # Send email to HR with PDF attachment (with global CC)
+        # Send email to all notification recipients with PDF attachment
         from .email_service import EmailService
         email_service = EmailService()
-        # Load global CC list
-        try:
-            ensure_global_recipients_table()
-            gres = supabase_service.client.table('global_email_recipients').select('email,is_active').execute()
-            global_cc = [g['email'] for g in (gres.data or []) if g.get('is_active', True)]
-        except Exception:
-            global_cc = []
-        
+
         attachments = [{
             "filename": filename,
             "content_base64": pdf_base64,
             "mime_type": "application/pdf"
         }]
-        
-        email_sent_hr = await email_service.send_email_with_cc(
-            hr_email,
-            global_cc,
-            subject,
-            html_content,
-            text_content,
-            attachments
-        )
-        
-        if email_sent_hr:
-            logger.info(f"Sent single-step completion notification to HR for {step_name} - {employee_name}")
+
+        # Send to all notification recipients
+        # Use first recipient as primary, rest as CC for better email deliverability
+        email_sent_hr = False
+        if notification_recipients:
+            primary_recipient = notification_recipients[0]
+            cc_recipients = notification_recipients[1:] if len(notification_recipients) > 1 else []
+
+            logger.info(f"Sending notification to {len(notification_recipients)} recipients: primary={primary_recipient}, cc={cc_recipients}")
+
+            email_sent_hr = await email_service.send_email_with_cc(
+                primary_recipient,
+                cc_recipients,
+                subject,
+                html_content,
+                text_content,
+                attachments
+            )
+
+            if email_sent_hr:
+                logger.info(f"✅ Sent single-step completion notification to {len(notification_recipients)} recipients for {step_name} - {employee_name}")
+            else:
+                logger.warning(f"❌ Failed to send HR notification for single-step completion")
         else:
-            logger.warning(f"Failed to send HR notification for single-step completion")
+            logger.error("❌ No notification recipients available - cannot send notification")
         
         # Also send confirmation to employee if we have their email
         email_sent_employee = False
@@ -19559,10 +19580,11 @@ async def notify_single_step_completion(request: Request):
             data={
                 "hr_notified": email_sent_hr,
                 "employee_notified": email_sent_employee,
-                "hr_email": hr_email,
+                "notification_recipients": notification_recipients,
+                "recipient_count": len(notification_recipients),
                 "employee_email": employee_email
             },
-            message="Notification sent successfully" if email_sent_hr else "Notification sending failed"
+            message=f"Notification sent to {len(notification_recipients)} recipients" if email_sent_hr else "Notification sending failed"
         )
         
     except Exception as e:
