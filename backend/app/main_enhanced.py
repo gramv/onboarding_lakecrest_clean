@@ -18578,58 +18578,124 @@ async def send_step_invitation(
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
         invitation_link = f"{frontend_url}/onboard?token={token_data['token']}&mode=single&step={step_id}"
 
+        # Get property and employee details for email
+        property_name = property_obj.get('name', 'Our Team')
+        employee_position = employee.get('position', 'Team Member') if employee else 'Team Member'
+        employee_department = employee.get('department', '') if employee else ''
+
+        # Get HR contact info
+        hr_contact_name = current_user.name or 'HR Department'
+        hr_contact_email = current_user.email or 'hr@company.com'
+
         # Send invitation email
-        subject = f"Action Required: Complete {step_name}"
-        
+        subject = f"Action Required: Complete {step_name} - {property_name}"
+
         html_content = f"""
         <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #2c3e50;">Complete Your Onboarding Step</h2>
-                
-                <p>Hello {recipient_name or 'there'},</p>
-                
-                <p>You've been invited to complete the following onboarding step:</p>
-                
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <h3 style="color: #2c3e50; margin-top: 0;">{step_name}</h3>
-                    <p style="margin-bottom: 0;">Please click the link below to complete this step.</p>
+        <head>
+            <style>
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; }}
+                .content {{ background: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; }}
+                .info-box {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }}
+                .button {{ display: inline-block; padding: 14px 32px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }}
+                .warning {{ background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0; }}
+                .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 0.9em; color: #666; }}
+            </style>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5;">
+            <div class="container">
+                <div class="header">
+                    <h1 style="margin: 0; font-size: 28px;">📋 Onboarding Step Required</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">{property_name}</p>
                 </div>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{invitation_link}" 
-                       style="display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                        Complete {step_name}
-                    </a>
+
+                <div class="content">
+                    <p style="font-size: 16px;">Hello <strong>{recipient_name or 'there'}</strong>,</p>
+
+                    <p>You've been invited to complete an important onboarding step for your new position{f' as <strong>{employee_position}</strong>' if employee_position != 'Team Member' else ''}{f' in the {employee_department} department' if employee_department else ''}.</p>
+
+                    <div class="info-box">
+                        <h3 style="color: #2c3e50; margin-top: 0; font-size: 20px;">📝 {step_name}</h3>
+                        <p style="margin-bottom: 0; color: #555;">This step is required to complete your onboarding process.</p>
+                    </div>
+
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{invitation_link}" class="button">
+                            Complete {step_name} →
+                        </a>
+                    </div>
+
+                    <div class="warning">
+                        <p style="margin: 0;"><strong>⏰ Important:</strong> This invitation will expire in 7 days. Please complete it as soon as possible to avoid delays in your onboarding.</p>
+                    </div>
+
+                    <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0; color: #0c5460;"><strong>💡 What to expect:</strong></p>
+                        <ul style="margin: 10px 0 0 0; color: #0c5460;">
+                            <li>The form will take approximately 5-10 minutes to complete</li>
+                            <li>You may need to provide documents or information</li>
+                            <li>Your progress will be saved automatically</li>
+                            <li>You'll receive a confirmation once submitted</li>
+                        </ul>
+                    </div>
+
+                    <div class="footer">
+                        <p><strong>Need help?</strong></p>
+                        <p>If you have any questions or need assistance, please contact:</p>
+                        <p style="margin: 10px 0;">
+                            <strong>{hr_contact_name}</strong><br>
+                            📧 <a href="mailto:{hr_contact_email}" style="color: #667eea;">{hr_contact_email}</a>
+                        </p>
+                        <p style="margin-top: 20px; font-size: 0.85em; color: #999;">
+                            🔒 This is a secure onboarding link. Please do not share it with others.<br>
+                            This is an automated message from the Hotel Onboarding System.
+                        </p>
+                    </div>
                 </div>
-                
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
-                    <p style="margin: 0;"><strong>Important:</strong> This invitation will expire in 7 days. Please complete it as soon as possible.</p>
-                </div>
-                
-                <p style="margin-top: 30px; font-size: 0.9em; color: #666;">
-                    If you have any questions, please contact HR or your manager.<br>
-                    This is an automated message from the Hotel Onboarding System.
-                </p>
             </div>
         </body>
         </html>
         """
 
         text_content = f"""
-        Complete Your Onboarding Step
+        📋 Onboarding Step Required - {property_name}
 
         Hello {recipient_name or 'there'},
 
-        You've been invited to complete the following onboarding step:
-        {step_name}
+        You've been invited to complete an important onboarding step for your new position{f' as {employee_position}' if employee_position != 'Team Member' else ''}{f' in the {employee_department} department' if employee_department else ''}.
 
-        Please visit this link to complete the step:
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        STEP TO COMPLETE:
+        📝 {step_name}
+
+        This step is required to complete your onboarding process.
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        COMPLETE THIS STEP:
         {invitation_link}
 
-        Important: This invitation will expire in 7 days. Please complete it as soon as possible.
+        ⏰ IMPORTANT: This invitation will expire in 7 days. Please complete it as soon as possible to avoid delays in your onboarding.
 
-        If you have any questions, please contact HR or your manager.
+        💡 WHAT TO EXPECT:
+        - The form will take approximately 5-10 minutes to complete
+        - You may need to provide documents or information
+        - Your progress will be saved automatically
+        - You'll receive a confirmation once submitted
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        NEED HELP?
+        If you have any questions or need assistance, please contact:
+
+        {hr_contact_name}
+        📧 {hr_contact_email}
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        🔒 This is a secure onboarding link. Please do not share it with others.
         This is an automated message from the Hotel Onboarding System.
         """
 
