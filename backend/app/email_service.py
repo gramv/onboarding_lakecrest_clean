@@ -2265,22 +2265,64 @@ class EmailService:
             logger.warning("Manager packet email skipped: missing recipient")
             return False
 
-        subject = f"Completed Onboarding Packet – {employee_name}"
+        subject = f"Onboarding Packet Ready: {employee_name}"
         html_content = f"""
+        <!DOCTYPE html>
         <html>
-          <body style="font-family: Arial, sans-serif; color: #111827;">
-            <h2 style="color:#1f2937;">Onboarding Packet Ready</h2>
-            <p>Hello,</p>
-            <p>The onboarding packet for <strong>{employee_name}</strong> at <strong>{property_name}</strong> has been finalized.</p>
-            <p>The attached PDF contains the New Hire Summary and all manager-approved documents.</p>
-            <p style="margin-top:24px; color:#4b5563; font-size:12px;">This message was generated automatically by the Hotel Onboarding System.</p>
-          </body>
+        <head>
+            <meta charset=\"utf-8\" />
+        </head>
+        <body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #0f172a; margin: 0; padding: 0; background-color: #f8fafc;\">
+            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); padding: 40px 0;\">
+                <tr>
+                    <td align=\"center\" style=\"padding: 0 24px;\">
+                        <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color: #ffffff; border-radius: 16px; box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1); overflow: hidden;\">
+                            <tr>
+                                <td style=\"padding: 32px; background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); color: #ffffff;\">
+                                    <h1 style=\"margin: 0; font-size: 26px; letter-spacing: 0.5px;\">Onboarding Packet Finalized</h1>
+                                    <p style=\"margin: 12px 0 0 0; font-size: 14px; opacity: 0.9;\">{employee_name} · {property_name}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style=\"padding: 32px;\">
+                                    <p style=\"font-size: 16px; margin: 0 0 20px 0;\">Hello,</p>
+                                    <p style=\"font-size: 15px; line-height: 1.7; color: #334155; margin: 0;\">
+                                        The onboarding packet for <strong>{employee_name}</strong> at <strong>{property_name}</strong> is ready for your records.
+                                        The attached PDF includes the manager-approved documents and New Hire Summary.
+                                    </p>
+
+                                    <div style=\"margin: 28px 0; padding: 20px; background-color: #f1f5f9; border-radius: 12px; border: 1px solid #e2e8f0;\">
+                                        <p style=\"margin: 0; font-weight: 600; color: #1d4ed8; text-transform: uppercase; font-size: 12px; letter-spacing: 0.08em;\">Packet Details</p>
+                                        <p style=\"margin: 12px 0 0 0; color: #334155; font-size: 14px;\">
+                                            • Employee: <strong>{employee_name}</strong><br/>
+                                            • Property: <strong>{property_name}</strong><br/>
+                                            • Attachment: {packet_filename or "onboarding_packet.pdf"}
+                                        </p>
+                                    </div>
+
+                                    <p style=\"font-size: 14px; line-height: 1.7; color: #475569; margin: 0;\">
+                                        Please review and archive this packet according to your onboarding retention guidelines.
+                                        If any corrections are required, reach out to the onboarding team.
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style=\"padding: 24px 32px; background-color: #0f172a; color: #cbd5f5; font-size: 12px; text-align: center;\">
+                                    <p style=\"margin: 0; opacity: 0.85;\">Generated automatically by the Hotel Onboarding System.</p>
+                                    <p style=\"margin: 8px 0 0 0; opacity: 0.6;\">Please do not reply to this email.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
         </html>
         """
 
         text_content = (
-            f"Onboarding packet for {employee_name} at {property_name} is attached.\n"
-            "This message was generated automatically by the Hotel Onboarding System."
+            f"The onboarding packet for {employee_name} at {property_name} is attached. "
+            "Please store it according to your onboarding policy."
         )
 
         attachments = [{
@@ -2305,93 +2347,94 @@ class EmailService:
         employee_number: str,
         position: str,
         department: str,
-        start_date: str,  # "Monday, October 7, 2025"
-        start_time: str,  # "9:00 AM"
+        start_date: str,
+        start_time: str,
         property_name: str,
         property_address: str,
         manager_name: str,
         manager_email: str,
-        manager_phone: str = None,
+        manager_phone: Optional[str] = None,
         dress_code: str = "Business casual",
         parking_details: str = "Employee parking available on-site",
         cc_manager: bool = True
     ) -> bool:
-        """
-        Send onboarding completion email to employee
-        Beautiful, professional email welcoming them to the team
-        """
+        """Send onboarding completion email to the employee with first-day guidance."""
         try:
             logger.info(f"[EMAIL] Sending onboarding completion email to {employee_email}")
 
-            subject = f"🎉 Congratulations! Your Onboarding is Complete - Welcome to {property_name}"
+            subject = f"Welcome to {property_name}! Your Onboarding is Complete"
 
-            # Format manager phone
-            phone_display = f"<strong>Phone:</strong> {manager_phone}" if manager_phone else ""
+            manager_phone_html = (
+                f"<p style=\"margin: 6px 0; color: #0f172a; font-size: 14px;\"><strong>Phone:</strong> {manager_phone}</p>"
+                if manager_phone else ""
+            )
+
+            cc_list = [manager_email] if cc_manager and manager_email else []
 
             html_content = f"""
             <!DOCTYPE html>
             <html>
             <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta charset=\"UTF-8\">
+                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
             </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+            <body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;\">
+                <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff;\">
 
                     <!-- Header -->
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
-                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🎉 Welcome to the Team!</h1>
-                        <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Your onboarding is complete</p>
+                    <div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;\">
+                        <h1 style=\"color: #ffffff; margin: 0; font-size: 28px;\">🎉 Welcome to the Team!</h1>
+                        <p style=\"color: #ffffff; margin: 10px 0 0 0; font-size: 16px;\">Your onboarding is complete</p>
                     </div>
 
                     <!-- Main Content -->
-                    <div style="padding: 40px 30px;">
+                    <div style=\"padding: 40px 30px;\">
 
                         <!-- Greeting -->
-                        <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+                        <p style=\"font-size: 16px; color: #333333; line-height: 1.6;\">
                             Dear <strong>{employee_name}</strong>,
                         </p>
 
-                        <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+                        <p style=\"font-size: 16px; color: #333333; line-height: 1.6;\">
                             Congratulations! We're thrilled to inform you that your onboarding process has been successfully completed.
                             You are now officially part of the <strong>{property_name}</strong> team!
                         </p>
 
                         <!-- Employment Details Box -->
-                        <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;">
-                            <h2 style="color: #667eea; margin: 0 0 15px 0; font-size: 18px;">📋 Your Employment Details</h2>
-                            <table style="width: 100%; border-collapse: collapse;">
+                        <div style=\"background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;\">
+                            <h2 style=\"color: #667eea; margin: 0 0 15px 0; font-size: 18px;\">📋 Your Employment Details</h2>
+                            <table style=\"width: 100%; border-collapse: collapse;\">
                                 <tr>
-                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Position:</strong></td>
-                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{position}</td>
+                                    <td style=\"padding: 8px 0; color: #666666; font-size: 14px;\"><strong>Position:</strong></td>
+                                    <td style=\"padding: 8px 0; color: #333333; font-size: 14px;\">{position}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Department:</strong></td>
-                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{department}</td>
+                                    <td style=\"padding: 8px 0; color: #666666; font-size: 14px;\"><strong>Department:</strong></td>
+                                    <td style=\"padding: 8px 0; color: #333333; font-size: 14px;\">{department}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Employee Number:</strong></td>
-                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{employee_number}</td>
+                                    <td style=\"padding: 8px 0; color: #666666; font-size: 14px;\"><strong>Employee Number:</strong></td>
+                                    <td style=\"padding: 8px 0; color: #333333; font-size: 14px;\">{employee_number}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Start Date:</strong></td>
-                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{start_date}</td>
+                                    <td style=\"padding: 8px 0; color: #666666; font-size: 14px;\"><strong>Start Date:</strong></td>
+                                    <td style=\"padding: 8px 0; color: #333333; font-size: 14px;\">{start_date}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Start Time:</strong></td>
-                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{start_time}</td>
+                                    <td style=\"padding: 8px 0; color: #666666; font-size: 14px;\"><strong>Start Time:</strong></td>
+                                    <td style=\"padding: 8px 0; color: #333333; font-size: 14px;\">{start_time}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 8px 0; color: #666666; font-size: 14px;"><strong>Work Location:</strong></td>
-                                    <td style="padding: 8px 0; color: #333333; font-size: 14px;">{property_address}</td>
+                                    <td style=\"padding: 8px 0; color: #666666; font-size: 14px;\"><strong>Work Location:</strong></td>
+                                    <td style=\"padding: 8px 0; color: #333333; font-size: 14px;\">{property_address}</td>
                                 </tr>
                             </table>
                         </div>
 
                         <!-- What's Next Section -->
-                        <div style="margin: 30px 0;">
-                            <h2 style="color: #333333; font-size: 20px; margin: 0 0 15px 0;">✨ What's Next?</h2>
-                            <ul style="color: #333333; font-size: 15px; line-height: 1.8; padding-left: 20px;">
+                        <div style=\"margin: 30px 0;\">
+                            <h2 style=\"color: #333333; font-size: 20px; margin: 0 0 15px 0;\">✨ What's Next?</h2>
+                            <ul style=\"color: #333333; font-size: 15px; line-height: 1.8; padding-left: 20px;\">
                                 <li>✓ All your onboarding documents have been reviewed and approved</li>
                                 <li>✓ Your employee profile has been activated</li>
                                 <li>✓ You're all set to begin your new role!</li>
@@ -2399,36 +2442,36 @@ class EmailService:
                         </div>
 
                         <!-- First Day Information -->
-                        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0; border-radius: 4px;">
-                            <h2 style="color: #856404; margin: 0 0 15px 0; font-size: 18px;">📅 First Day Information</h2>
+                        <div style=\"background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0; border-radius: 4px;\">
+                            <h2 style=\"color: #856404; margin: 0 0 15px 0; font-size: 18px;\">📅 First Day Information</h2>
 
-                            <div style="margin: 15px 0;">
-                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                            <div style=\"margin: 15px 0;\">
+                                <p style=\"margin: 5px 0; color: #333333; font-size: 15px;\">
                                     <strong>📅 Date:</strong> {start_date}
                                 </p>
-                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                <p style=\"margin: 5px 0; color: #333333; font-size: 15px;\">
                                     <strong>🕐 Time:</strong> {start_time} (Please arrive 15 minutes early)
                                 </p>
-                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                <p style=\"margin: 5px 0; color: #333333; font-size: 15px;\">
                                     <strong>📍 Location:</strong> {property_address}
                                 </p>
-                                <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                                <p style=\"margin: 5px 0; color: #333333; font-size: 15px;\">
                                     <strong>🚪 Report to:</strong> {manager_name} (Your Manager)
                                 </p>
                             </div>
 
-                            <div style="margin-top: 20px;">
-                                <p style="margin: 10px 0 5px 0; color: #333333; font-size: 15px;"><strong>What to Bring:</strong></p>
-                                <ul style="color: #333333; font-size: 14px; line-height: 1.6; margin: 5px 0; padding-left: 20px;">
+                            <div style=\"margin-top: 20px;\">
+                                <p style=\"margin: 10px 0 5px 0; color: #333333; font-size: 15px;\"><strong>What to Bring:</strong></p>
+                                <ul style=\"color: #333333; font-size: 14px; line-height: 1.6; margin: 5px 0; padding-left: 20px;\">
                                     <li>Valid government-issued photo ID</li>
                                     <li>Social Security card (for I-9 verification)</li>
                                     <li>Any additional documents requested by your manager</li>
                                 </ul>
                             </div>
 
-                            <div style="margin-top: 15px;">
-                                <p style="margin: 10px 0 5px 0; color: #333333; font-size: 15px;"><strong>What to Expect:</strong></p>
-                                <ul style="color: #333333; font-size: 14px; line-height: 1.6; margin: 5px 0; padding-left: 20px;">
+                            <div style=\"margin-top: 15px;\">
+                                <p style=\"margin: 10px 0 5px 0; color: #333333; font-size: 15px;\"><strong>What to Expect:</strong></p>
+                                <ul style=\"color: #333333; font-size: 14px; line-height: 1.6; margin: 5px 0; padding-left: 20px;\">
                                     <li>Welcome orientation and facility tour</li>
                                     <li>Meet your team members</li>
                                     <li>Review of your role and responsibilities</li>
@@ -2438,24 +2481,24 @@ class EmailService:
                         </div>
 
                         <!-- Manager Contact -->
-                        <div style="background-color: #e7f3ff; border-left: 4px solid #2196F3; padding: 20px; margin: 30px 0; border-radius: 4px;">
-                            <h2 style="color: #1976D2; margin: 0 0 15px 0; font-size: 18px;">👤 Your Manager</h2>
-                            <p style="margin: 5px 0; color: #333333; font-size: 15px;">
+                        <div style=\"background-color: #e7f3ff; border-left: 4px solid #2196F3; padding: 20px; margin: 30px 0; border-radius: 4px;\">
+                            <h2 style=\"color: #1976D2; margin: 0 0 15px 0; font-size: 18px;\">👤 Your Manager</h2>
+                            <p style=\"margin: 5px 0; color: #333333; font-size: 15px;\">
                                 <strong>Name:</strong> {manager_name}
                             </p>
-                            <p style="margin: 5px 0; color: #333333; font-size: 15px;">
-                                <strong>Email:</strong> <a href="mailto:{manager_email}" style="color: #2196F3; text-decoration: none;">{manager_email}</a>
+                            <p style=\"margin: 5px 0; color: #333333; font-size: 15px;\">
+                                <strong>Email:</strong> <a href=\"mailto:{manager_email}\" style=\"color: #2196F3; text-decoration: none;\">{manager_email}</a>
                             </p>
-                            {f'<p style="margin: 5px 0; color: #333333; font-size: 15px;">{phone_display}</p>' if manager_phone else ''}
-                            <p style="margin: 15px 0 0 0; color: #666666; font-size: 14px; font-style: italic;">
+                            {'<p style="margin: 5px 0; color: #333333; font-size: 15px;">' + phone_display + '</p>' if manager_phone else ''}
+                            <p style=\"margin: 15px 0 0 0; color: #666666; font-size: 14px; font-style: italic;\">
                                 Feel free to reach out if you have any questions before your start date!
                             </p>
                         </div>
 
                         <!-- Important Reminders -->
-                        <div style="background-color: #fff; border: 2px dashed #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;">
-                            <h2 style="color: #667eea; margin: 0 0 15px 0; font-size: 18px;">⚠️ Important Reminders</h2>
-                            <ul style="color: #333333; font-size: 14px; line-height: 1.8; padding-left: 20px;">
+                        <div style=\"background-color: #fff; border: 2px dashed #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;\">
+                            <h2 style=\"color: #667eea; margin: 0 0 15px 0; font-size: 18px;\">⚠️ Important Reminders</h2>
+                            <ul style=\"color: #333333; font-size: 14px; line-height: 1.8; padding-left: 20px;\">
                                 <li>Please arrive <strong>15 minutes early</strong> on your first day</li>
                                 <li><strong>Dress code:</strong> {dress_code}</li>
                                 <li><strong>Parking:</strong> {parking_details}</li>
@@ -2464,14 +2507,14 @@ class EmailService:
                         </div>
 
                         <!-- Closing -->
-                        <div style="margin: 30px 0;">
-                            <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+                        <div style=\"margin: 30px 0;\">
+                            <p style=\"font-size: 16px; color: #333333; line-height: 1.6;\">
                                 We're excited to have you join our team and look forward to seeing you on <strong>{start_date}</strong>!
                             </p>
-                            <p style="font-size: 16px; color: #333333; line-height: 1.6; margin-top: 20px;">
+                            <p style=\"font-size: 16px; color: #333333; line-height: 1.6; margin-top: 20px;\">
                                 <strong>Welcome aboard! 🎉</strong>
                             </p>
-                            <p style="font-size: 16px; color: #333333; line-height: 1.6; margin-top: 20px;">
+                            <p style=\"font-size: 16px; color: #333333; line-height: 1.6; margin-top: 20px;\">
                                 Best regards,<br>
                                 <strong>The {property_name} Team</strong>
                             </p>
@@ -2480,8 +2523,8 @@ class EmailService:
                     </div>
 
                     <!-- Footer -->
-                    <div style="background-color: #f8f9fa; padding: 20px 30px; border-top: 1px solid #e0e0e0; text-align: center;">
-                        <p style="margin: 0; color: #666666; font-size: 12px;">
+                    <div style=\"background-color: #f8f9fa; padding: 20px 30px; border-top: 1px solid #e0e0e0; text-align: center;\">
+                        <p style=\"margin: 0; color: #666666; font-size: 12px;\">
                             🔒 This is an automated message from the Hotel Onboarding System.
                         </p>
                     </div>
