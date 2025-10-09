@@ -47,6 +47,9 @@ from .models import (
 # Import OnboardingPhase from models_enhanced
 from .models_enhanced import OnboardingPhase
 
+# Import document encryption service
+from .services.document_encryption_service import DocumentEncryptionService
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -150,7 +153,15 @@ class EnhancedSupabaseService:
             )
         self.cipher = Fernet(self.encryption_key.encode())
         logger.info("✅ Field encryption enabled (Fernet/AES-128) in SupabaseService")
-        
+
+        # Initialize document encryption service
+        try:
+            self.doc_encryption = DocumentEncryptionService()
+            logger.info("✅ Document encryption service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize document encryption service: {e}")
+            raise
+
         # Connection pool for direct PostgreSQL access
         self.db_pool = None
         
@@ -3293,17 +3304,26 @@ class EnhancedSupabaseService:
             logger.error(f"Failed to create storage bucket {bucket_name}: {e}")
             return False
     
-    async def upload_document_to_storage(self, bucket_name: str, file_path: str, file_data: bytes, 
+    async def upload_document_to_storage(self, bucket_name: str, file_path: str, file_data: bytes,
                                         content_type: str = 'application/octet-stream') -> Dict[str, Any]:
-        """Upload document to Supabase storage"""
+        """Upload document to Supabase storage with encryption"""
         try:
             # Ensure bucket exists
             await self.create_storage_bucket(bucket_name)
-            
-            # Upload file using admin client
+
+            # Encrypt document before upload
+            logger.info(f"🔒 Encrypting document for storage: {file_path}")
+            encrypted_data, encryption_metadata = self.doc_encryption.encrypt_document(
+                file_data,
+                document_type=file_path.split('/')[-2] if '/' in file_path else 'document',
+                employee_id=file_path.split('/')[1] if '/' in file_path and len(file_path.split('/')) > 1 else 'unknown'
+            )
+            logger.info(f"✅ Document encrypted: {len(file_data)} → {len(encrypted_data)} bytes")
+
+            # Upload encrypted file using admin client
             response = self.admin_client.storage.from_(bucket_name).upload(
                 file_path,
-                file_data,
+                encrypted_data,  # Upload encrypted data
                 file_options={
                     "content-type": content_type,
                     "upsert": "true"  # Must be string, not boolean
@@ -3319,9 +3339,13 @@ class EnhancedSupabaseService:
                 "bucket": bucket_name,
                 "path": file_path,
                 "size": len(file_data),
+                "encrypted_size": len(encrypted_data),
                 "content_type": content_type,
                 "public_url": public_url,
-                "uploaded_at": datetime.now(timezone.utc).isoformat()
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "encrypted": True,
+                "encryption_algorithm": encryption_metadata.get("algorithm", "Fernet/AES-128-CBC"),
+                "encrypted_at": encryption_metadata.get("encrypted_at")
             }
 
             # Note: Not storing in signed_documents here as this is for generic uploads
@@ -3614,10 +3638,19 @@ class EnhancedSupabaseService:
                 except Exception as archive_err:
                     logger.warning(f"Archiving previous active document(s) failed: {archive_err}")
 
-            # Upload new active PDF
+            # Encrypt document before upload
+            logger.info(f"🔒 Encrypting document: {form_type} for employee {employee_id}")
+            encrypted_bytes, encryption_metadata = self.doc_encryption.encrypt_document(
+                pdf_bytes,
+                document_type=form_type,
+                employee_id=employee_id
+            )
+            logger.info(f"✅ Document encrypted: {len(pdf_bytes)} → {len(encrypted_bytes)} bytes")
+
+            # Upload encrypted PDF
             self.admin_client.storage.from_(bucket_name).upload(
                 active_path,
-                pdf_bytes,
+                encrypted_bytes,  # Upload encrypted bytes instead of plaintext
                 file_options={"content-type": "application/pdf", "upsert": "true"}
             )
 
@@ -3669,8 +3702,12 @@ class EnhancedSupabaseService:
                         "bucket": bucket_name,
                         "path": active_path,
                         "size": len(pdf_bytes),
+                        "encrypted_size": len(encrypted_bytes),
                         "content_type": "application/pdf",
-                        "signed_url_expires_at": signed_url_expires_at
+                        "signed_url_expires_at": signed_url_expires_at,
+                        "encrypted": True,
+                        "encryption_algorithm": encryption_metadata.get("algorithm", "Fernet/AES-128-CBC"),
+                        "encrypted_at": encryption_metadata.get("encrypted_at")
                     },
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "updated_at": datetime.now(timezone.utc).isoformat()
@@ -3803,13 +3840,15 @@ class EnhancedSupabaseService:
             return None
 
     async def get_signed_document_bytes(self, record: Dict[str, Any]) -> Optional[bytes]:
-        """Download the binary content for a signed document record."""
+        """Download and decrypt the binary content for a signed document record."""
         if not record:
             return None
 
         metadata = record.get("metadata") or {}
         bucket = metadata.get("bucket") or "onboarding-documents"
         path = metadata.get("path")
+        document_type = record.get("document_type", "unknown")
+        employee_id = record.get("employee_id", "unknown")
 
         if not path:
             logger.warning(
@@ -3819,10 +3858,26 @@ class EnhancedSupabaseService:
             return None
 
         try:
-            return self.admin_client.storage.from_(bucket).download(path)
+            # Download document (might be encrypted)
+            encrypted_bytes = self.admin_client.storage.from_(bucket).download(path)
+
+            # Try to decrypt (handles both encrypted and unencrypted documents)
+            logger.info(f"🔓 Decrypting document: {document_type} for employee {employee_id}")
+            decrypted_bytes, was_encrypted = self.doc_encryption.decrypt_document(
+                encrypted_bytes,
+                document_type=document_type,
+                employee_id=employee_id
+            )
+
+            if was_encrypted:
+                logger.info(f"✅ Document decrypted: {len(encrypted_bytes)} → {len(decrypted_bytes)} bytes")
+            else:
+                logger.warning(f"⚠️  Legacy unencrypted document: {document_type}")
+
+            return decrypted_bytes
         except Exception as e:
             logger.error(
-                "Failed to download signed document %s from %s/%s: %s",
+                "Failed to download/decrypt signed document %s from %s/%s: %s",
                 record.get("id"),
                 bucket,
                 path,
@@ -5212,12 +5267,21 @@ class EnhancedSupabaseService:
                 await self.create_storage_bucket(bucket_name, public=False)
                 logger.info(f"✅ Bucket '{bucket_name}' verified/created")
 
-                # Upload file using admin client with proper error handling
+                # Encrypt document before upload
+                logger.info(f"🔒 Encrypting I-9 verification document: {document_type} for employee {employee_id}")
+                encrypted_file_data, encryption_metadata = self.doc_encryption.encrypt_document(
+                    file_data,
+                    document_type=f"i9_verification_{document_type}",
+                    employee_id=employee_id
+                )
+                logger.info(f"✅ Document encrypted: {len(file_data)} → {len(encrypted_file_data)} bytes")
+
+                # Upload encrypted file using admin client with proper error handling
                 try:
-                    logger.info(f"📤 Attempting upload to {bucket_name}/{storage_path} ({len(file_data)} bytes, mime: {mime_type})")
+                    logger.info(f"📤 Attempting upload to {bucket_name}/{storage_path} ({len(encrypted_file_data)} bytes, mime: {mime_type})")
                     res = self.admin_client.storage.from_(bucket_name).upload(
                         storage_path,
-                        file_data,
+                        encrypted_file_data,  # Upload encrypted data
                         file_options={"content-type": mime_type, "upsert": "true"}
                     )
                     logger.info(f"✅ Upload successful on first attempt: {res}")
@@ -5226,7 +5290,7 @@ class EnhancedSupabaseService:
                     # Try with different options format
                     res = self.admin_client.storage.from_(bucket_name).upload(
                         storage_path,
-                        file_data,
+                        encrypted_file_data,  # Use encrypted data on retry too
                         {"content-type": mime_type}
                     )
                     logger.info(f"✅ Upload successful on retry: {res}")
