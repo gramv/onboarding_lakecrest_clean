@@ -8,6 +8,7 @@ Provides centralized PDF generation with consistent employee data retrieval
 # from .i9_pdf_generator import I9PDFGenerator
 # from .direct_deposit_pdf_generator import DirectDepositPDFGenerator
 from .health_insurance_pdf_generator import HealthInsurancePDFGenerator
+from .new_hire_summary_pdf import NewHireSummaryPDFGenerator
 # from .company_policies_pdf_generator import CompanyPoliciesPDFGenerator
 # from .weapons_policy_pdf_generator import WeaponsPolicyPDFGenerator
 
@@ -16,6 +17,7 @@ __all__ = [
     # 'I9PDFGenerator',
     # 'DirectDepositPDFGenerator',
     'HealthInsurancePDFGenerator',
+    'NewHireSummaryPDFGenerator',
     # 'CompanyPoliciesPDFGenerator',
     # 'WeaponsPolicyPDFGenerator'
 ]

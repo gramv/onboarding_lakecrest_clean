@@ -37,7 +37,7 @@ export class SessionStorageService {
       JSON.stringify(session)
     );
 
-    console.log('✅ Session saved:', { employeeId, expiresAt });
+    console.log('✅ Session saved:', { employeeId, createdAt: session.createdAt });
   }
 
   /**
@@ -225,4 +225,3 @@ export class SessionStorageService {
 }
 
 export default SessionStorageService;
-

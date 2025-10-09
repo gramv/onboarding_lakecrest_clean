@@ -30,35 +30,52 @@ class EncryptionService:
     def __init__(self):
         """
         Initialize encryption service with key from environment.
-        
+
         Environment Variables:
             FIELD_ENCRYPTION_KEY: Base64-encoded Fernet key
+
+        Raises:
+            RuntimeError: If encryption key is not set or invalid
         """
-        # Get encryption key from environment
+        # Get encryption key from environment - REQUIRED
         key = os.getenv('FIELD_ENCRYPTION_KEY')
-        
+
         if not key:
-            logger.warning("⚠️  FIELD_ENCRYPTION_KEY not set - encryption disabled!")
-            logger.warning("⚠️  Sensitive data will be stored as plain text!")
-            logger.warning("⚠️  Generate key with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'")
-            self.cipher = None
-            self.enabled = False
-        else:
-            try:
-                from cryptography.fernet import Fernet
-                self.cipher = Fernet(key.encode())
-                self.enabled = True
-                logger.info("✅ Field encryption enabled (Fernet/AES-128)")
-            except ImportError:
-                logger.error("❌ cryptography package not installed!")
-                logger.error("   Install with: pip install cryptography")
-                self.cipher = None
-                self.enabled = False
-            except Exception as e:
-                logger.error(f"❌ Failed to initialize encryption: {e}")
-                logger.error("   Check FIELD_ENCRYPTION_KEY format")
-                self.cipher = None
-                self.enabled = False
+            error_msg = (
+                "❌ FIELD_ENCRYPTION_KEY not set - CANNOT START!\n"
+                "   This is REQUIRED for storing sensitive data (SSN, bank accounts, etc.)\n"
+                "   \n"
+                "   To generate a secure key:\n"
+                "   python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'\n"
+                "   \n"
+                "   Then add to your .env file:\n"
+                "   FIELD_ENCRYPTION_KEY=<your-generated-key>\n"
+                "   \n"
+                "   ⚠️  IMPORTANT: Backup this key securely! Loss = data loss!"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+
+        try:
+            from cryptography.fernet import Fernet
+            self.cipher = Fernet(key.encode())
+            self.enabled = True
+            logger.info("✅ Field encryption enabled (Fernet/AES-128)")
+        except ImportError:
+            error_msg = (
+                "❌ cryptography package not installed!\n"
+                "   Install with: pip install cryptography"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+        except Exception as e:
+            error_msg = (
+                f"❌ Failed to initialize encryption: {e}\n"
+                f"   Check FIELD_ENCRYPTION_KEY format\n"
+                f"   Key should be a valid Fernet key (base64-encoded)"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
     
     def is_enabled(self) -> bool:
         """Check if encryption is enabled"""
@@ -67,14 +84,16 @@ class EncryptionService:
     def encrypt(self, value: Optional[str]) -> Optional[str]:
         """
         Encrypt a string value.
-        
+
         Args:
             value: Plain text string to encrypt
-        
+
         Returns:
             Encrypted string (base64 encoded) or None if value is None
-            Returns plain text if encryption is disabled (with warning)
-        
+
+        Raises:
+            RuntimeError: If encryption is not available or fails
+
         Examples:
             >>> service = EncryptionService()
             >>> encrypted = service.encrypt("123-45-6789")
@@ -83,20 +102,20 @@ class EncryptionService:
         """
         if not value:
             return None
-        
+
         if not self.cipher:
-            logger.warning(f"⚠️  Encryption not available - storing plain text!")
-            return value
-        
+            error_msg = "❌ Encryption not available - cannot store sensitive data!"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+
         try:
             encrypted = self.cipher.encrypt(value.encode())
+            logger.debug(f"🔒 Encrypted field (length: {len(value)} → {len(encrypted)})")
             return encrypted.decode()
         except Exception as e:
-            logger.error(f"❌ Encryption failed: {e}")
-            logger.error(f"   Value length: {len(value)}")
-            # Return plain text as fallback (with warning)
-            logger.warning("⚠️  Falling back to plain text storage!")
-            return value
+            error_msg = f"❌ Encryption failed: {e} (value length: {len(value)})"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
     
     def decrypt(self, encrypted_value: Optional[str]) -> Optional[str]:
         """
@@ -124,6 +143,7 @@ class EncryptionService:
         
         try:
             decrypted = self.cipher.decrypt(encrypted_value.encode())
+            logger.debug(f"🔓 Decrypted field (length: {len(encrypted_value)} → {len(decrypted)})")
             return decrypted.decode()
         except Exception as e:
             # If decryption fails, might be plain text (backwards compatibility)

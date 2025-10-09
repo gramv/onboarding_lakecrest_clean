@@ -31,6 +31,19 @@ export interface AllDocumentsStatus {
 export const DOCUMENT_WORKFLOW = [
   {
     order: 1,
+    type: 'new_hire_summary',
+    name: 'New Hire Summary',
+    description: 'Review auto-filled hire summary and confirm details before approving',
+    path: 'forms/new_hire_summary',
+    verificationSteps: [
+      'Review hotel and employment location details',
+      'Confirm employee personal information and address',
+      'Verify compensation, hire date, and department',
+      'Confirm health insurance selections and notes'
+    ]
+  },
+  {
+    order: 2,
     type: 'company_policies',
     name: 'Company Policies Acknowledgment',
     description: 'Verify employee signature on company policies',
@@ -42,7 +55,7 @@ export const DOCUMENT_WORKFLOW = [
     ]
   },
   {
-    order: 2,
+    order: 3,
     type: 'i9',
     name: 'I-9 Employment Eligibility Verification',
     description: 'Review Section 1, compare with uploaded documents, complete Section 2',
@@ -57,7 +70,7 @@ export const DOCUMENT_WORKFLOW = [
     ]
   },
   {
-    order: 3,
+    order: 4,
     type: 'w4',
     name: 'W-4 Federal Tax Withholding',
     description: 'Review W-4 and verify SSN',
@@ -71,7 +84,7 @@ export const DOCUMENT_WORKFLOW = [
     ]
   },
   {
-    order: 4,
+    order: 5,
     type: 'direct_deposit',
     name: 'Direct Deposit Authorization',
     description: 'Review direct deposit form with embedded voided check',
@@ -85,7 +98,7 @@ export const DOCUMENT_WORKFLOW = [
     ]
   },
   {
-    order: 5,
+    order: 6,
     type: 'health_insurance',
     name: 'Health Insurance Enrollment',
     description: 'Review health insurance enrollment form',
@@ -306,7 +319,57 @@ export class DocumentVerificationService {
     const step = this.getWorkflowStep(documentType);
     return step?.name || documentType;
   }
+
+  static async getNewHireSummary(employeeId: string): Promise<any> {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/summary`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load new hire summary');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching new hire summary:', error);
+      throw error;
+    }
+  }
+
+  static async approveNewHireSummary(
+    employeeId: string,
+    summary: any
+  ): Promise<any> {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/summary/approve`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(summary)
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to approve summary');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error approving new hire summary:', error);
+      throw error;
+    }
+  }
 }
 
 export default DocumentVerificationService;
-

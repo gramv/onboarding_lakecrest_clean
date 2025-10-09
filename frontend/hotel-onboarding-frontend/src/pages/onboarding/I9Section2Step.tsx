@@ -27,13 +27,27 @@ import { getApiUrl } from '@/config/api'
 
 interface UploadedDocument {
   id: string
-  type: 'list_a' | 'list_b' | 'list_c'
+  type: 'list_a' | 'list_b' | 'list_c' | 'ssn'
   documentType: string
   fileName: string
   fileSize: number
   fileData: string // Base64
   uploadedAt: string
-  ocrData?: any
+  ocrData?: any  // OCR extracted data
+  manualData?: {  // Manually entered data (fallback if OCR fails)
+    documentNumber?: string
+    expirationDate?: string
+    issuingAuthority?: string
+    firstName?: string
+    lastName?: string
+    dateOfBirth?: string
+    alienNumber?: string
+    uscisNumber?: string
+    ssn?: string
+  }
+  dataSource?: 'ocr' | 'manual' | 'hybrid'  // Track data source
+  ocrAttempted?: boolean  // Track if OCR was attempted
+  ocrFailed?: boolean  // Track if OCR failed
   preview?: string // For images
 }
 
@@ -43,6 +57,7 @@ interface I9Section2Data {
   listADocument?: UploadedDocument
   listBDocument?: UploadedDocument
   listCDocument?: UploadedDocument
+  ssnDocument?: UploadedDocument  // SSN required for List A (payroll/direct deposit)
   verificationComplete: boolean
 }
 
@@ -67,10 +82,17 @@ export default function I9Section2Step({
   const [uploadingDocument, setUploadingDocument] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [processingOcr, setProcessingOcr] = useState(false)
+  const [showManualEntry, setShowManualEntry] = useState<{
+    list_a?: boolean
+    list_b?: boolean
+    list_c?: boolean
+    ssn?: boolean
+  }>({})
   const fileInputRefs = {
     list_a: useRef<HTMLInputElement>(null),
     list_b: useRef<HTMLInputElement>(null),
-    list_c: useRef<HTMLInputElement>(null)
+    list_c: useRef<HTMLInputElement>(null),
+    ssn: useRef<HTMLInputElement>(null)  // SSN upload for List A
   }
 
   // Auto-save hook
@@ -143,7 +165,7 @@ export default function I9Section2Step({
     }
   }, [formData, currentStep.id, saveProgress])
 
-  const handleFileUpload = async (file: File, documentList: 'list_a' | 'list_b' | 'list_c') => {
+  const handleFileUpload = async (file: File, documentList: 'list_a' | 'list_b' | 'list_c' | 'ssn') => {
     // Validate file
     if (file.size > 10 * 1024 * 1024) {
       setUploadError('File size must be less than 10MB')
@@ -185,10 +207,12 @@ export default function I9Section2Step({
       if (employee?.id) {
         setProcessingOcr(true)
         try {
-          // Step 1: OCR Processing
+          // Step 1: OCR Processing (OPTIONAL - don't block if it fails)
           const ocrFormData = new FormData()
           ocrFormData.append('file', file)
-          ocrFormData.append('document_type', documentList)
+          // Map 'ssn' to 'list_c' for OCR processing (SSN is a List C document)
+          const ocrDocType = documentList === 'ssn' ? 'list_c' : documentList
+          ocrFormData.append('document_type', ocrDocType)
           ocrFormData.append('employee_id', employee.id)
 
           const ocrResponse = await axios.post(
@@ -203,7 +227,17 @@ export default function I9Section2Step({
 
           if (ocrResponse.data.success) {
             newDocument.ocrData = ocrResponse.data.data.extracted_data
-            console.log('OCR data extracted:', newDocument.ocrData)
+            newDocument.ocrAttempted = true
+            newDocument.ocrFailed = false
+            newDocument.dataSource = 'ocr'
+            console.log('✅ OCR data extracted successfully:', newDocument.ocrData)
+          } else {
+            // OCR returned but failed to extract data
+            newDocument.ocrAttempted = true
+            newDocument.ocrFailed = true
+            newDocument.dataSource = 'manual'
+            console.warn('⚠️ OCR failed to extract data:', ocrResponse.data.message)
+            setUploadError('OCR processing failed. Please enter document information manually below.')
           }
 
           // Step 2: Upload to Supabase storage (in parallel or after OCR)
@@ -226,8 +260,19 @@ export default function I9Section2Step({
           }
 
         } catch (ocrError) {
-          console.error('OCR processing failed:', ocrError)
-          // Continue without OCR data
+          // OCR service unavailable or error - DON'T BLOCK USER
+          newDocument.ocrAttempted = true
+          newDocument.ocrFailed = true
+          newDocument.dataSource = 'manual'
+          console.error('❌ OCR processing error (service may be unavailable):', ocrError)
+
+          // Show user-friendly message - they can still proceed with manual entry
+          setUploadError(
+            'OCR processing is currently unavailable. Please enter document information manually below.'
+          )
+
+          // Auto-show manual entry form
+          setShowManualEntry(prev => ({ ...prev, [documentList]: true }))
         } finally {
           setProcessingOcr(false)
         }
@@ -236,13 +281,15 @@ export default function I9Section2Step({
       // Update form data based on document list
       setFormData(prev => {
         const updated = { ...prev }
-        
+
         if (documentList === 'list_a') {
           updated.listADocument = newDocument
         } else if (documentList === 'list_b') {
           updated.listBDocument = newDocument
         } else if (documentList === 'list_c') {
           updated.listCDocument = newDocument
+        } else if (documentList === 'ssn') {
+          updated.ssnDocument = newDocument
         }
 
         // Add to uploaded documents array
@@ -283,6 +330,8 @@ export default function I9Section2Step({
       if (lower.includes('license') || lower.includes('dl')) return "Driver's License"
       if (lower.includes('id')) return 'State ID Card'
       return 'List B Document'
+    } else if (list === 'ssn') {
+      return 'Social Security Card'
     } else {
       if (lower.includes('ssn') || lower.includes('social')) return 'Social Security Card'
       if (lower.includes('birth')) return 'Birth Certificate'
@@ -290,16 +339,18 @@ export default function I9Section2Step({
     }
   }
 
-  const handleRemoveDocument = (documentList: 'list_a' | 'list_b' | 'list_c') => {
+  const handleRemoveDocument = (documentList: 'list_a' | 'list_b' | 'list_c' | 'ssn') => {
     setFormData(prev => {
       const updated = { ...prev }
-      
+
       if (documentList === 'list_a') {
         updated.listADocument = undefined
       } else if (documentList === 'list_b') {
         updated.listBDocument = undefined
       } else if (documentList === 'list_c') {
         updated.listCDocument = undefined
+      } else if (documentList === 'ssn') {
+        updated.ssnDocument = undefined
       }
 
       // Remove from uploaded documents array
@@ -307,6 +358,54 @@ export default function I9Section2Step({
 
       return updated
     })
+  }
+
+  const handleManualDataChange = (
+    list: 'list_a' | 'list_b' | 'list_c' | 'ssn',
+    field: string,
+    value: string
+  ) => {
+    setFormData(prev => {
+      const updated = { ...prev }
+      let doc: UploadedDocument | undefined
+
+      if (list === 'list_a') doc = updated.listADocument
+      else if (list === 'list_b') doc = updated.listBDocument
+      else if (list === 'list_c') doc = updated.listCDocument
+      else if (list === 'ssn') doc = updated.ssnDocument
+
+      if (doc) {
+        doc.manualData = {
+          ...doc.manualData,
+          [field]: value
+        }
+        // Update data source
+        doc.dataSource = doc.ocrData ? 'hybrid' : 'manual'
+
+        // Update in uploadedDocuments array as well
+        const docIndex = updated.uploadedDocuments.findIndex(d => d.type === list)
+        if (docIndex !== -1) {
+          updated.uploadedDocuments[docIndex] = doc
+        }
+      }
+
+      return updated
+    })
+  }
+
+  const hasRequiredManualData = (
+    doc: UploadedDocument,
+    type: 'list_a' | 'list_b' | 'list_c' | 'ssn'
+  ): boolean => {
+    if (!doc.manualData) return false
+
+    // SSN requires SSN field
+    if (type === 'ssn') {
+      return !!doc.manualData.ssn
+    }
+
+    // All other documents require document number and issuing authority
+    return !!(doc.manualData.documentNumber && doc.manualData.issuingAuthority)
   }
 
   const handleComplete = async () => {
@@ -367,16 +466,115 @@ export default function I9Section2Step({
   }
 
   const canProceed = () => {
+    // SSN is ALWAYS required for all employees
+    const hasSsnData = formData.ssnDocument && (
+      formData.ssnDocument.ocrData ||
+      hasRequiredManualData(formData.ssnDocument, 'ssn')
+    )
+
+    if (!hasSsnData) return false  // Block if no SSN
+
     if (formData.documentSelection === 'list_a') {
-      return !!formData.listADocument
+      // List A requires List A document + SSN
+      const hasListAData = formData.listADocument && (
+        formData.listADocument.ocrData ||
+        hasRequiredManualData(formData.listADocument, 'list_a')
+      )
+      return hasListAData
     } else if (formData.documentSelection === 'list_bc') {
-      return !!formData.listBDocument && !!formData.listCDocument
+      // List B+C requires List B + List C + SSN
+      const hasListBData = formData.listBDocument && (
+        formData.listBDocument.ocrData ||
+        hasRequiredManualData(formData.listBDocument, 'list_b')
+      )
+      const hasListCData = formData.listCDocument && (
+        formData.listCDocument.ocrData ||
+        hasRequiredManualData(formData.listCDocument, 'list_c')
+      )
+      return hasListBData && hasListCData
     }
     return false
   }
 
+  const renderManualDataEntry = (
+    doc: UploadedDocument,
+    list: 'list_a' | 'list_b' | 'list_c' | 'ssn'
+  ) => {
+    return (
+      <Card className="mt-4 border-blue-200 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            {doc.ocrFailed ? (
+              <>
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <span>⚠️ OCR Failed - Enter Document Information Manually</span>
+              </>
+            ) : (
+              <>
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span>Manual Data Entry</span>
+              </>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {list === 'ssn' ? (
+            // SSN Card - only need SSN
+            <div>
+              <Label htmlFor={`${list}-ssn`}>Social Security Number *</Label>
+              <Input
+                id={`${list}-ssn`}
+                value={doc.manualData?.ssn || ''}
+                onChange={(e) => handleManualDataChange(list, 'ssn', e.target.value)}
+                placeholder="XXX-XX-XXXX"
+                pattern="\d{3}-\d{2}-\d{4}"
+                className="font-mono"
+              />
+              <p className="text-xs text-gray-500 mt-1">Format: XXX-XX-XXXX</p>
+            </div>
+          ) : (
+            // Other documents - need document number, expiration, issuing authority
+            <>
+              <div>
+                <Label htmlFor={`${list}-docNumber`}>Document Number *</Label>
+                <Input
+                  id={`${list}-docNumber`}
+                  value={doc.manualData?.documentNumber || ''}
+                  onChange={(e) => handleManualDataChange(list, 'documentNumber', e.target.value)}
+                  placeholder="Enter document number as shown on document"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`${list}-expiration`}>Expiration Date</Label>
+                <Input
+                  id={`${list}-expiration`}
+                  type="date"
+                  value={doc.manualData?.expirationDate || ''}
+                  onChange={(e) => handleManualDataChange(list, 'expirationDate', e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave blank if document does not expire</p>
+              </div>
+
+              <div>
+                <Label htmlFor={`${list}-authority`}>Issuing Authority *</Label>
+                <Input
+                  id={`${list}-authority`}
+                  value={doc.manualData?.issuingAuthority || ''}
+                  onChange={(e) => handleManualDataChange(list, 'issuingAuthority', e.target.value)}
+                  placeholder="e.g., California DMV, USCIS, Social Security Administration"
+                />
+                <p className="text-xs text-gray-500 mt-1">State, country, or agency that issued the document</p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
   const renderDocumentUpload = (
-    list: 'list_a' | 'list_b' | 'list_c',
+    list: 'list_a' | 'list_b' | 'list_c' | 'ssn',
     title: string,
     description: string,
     acceptedDocs: string[],
@@ -417,13 +615,39 @@ export default function I9Section2Step({
                 </Button>
               </div>
 
-              {uploadedDoc.ocrData && (
-                <Alert className="bg-blue-50 border-blue-200">
-                  <CheckCircle className="h-4 w-4 text-blue-600" />
-                  <AlertDescription className="text-blue-800">
-                    Document processed successfully. Information extracted for verification.
+              {/* OCR Status Indicator */}
+              {uploadedDoc.ocrAttempted && (
+                <Alert className={uploadedDoc.ocrFailed ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200'}>
+                  <AlertCircle className={`h-4 w-4 ${uploadedDoc.ocrFailed ? 'text-yellow-600' : 'text-green-600'}`} />
+                  <AlertDescription className={uploadedDoc.ocrFailed ? 'text-yellow-800' : 'text-green-800'}>
+                    {uploadedDoc.ocrFailed ? (
+                      <>
+                        <strong>OCR Unavailable:</strong> Please enter document information manually below.
+                      </>
+                    ) : (
+                      <>
+                        <strong>OCR Successful:</strong> Data extracted automatically. You can edit if needed.
+                      </>
+                    )}
                   </AlertDescription>
                 </Alert>
+              )}
+
+              {/* Manual Entry Form - Show if OCR failed or user wants to edit */}
+              {(uploadedDoc.ocrFailed || showManualEntry[list]) && (
+                renderManualDataEntry(uploadedDoc, list)
+              )}
+
+              {/* Toggle button for manual entry (only if OCR succeeded) */}
+              {!uploadedDoc.ocrFailed && uploadedDoc.ocrData && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowManualEntry(prev => ({ ...prev, [list]: !prev[list] }))}
+                  className="mt-2"
+                >
+                  {showManualEntry[list] ? 'Hide Manual Entry' : 'Edit Data Manually'}
+                </Button>
               )}
             </div>
           ) : (
@@ -489,7 +713,7 @@ export default function I9Section2Step({
       listBTitle: 'List B Document',
       listBDesc: 'Documents that establish identity',
       listCTitle: 'List C Document',
-      listCDesc: 'Documents that establish employment authorization',
+      listCDesc: 'Documents that establish employment authorization (Birth Certificate, Employment Authorization, etc.)',
       proceedButton: 'Submit Documents',
       errorTitle: 'Upload Error',
       completedMessage: 'Documents have been uploaded and verified successfully.'
@@ -505,7 +729,7 @@ export default function I9Section2Step({
       listBTitle: 'Documento de Lista B',
       listBDesc: 'Documentos que establecen identidad',
       listCTitle: 'Documento de Lista C',
-      listCDesc: 'Documentos que establecen autorización de empleo',
+      listCDesc: 'Documentos que establecen autorización de empleo (Certificado de Nacimiento, Autorización de Empleo, etc.)',
       proceedButton: 'Enviar Documentos',
       errorTitle: 'Error de Carga',
       completedMessage: 'Los documentos han sido cargados y verificados exitosamente.'
@@ -530,9 +754,12 @@ export default function I9Section2Step({
   ]
 
   const listCDocs = [
-    'Social Security Card',
     'Birth Certificate',
-    'Employment authorization document issued by DHS'
+    'Employment authorization document issued by DHS',
+    'Certification of Birth Abroad',
+    'Native American tribal document',
+    'U.S. Citizen ID Card'
+    // Note: Social Security Card is now a separate, always-required upload
   ]
 
   return (
@@ -624,6 +851,31 @@ export default function I9Section2Step({
                 t.listCDesc,
                 listCDocs,
                 formData.listCDocument
+              )}
+            </div>
+          )}
+
+          {/* SSN Upload - REQUIRED FOR ALL EMPLOYEES (moved outside conditional) */}
+          {formData.documentSelection && (
+            <div className="space-y-6 mt-8 pt-8 border-t-2 border-gray-200">
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>Required for All Employees:</strong> Please upload your Social Security Card.
+                  <br />
+                  <span className="text-sm mt-1 block">
+                    This is required for payroll processing, direct deposit, tax forms (W-4, W-2),
+                    benefits enrollment, and employment verification (E-Verify).
+                  </span>
+                </AlertDescription>
+              </Alert>
+
+              {renderDocumentUpload(
+                'ssn',
+                'Social Security Card (Required for All Employees)',
+                'Upload a clear photo or scan of your Social Security Card',
+                ['Social Security Card'],
+                formData.ssnDocument
               )}
             </div>
           )}

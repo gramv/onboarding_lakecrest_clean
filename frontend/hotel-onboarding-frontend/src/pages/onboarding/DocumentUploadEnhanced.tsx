@@ -47,7 +47,17 @@ interface UploadedDocument {
     documentNumber?: string
     expirationDate?: string
     issuingAuthority?: string
+    ssn?: string
   }
+  manualData?: {
+    documentNumber?: string
+    expirationDate?: string
+    issuingAuthority?: string
+    ssn?: string
+  }
+  ocrAttempted?: boolean
+  ocrFailed?: boolean
+  dataSource?: 'ocr' | 'manual' | 'hybrid'
   error?: string
   storageMetadata?: any
 }
@@ -374,21 +384,28 @@ export default function DocumentUploadEnhanced({
         console.log('SSN found in response:', extractedData.ssn)
       }
       
-      setUploadedDocuments(prev => prev.map(doc => 
+      setUploadedDocuments(prev => prev.map(doc =>
         doc.id === docId ? {
           ...doc,
           status: 'complete',
-          extractedData: extractedData
+          extractedData: extractedData,
+          ocrAttempted: true,
+          ocrFailed: false,
+          dataSource: 'ocr'
         } : doc
       ))
-      
+
     } catch (error) {
-      console.error('Document processing error:', error)
-      setUploadedDocuments(prev => prev.map(doc => 
+      console.error('❌ OCR processing error (service may be unavailable):', error)
+      // DON'T BLOCK USER - mark as complete but with OCR failed flag
+      setUploadedDocuments(prev => prev.map(doc =>
         doc.id === docId ? {
           ...doc,
-          status: 'error',
-          error: 'Failed to process document'
+          status: 'complete',  // ✅ Still mark as complete
+          ocrAttempted: true,
+          ocrFailed: true,
+          dataSource: 'manual',
+          error: 'OCR unavailable - please enter document information manually'
         } : doc
       ))
     }
@@ -411,47 +428,74 @@ export default function DocumentUploadEnhanced({
     setIsProcessing(false)
   }
   
+  // Helper to check if document has valid data (OCR or manual)
+  const hasValidData = (doc: UploadedDocument): boolean => {
+    if (doc.status !== 'complete') return false
+
+    // Has OCR data
+    if (doc.extractedData && Object.keys(doc.extractedData).length > 0) return true
+
+    // Has manual data
+    if (doc.manualData) {
+      // For SSN, just need SSN field
+      if (doc.type === 'social_security_card') {
+        return !!doc.manualData.ssn
+      }
+      // For other docs, need document number and issuing authority
+      return !!(doc.manualData.documentNumber && doc.manualData.issuingAuthority)
+    }
+
+    return false
+  }
+
   // Check if ready to continue
   const isReady = () => {
     if (documentChoice === 'passport') {
-      // Need one List A document and SSN
+      // Need one List A document and SSN UPLOAD (with either OCR or manual data)
       const hasListADoc = uploadedDocuments.some(doc => {
         const docOption = DOCUMENT_OPTIONS.find(opt => opt.apiType === doc.type)
-        return docOption?.category === 'listA' && doc.status === 'complete'
+        return docOption?.category === 'listA' && hasValidData(doc)
       })
-      const hasValidSSN = ssn.trim().length > 0
-      return hasListADoc && hasValidSSN
-    } else if (documentChoice === 'dl_ssn') {
-      const hasLicense = uploadedDocuments.some(doc => 
-        doc.type === 'drivers_license' && doc.status === 'complete'
+      const hasSSNUpload = uploadedDocuments.some(doc =>
+        doc.type === 'social_security_card' && hasValidData(doc)
       )
-      const hasSSN = uploadedDocuments.some(doc => 
-        doc.type === 'social_security_card' && doc.status === 'complete'
+      return hasListADoc && hasSSNUpload
+    } else if (documentChoice === 'dl_ssn') {
+      const hasLicense = uploadedDocuments.some(doc =>
+        doc.type === 'drivers_license' && hasValidData(doc)
+      )
+      const hasSSN = uploadedDocuments.some(doc =>
+        doc.type === 'social_security_card' && hasValidData(doc)
       )
       return hasLicense && hasSSN
     } else if (documentChoice === 'other') {
       // Need either one List A document OR one List B + one List C
-      const completedDocs = uploadedDocuments.filter(doc => doc.status === 'complete')
-      
+      // PLUS SSN is ALWAYS required for all employees
+      const validDocs = uploadedDocuments.filter(doc => hasValidData(doc))
+
+      // Check for SSN (REQUIRED FOR ALL)
+      const hasSSN = validDocs.some(doc => doc.type === 'social_security_card')
+      if (!hasSSN) return false  // Block if no SSN
+
       // Check for List A
-      const hasListA = completedDocs.some(doc => {
+      const hasListA = validDocs.some(doc => {
         const docOption = DOCUMENT_OPTIONS.find(opt => opt.apiType === doc.type)
         return docOption?.category === 'listA'
       })
-      
+
       if (hasListA) return true
-      
+
       // Check for List B + List C combination
-      const hasListB = completedDocs.some(doc => {
+      const hasListB = validDocs.some(doc => {
         const docOption = DOCUMENT_OPTIONS.find(opt => opt.apiType === doc.type)
         return docOption?.category === 'listB'
       })
-      
-      const hasListC = completedDocs.some(doc => {
+
+      const hasListC = validDocs.some(doc => {
         const docOption = DOCUMENT_OPTIONS.find(opt => opt.apiType === doc.type)
         return docOption?.category === 'listC'
       })
-      
+
       return hasListB && hasListC
     }
     return false
@@ -481,7 +525,7 @@ export default function DocumentUploadEnhanced({
     // Clear saved data on successful completion
     sessionStorage.removeItem('document_upload_data')
     
-    onComplete({ 
+    onComplete({
       uploadedDocuments: uploadedDocuments.map(doc => ({
         type: doc.type,
         category: doc.category,
@@ -489,8 +533,8 @@ export default function DocumentUploadEnhanced({
         file: doc.file,
         originalFile: doc.file
       })),
-      extractedData,
-      ssn: documentChoice === 'passport' ? ssn : undefined
+      extractedData
+      // Note: SSN is now always uploaded as a document, not typed input
     })
   }
   
@@ -548,43 +592,16 @@ export default function DocumentUploadEnhanced({
         </div>
       )}
       
-      {/* SSN Input for List A documents */}
+      {/* SSN Upload Required for All Employees */}
       {documentChoice === 'passport' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.ssnLabel}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="ssn-input">{t.ssnLabel}</Label>
-              <Input
-                id="ssn-input"
-                type="text"
-                placeholder={t.ssnPlaceholder}
-                value={ssn}
-                onChange={(e) => {
-                  // Format SSN as user types (XXX-XX-XXXX)
-                  let value = e.target.value.replace(/\D/g, '')
-                  if (value.length > 0) {
-                    if (value.length <= 3) {
-                      value = value
-                    } else if (value.length <= 5) {
-                      value = value.slice(0, 3) + '-' + value.slice(3)
-                    } else {
-                      value = value.slice(0, 3) + '-' + value.slice(3, 5) + '-' + value.slice(5, 9)
-                    }
-                  }
-                  setSsn(value)
-                }}
-                maxLength={11}
-                className="font-mono"
-              />
-              {ssn.trim().length === 0 && (
-                <p className="text-sm text-amber-600">{t.ssnRequired}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          <Alert className="bg-amber-50 border-amber-200">
+            <Shield className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Required for All Employees:</strong> You must upload your Social Security Card for payroll, direct deposit, and tax purposes.
+            </AlertDescription>
+          </Alert>
+        </>
       )}
       
       {/* Document Upload */}
@@ -627,6 +644,35 @@ export default function DocumentUploadEnhanced({
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileSelect(e, 'permanent_resident_card')}
+                    className="hidden"
+                    disabled={isProcessing}
+                  />
+                </label>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SSN Card Upload for List A (Required) */}
+      {documentChoice === 'passport' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Social Security Card (Required)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 border-2 border-dashed rounded-lg">
+              <div className="text-center">
+                <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <label htmlFor="ssn-passport-upload" className="cursor-pointer">
+                  <span className="text-blue-600 hover:text-blue-700 font-medium">
+                    {t.upload} Social Security Card
+                  </span>
+                  <input
+                    id="ssn-passport-upload"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => handleFileSelect(e, 'social_security_card')}
                     className="hidden"
                     disabled={isProcessing}
                   />
@@ -702,6 +748,13 @@ export default function DocumentUploadEnhanced({
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
               {t.listBCNote}
+            </AlertDescription>
+          </Alert>
+
+          <Alert className="bg-amber-50 border-amber-200">
+            <Shield className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Required for All Employees:</strong> You must upload your Social Security Card (List C) for payroll, direct deposit, and tax purposes.
             </AlertDescription>
           </Alert>
           

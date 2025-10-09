@@ -2251,6 +2251,53 @@ class EmailService:
             logger.error(f"Failed to send signed document with attachments: {e}")
             return False
 
+    async def send_manager_review_packet_email(
+        self,
+        to_email: str,
+        cc_emails: List[str],
+        employee_name: str,
+        property_name: str,
+        packet_filename: str,
+        packet_base64: str
+    ) -> bool:
+        """Send the consolidated onboarding packet to the approving manager and HR."""
+        if not to_email:
+            logger.warning("Manager packet email skipped: missing recipient")
+            return False
+
+        subject = f"Completed Onboarding Packet – {employee_name}"
+        html_content = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #111827;">
+            <h2 style="color:#1f2937;">Onboarding Packet Ready</h2>
+            <p>Hello,</p>
+            <p>The onboarding packet for <strong>{employee_name}</strong> at <strong>{property_name}</strong> has been finalized.</p>
+            <p>The attached PDF contains the New Hire Summary and all manager-approved documents.</p>
+            <p style="margin-top:24px; color:#4b5563; font-size:12px;">This message was generated automatically by the Hotel Onboarding System.</p>
+          </body>
+        </html>
+        """
+
+        text_content = (
+            f"Onboarding packet for {employee_name} at {property_name} is attached.\n"
+            "This message was generated automatically by the Hotel Onboarding System."
+        )
+
+        attachments = [{
+            "filename": packet_filename or "onboarding_packet.pdf",
+            "content_base64": packet_base64,
+            "mime_type": "application/pdf"
+        }]
+
+        return await self.send_email_with_cc(
+            to_email,
+            cc_emails or [],
+            subject,
+            html_content,
+            text_content=text_content,
+            attachments=attachments
+        )
+
     async def send_onboarding_completion_email(
         self,
         employee_email: str,
@@ -2549,6 +2596,355 @@ The {property_name} Team
 
         except Exception as e:
             logger.error(f"[EMAIL] Error sending onboarding completion email: {e}")
+            return False
+
+    async def send_new_hire_notification_email(
+        self,
+        to_email: str,
+        employee_first_name: str,
+        employee_last_name: str,
+        hotel_name: str,
+        hotel_address: str,
+        department: str,
+        job_title: str,
+        supervisor_name: str,
+        job_start_date: str,
+        start_time: str,
+        pay_rate: str,
+        pay_frequency: str,
+        payment_method: str,
+    ) -> bool:
+        """
+        Send comprehensive new hire notification email to employee
+        Confirms onboarding completion and provides all employment details
+        """
+        try:
+            logger.info(f"[EMAIL] Sending new hire notification to {to_email}")
+
+            # Format pay frequency for display
+            pay_freq_display = {
+                'weekly': 'Weekly',
+                'bi-weekly': 'Bi-Weekly',
+                'biweekly': 'Bi-Weekly',
+                'monthly': 'Monthly'
+            }.get(pay_frequency.lower(), pay_frequency)
+
+            subject = f"🎉 Welcome to {hotel_name} - Your Onboarding is Complete!"
+
+            html_content = f"""
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #1f2937;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f9fafb;
+                    }}
+                    .container {{
+                        max-width: 650px;
+                        margin: 0 auto;
+                        background-color: #ffffff;
+                        border-radius: 12px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    }}
+                    .header {{
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 40px 30px;
+                        text-align: center;
+                    }}
+                    .header h1 {{
+                        margin: 0;
+                        font-size: 28px;
+                        font-weight: 700;
+                    }}
+                    .header p {{
+                        margin: 10px 0 0 0;
+                        font-size: 16px;
+                        opacity: 0.95;
+                    }}
+                    .content {{
+                        padding: 40px 30px;
+                    }}
+                    .greeting {{
+                        font-size: 18px;
+                        color: #1f2937;
+                        margin-bottom: 20px;
+                    }}
+                    .message {{
+                        font-size: 15px;
+                        color: #4b5563;
+                        margin-bottom: 30px;
+                        line-height: 1.7;
+                    }}
+                    .section {{
+                        margin-bottom: 30px;
+                    }}
+                    .section-title {{
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #1f2937;
+                        margin-bottom: 15px;
+                        padding-bottom: 8px;
+                        border-bottom: 2px solid #e5e7eb;
+                    }}
+                    .info-table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }}
+                    .info-table tr {{
+                        border-bottom: 1px solid #f3f4f6;
+                    }}
+                    .info-table tr:last-child {{
+                        border-bottom: none;
+                    }}
+                    .info-table td {{
+                        padding: 12px 0;
+                        font-size: 14px;
+                    }}
+                    .info-table td:first-child {{
+                        font-weight: 600;
+                        color: #374151;
+                        width: 40%;
+                    }}
+                    .info-table td:last-child {{
+                        color: #1f2937;
+                    }}
+                    .highlight-box {{
+                        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                        border-left: 4px solid #f59e0b;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin: 25px 0;
+                    }}
+                    .highlight-box h3 {{
+                        margin: 0 0 10px 0;
+                        color: #92400e;
+                        font-size: 16px;
+                    }}
+                    .highlight-box p {{
+                        margin: 5px 0;
+                        color: #78350f;
+                        font-size: 14px;
+                    }}
+                    .success-badge {{
+                        display: inline-block;
+                        background-color: #10b981;
+                        color: white;
+                        padding: 8px 16px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        margin-bottom: 20px;
+                    }}
+                    .footer {{
+                        background-color: #f9fafb;
+                        padding: 30px;
+                        text-align: center;
+                        border-top: 1px solid #e5e7eb;
+                    }}
+                    .footer p {{
+                        margin: 5px 0;
+                        font-size: 13px;
+                        color: #6b7280;
+                    }}
+                    .emoji {{
+                        font-size: 24px;
+                        margin-right: 8px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎉 Congratulations!</h1>
+                        <p>Your Onboarding is Complete</p>
+                    </div>
+
+                    <div class="content">
+                        <div class="success-badge">✓ Onboarding Completed</div>
+
+                        <div class="greeting">
+                            Dear {employee_first_name} {employee_last_name},
+                        </div>
+
+                        <div class="message">
+                            <p>Congratulations! You have successfully completed your onboarding process at <strong>{hotel_name}</strong>.
+                            We are thrilled to welcome you to our team!</p>
+
+                            <p>Your manager has reviewed and approved all your documents. Below are your confirmed employment details
+                            for your records.</p>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-title">📋 Employment Information</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td>Property:</td>
+                                    <td><strong>{hotel_name}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Location:</td>
+                                    <td>{hotel_address}</td>
+                                </tr>
+                                <tr>
+                                    <td>Department:</td>
+                                    <td>{department}</td>
+                                </tr>
+                                <tr>
+                                    <td>Position:</td>
+                                    <td><strong>{job_title}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Supervisor:</td>
+                                    <td>{supervisor_name}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="highlight-box">
+                            <h3>📅 Your First Day</h3>
+                            <p><strong>Date:</strong> {job_start_date}</p>
+                            <p><strong>Time:</strong> {start_time}</p>
+                            <p>Please arrive 15 minutes early for orientation.</p>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-title">💰 Compensation Details</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td>Rate of Pay:</td>
+                                    <td><strong>{pay_rate}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Pay Frequency:</td>
+                                    <td>{pay_freq_display}</td>
+                                </tr>
+                                <tr>
+                                    <td>Payment Method:</td>
+                                    <td>{payment_method}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-title">📝 What to Bring on Your First Day</div>
+                            <table class="info-table">
+                                <tr>
+                                    <td>✓</td>
+                                    <td>Valid government-issued photo ID</td>
+                                </tr>
+                                <tr>
+                                    <td>✓</td>
+                                    <td>Social Security card or proof of eligibility to work</td>
+                                </tr>
+                                <tr>
+                                    <td>✓</td>
+                                    <td>Voided check or bank account information (if not already provided)</td>
+                                </tr>
+                                <tr>
+                                    <td>✓</td>
+                                    <td>Comfortable, professional attire</td>
+                                </tr>
+                                <tr>
+                                    <td>✓</td>
+                                    <td>Notepad and pen for orientation</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="message">
+                            <p style="margin-top: 30px;">If you have any questions before your first day, please don't hesitate to reach out
+                            to your supervisor or our HR department.</p>
+
+                            <p><strong>We look forward to seeing you on {job_start_date}!</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <p><strong>{hotel_name}</strong></p>
+                        <p>{hotel_address}</p>
+                        <p style="margin-top: 15px; font-size: 12px;">
+                            This is an automated message from the Hotel Onboarding System.
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            text_content = f"""
+Congratulations! Your Onboarding is Complete
+
+Dear {employee_first_name} {employee_last_name},
+
+Congratulations! You have successfully completed your onboarding process at {hotel_name}.
+We are thrilled to welcome you to our team!
+
+Your manager has reviewed and approved all your documents. Below are your confirmed employment
+details for your records.
+
+EMPLOYMENT INFORMATION
+----------------------
+Property: {hotel_name}
+Location: {hotel_address}
+Department: {department}
+Position: {job_title}
+Supervisor: {supervisor_name}
+
+YOUR FIRST DAY
+--------------
+Date: {job_start_date}
+Time: {start_time}
+Please arrive 15 minutes early for orientation.
+
+COMPENSATION DETAILS
+--------------------
+Rate of Pay: {pay_rate}
+Pay Frequency: {pay_freq_display}
+Payment Method: {payment_method}
+
+WHAT TO BRING ON YOUR FIRST DAY
+--------------------------------
+✓ Valid government-issued photo ID
+✓ Social Security card or proof of eligibility to work
+✓ Voided check or bank account information (if not already provided)
+✓ Comfortable, professional attire
+✓ Notepad and pen for orientation
+
+If you have any questions before your first day, please don't hesitate to reach out
+to your supervisor or our HR department.
+
+We look forward to seeing you on {job_start_date}!
+
+---
+{hotel_name}
+{hotel_address}
+
+This is an automated message from the Hotel Onboarding System.
+            """
+
+            success = await self.send_email(
+                to_email,
+                subject,
+                html_content,
+                text_content
+            )
+
+            if success:
+                logger.info(f"[EMAIL] ✅ New hire notification sent to {to_email}")
+            else:
+                logger.error(f"[EMAIL] ❌ Failed to send new hire notification to {to_email}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"[EMAIL] Error sending new hire notification: {e}")
             return False
 
 # Create global email service instance

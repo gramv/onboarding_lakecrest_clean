@@ -141,13 +141,16 @@ class EmployeeDataService:
                 return {}
             
             form_data = step_data['form_data']
-            
-            # Handle nested formData structure (legacy compatibility)
-            if 'formData' in form_data:
-                # Nested structure from frontend
+
+            # Handle nested personalInfo structure
+            if 'personalInfo' in form_data:
+                # Nested structure from frontend (most common)
+                actual_data = form_data['personalInfo']
+            elif 'formData' in form_data:
+                # Legacy nested structure
                 actual_data = form_data['formData']
             else:
-                # Direct structure
+                # Direct structure (fallback)
                 actual_data = form_data
             
             # Extract personal information

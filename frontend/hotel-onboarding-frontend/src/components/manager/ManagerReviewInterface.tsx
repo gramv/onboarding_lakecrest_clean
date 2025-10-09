@@ -14,6 +14,7 @@ import { I9ReviewModal } from './i9';
 import { W4ReviewModal } from './w4/W4ReviewModal';
 import { HealthInsuranceReviewModal } from './health_insurance/HealthInsuranceReviewModal';
 import { CompleteReviewModal } from './CompleteReviewModal';
+import NewHireSummaryModal from './NewHireSummaryModal';
 
 interface ManagerReviewInterfaceProps {
   employeeId: string;
@@ -40,6 +41,7 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
   const [showW4Modal, setShowW4Modal] = useState(false);
   const [showHealthInsuranceModal, setShowHealthInsuranceModal] = useState(false);
   const [showCompleteReviewModal, setShowCompleteReviewModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -110,11 +112,21 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
   const handleStepClick = (documentType: string) => {
     setSelectedDocument(documentType);
 
+    if (documentType === 'new_hire_summary') {
+      setShowSummaryModal(true);
+      setShowReviewModal(false);
+      setShowI9Modal(false);
+      setShowW4Modal(false);
+      setShowHealthInsuranceModal(false);
+      return;
+    }
+
     if (documentType === 'i9') {
       setShowI9Modal(true);
       setShowReviewModal(false);
       setShowW4Modal(false);
       setShowHealthInsuranceModal(false);
+      setShowSummaryModal(false);
       return;
     }
 
@@ -123,6 +135,7 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
       setShowReviewModal(false);
       setShowI9Modal(false);
       setShowHealthInsuranceModal(false);
+      setShowSummaryModal(false);
       return;
     }
 
@@ -131,6 +144,7 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
       setShowReviewModal(false);
       setShowI9Modal(false);
       setShowW4Modal(false);
+      setShowSummaryModal(false);
       return;
     }
 
@@ -138,6 +152,7 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
     setShowI9Modal(false);
     setShowW4Modal(false);
     setShowHealthInsuranceModal(false);
+    setShowSummaryModal(false);
   };
 
   const handleDocumentApproved = () => {
@@ -292,7 +307,23 @@ export const ManagerReviewInterface: React.FC<ManagerReviewInterfaceProps> = ({
         />
       )}
 
-      {showReviewModal && selectedDocument && selectedDocument !== 'i9' && selectedDocument !== 'w4' && selectedDocument !== 'health_insurance' && (
+      {showSummaryModal && (
+        <NewHireSummaryModal
+          isOpen={showSummaryModal}
+          employeeId={employeeId}
+          onClose={() => {
+            setShowSummaryModal(false);
+            setSelectedDocument(null);
+          }}
+          onApproved={() => {
+            setShowSummaryModal(false);
+            setSelectedDocument(null);
+            handleDocumentApproved();
+          }}
+        />
+      )}
+
+      {showReviewModal && selectedDocument && selectedDocument !== 'i9' && selectedDocument !== 'w4' && selectedDocument !== 'health_insurance' && selectedDocument !== 'new_hire_summary' && (
         <DocumentReviewModal
           isOpen={showReviewModal}
           onClose={() => {

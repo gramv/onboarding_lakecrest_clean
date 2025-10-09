@@ -723,15 +723,19 @@ try:
         else:
             logger.info("   Using default application credentials")
 except Exception as e:
-    logger.warning(f"⚠️ Google Document AI initialization failed: {str(e)}")
-    logger.info("   Will try GPT-4o as fallback...")
+    logger.error(f"❌ Google Document AI initialization failed: {str(e)}")
+    logger.error("   CRITICAL: No fallback available - Google Document AI is REQUIRED")
 
 # NO FALLBACK - Government IDs require Google Document AI only for security/compliance
 # As per requirement: "we should only use google document ai. no fallbacks and no shit. we are dealing with gov id's"
 if not ocr_service:
-    logger.error("❌ Google Document AI is REQUIRED for government ID processing")
-    logger.error("   For security and compliance, only Google Document AI is authorized for government documents")
+    logger.error("=" * 80)
+    logger.error("❌ CRITICAL: Google Document AI is REQUIRED for government ID processing")
+    logger.error("   For security and compliance, ONLY Google Document AI is authorized")
+    logger.error("   NO FALLBACKS will be used - this is a hard requirement")
     logger.error("   Please configure GOOGLE_CREDENTIALS_BASE64 or GOOGLE_APPLICATION_CREDENTIALS")
+    logger.error("   I-9 document OCR will NOT be available until Google AI is configured")
+    logger.error("=" * 80)
     # OCR features will not be available without Google Document AI
 
 # Log service status summary at startup
@@ -16219,7 +16223,7 @@ async def verify_document_integrity(
             status_code=500
         )
 
-# Document Processing with AI (GROQ/Llama)
+# Document Processing with Google Document AI (NO FALLBACKS)
 @app.options("/api/documents/process")
 async def process_document_options():
     """Handle OPTIONS request for CORS preflight"""
@@ -16240,9 +16244,17 @@ async def process_document_with_ai(
     employee_id: Optional[str] = Form(None)
 ):
     """
-    Process uploaded document with GROQ AI to extract I-9 relevant information
-    Uses Llama 3.3 70B model for document analysis with rate limiting
+    Process uploaded I-9 document with Google Document AI ONLY
+
+    SECURITY REQUIREMENT: Only Google Document AI is used for government IDs
+    NO FALLBACKS - If Google AI is unavailable, processing will fail
+
+    Supports all List A, B, and C I-9 acceptable documents
     Also saves document to Supabase storage
+
+    Rate Limits:
+    - 10 requests per minute per IP
+    - 50 requests per hour per employee
     """
     try:
         # Get client IP for rate limiting
@@ -16326,38 +16338,100 @@ async def process_document_with_ai(
         file_base64 = base64.b64encode(file_content).decode('utf-8')
         
         # Map frontend document types to backend enum
-        # Handle both specific document types and generic list types
+        # Comprehensive mapping for all I-9 acceptable documents
         document_type_mapping = {
-            # Specific document types
+            # LIST A - Documents that establish both identity and employment authorization
             'us_passport': I9DocumentType.US_PASSPORT,
+            'us_passport_card': I9DocumentType.US_PASSPORT_CARD,
             'permanent_resident_card': I9DocumentType.PERMANENT_RESIDENT_CARD,
+            'green_card': I9DocumentType.PERMANENT_RESIDENT_CARD,
+            'permanent_resident_card_i551': I9DocumentType.PERMANENT_RESIDENT_CARD_I551,
+            'foreign_passport_i551': I9DocumentType.FOREIGN_PASSPORT_I551,
+            'foreign_passport_i94': I9DocumentType.FOREIGN_PASSPORT_I94,
+            'employment_authorization_card': I9DocumentType.EMPLOYMENT_AUTHORIZATION_CARD,
+            'ead': I9DocumentType.EMPLOYMENT_AUTHORIZATION_CARD,
+
+            # LIST B - Documents that establish identity
             'drivers_license': I9DocumentType.DRIVERS_LICENSE,
+            'driver_license': I9DocumentType.DRIVERS_LICENSE,
+            'state_id_card': I9DocumentType.STATE_ID_CARD,
+            'state_id': I9DocumentType.STATE_ID_CARD,
+            'us_military_card': I9DocumentType.US_MILITARY_CARD,
+            'military_id': I9DocumentType.US_MILITARY_CARD,
+            'military_dependent_card': I9DocumentType.MILITARY_DEPENDENT_CARD,
+            'us_coast_guard_card': I9DocumentType.US_COAST_GUARD_CARD,
+            'native_american_tribal_document': I9DocumentType.NATIVE_AMERICAN_TRIBAL_DOCUMENT,
+            'tribal_document': I9DocumentType.NATIVE_AMERICAN_TRIBAL_DOCUMENT,
+            'canadian_drivers_license': I9DocumentType.CANADIAN_DRIVERS_LICENSE,
+            'school_id_photo': I9DocumentType.SCHOOL_ID_PHOTO,
+            'school_id': I9DocumentType.SCHOOL_ID_PHOTO,
+            'voter_registration_card': I9DocumentType.VOTER_REGISTRATION_CARD,
+            'school_record': I9DocumentType.SCHOOL_RECORD,
+            'clinic_record': I9DocumentType.CLINIC_RECORD,
+            'daycare_record': I9DocumentType.DAYCARE_RECORD,
+
+            # LIST C - Documents that establish employment authorization
             'social_security_card': I9DocumentType.SSN_CARD,
-            # Generic list types from I9Section2Step
-            'list_a': I9DocumentType.US_PASSPORT,  # Default List A to passport
-            'list_b': I9DocumentType.DRIVERS_LICENSE,  # Default List B to driver's license
-            'list_c': I9DocumentType.SSN_CARD,  # Default List C to SSN card
+            'ssn_card': I9DocumentType.SSN_CARD,
+            'ssn': I9DocumentType.SSN_CARD,
+            'certification_birth_citizen': I9DocumentType.CERTIFICATION_BIRTH_CITIZEN,
+            'birth_certificate': I9DocumentType.CERTIFICATION_BIRTH_CITIZEN,
+            'citizen_id_card': I9DocumentType.CITIZEN_ID_CARD,
+            'resident_citizen_card': I9DocumentType.RESIDENT_CITIZEN_CARD,
+            'unexpired_employment_auth': I9DocumentType.UNEXPIRED_EMPLOYMENT_AUTH,
+            'temporary_resident_card': I9DocumentType.TEMPORARY_RESIDENT_CARD,
+
+            # Generic list types from I9Section2Step (use intelligent defaults)
+            # These will work with Google Document AI's generic extraction
+            'list_a': I9DocumentType.US_PASSPORT,  # Default List A - will extract any List A doc
+            'list_b': I9DocumentType.DRIVERS_LICENSE,  # Default List B - will extract any List B doc
+            'list_c': I9DocumentType.SSN_CARD,  # Default List C - will extract any List C doc
         }
 
         # Log the document type for debugging
         logger.info(f"Processing document upload - type: {document_type}, employee_id: {employee_id}")
 
         # Get the document type enum
-        doc_type_enum = document_type_mapping.get(document_type)
+        doc_type_enum = document_type_mapping.get(document_type.lower())
         if not doc_type_enum:
             logger.warning(f"Unknown document type: {document_type}")
-            # For unknown types, try to infer from the document_type string
-            if 'passport' in document_type.lower():
+            # Enhanced inference for unknown types
+            doc_type_lower = document_type.lower()
+
+            # List A documents
+            if any(x in doc_type_lower for x in ['passport', 'foreign passport']):
                 doc_type_enum = I9DocumentType.US_PASSPORT
-            elif 'license' in document_type.lower() or 'driver' in document_type.lower():
-                doc_type_enum = I9DocumentType.DRIVERS_LICENSE
-            elif 'social' in document_type.lower() or 'ssn' in document_type.lower():
-                doc_type_enum = I9DocumentType.SSN_CARD
-            elif 'green' in document_type.lower() or 'resident' in document_type.lower():
+            elif any(x in doc_type_lower for x in ['green card', 'resident card', 'permanent resident']):
                 doc_type_enum = I9DocumentType.PERMANENT_RESIDENT_CARD
+            elif any(x in doc_type_lower for x in ['employment authorization', 'ead', 'work permit']):
+                doc_type_enum = I9DocumentType.EMPLOYMENT_AUTHORIZATION_CARD
+
+            # List B documents
+            elif any(x in doc_type_lower for x in ['license', 'driver', 'dl']):
+                doc_type_enum = I9DocumentType.DRIVERS_LICENSE
+            elif any(x in doc_type_lower for x in ['state id', 'identification card']):
+                doc_type_enum = I9DocumentType.STATE_ID_CARD
+            elif any(x in doc_type_lower for x in ['military', 'dod', 'armed forces']):
+                doc_type_enum = I9DocumentType.US_MILITARY_CARD
+            elif any(x in doc_type_lower for x in ['tribal', 'native american']):
+                doc_type_enum = I9DocumentType.NATIVE_AMERICAN_TRIBAL_DOCUMENT
+            elif any(x in doc_type_lower for x in ['school id', 'student id']):
+                doc_type_enum = I9DocumentType.SCHOOL_ID_PHOTO
+            elif any(x in doc_type_lower for x in ['voter', 'registration']):
+                doc_type_enum = I9DocumentType.VOTER_REGISTRATION_CARD
+
+            # List C documents
+            elif any(x in doc_type_lower for x in ['social security', 'ssn', 'ss card']):
+                doc_type_enum = I9DocumentType.SSN_CARD
+            elif any(x in doc_type_lower for x in ['birth certificate', 'birth cert', 'certification of birth']):
+                doc_type_enum = I9DocumentType.CERTIFICATION_BIRTH_CITIZEN
+            elif any(x in doc_type_lower for x in ['citizen id', 'citizenship']):
+                doc_type_enum = I9DocumentType.CITIZEN_ID_CARD
+
             else:
+                logger.error(f"Could not map document type: {document_type}")
                 return validation_error_response(
-                    f"Unknown document type: {document_type}. Please use: list_a, list_b, list_c, or specific types like us_passport, drivers_license, social_security_card"
+                    f"Unknown document type: {document_type}. Please use a valid I-9 document type or list_a/list_b/list_c."
                 )
         
         # Check if OCR service is available
@@ -16386,27 +16460,55 @@ async def process_document_with_ai(
         
         # Extract the data we need for Section 2
         extracted_data = result.get("extracted_data", {})
-        
-        # Format response for frontend
+
+        # Format response for frontend - include all extracted fields
         response_data = {
+            # Core I-9 fields
             "documentNumber": extracted_data.get("document_number", ""),
             "expirationDate": extracted_data.get("expiration_date", ""),
             "issuingAuthority": extracted_data.get("issuing_authority", ""),
+            "issueDate": extracted_data.get("issue_date", ""),
+
+            # Personal information (if extracted)
+            "firstName": extracted_data.get("first_name", ""),
+            "lastName": extracted_data.get("last_name", ""),
+            "dateOfBirth": extracted_data.get("date_of_birth", ""),
+
+            # Metadata
             "documentType": document_type,
+            "detectedDocumentType": doc_type_enum.value if doc_type_enum else document_type,
             "confidence": result.get("confidence_score", 0.0),
             "validation": result.get("validation", {}),
-            # Include storage information
+
+            # Storage information
             "storageUrl": storage_url,
             "storagePath": storage_result.get("file_path") if storage_result else None,
-            "stored": bool(storage_url)
+            "stored": bool(storage_url),
+
+            # All extracted data for debugging/advanced use
+            "extracted_data": extracted_data
         }
 
-        # Add additional fields based on document type
-        if doc_type_enum == I9DocumentType.PERMANENT_RESIDENT_CARD:
+        # Add document-specific fields based on document type
+        # List A documents
+        if doc_type_enum in [I9DocumentType.PERMANENT_RESIDENT_CARD, I9DocumentType.PERMANENT_RESIDENT_CARD_I551]:
             response_data["alienNumber"] = extracted_data.get("alien_number", "")
             response_data["uscisNumber"] = extracted_data.get("uscis_number", "")
+
+        elif doc_type_enum == I9DocumentType.EMPLOYMENT_AUTHORIZATION_CARD:
+            response_data["alienNumber"] = extracted_data.get("alien_number", "")
+            response_data["uscisNumber"] = extracted_data.get("uscis_number", "")
+            response_data["category"] = extracted_data.get("category", "")
+
+        elif doc_type_enum in [I9DocumentType.FOREIGN_PASSPORT_I551, I9DocumentType.FOREIGN_PASSPORT_I94]:
+            response_data["i94Number"] = extracted_data.get("i94_number", "")
+
+        # List C documents
         elif doc_type_enum == I9DocumentType.SSN_CARD:
             response_data["ssn"] = extracted_data.get("ssn", "")
+
+        elif doc_type_enum in [I9DocumentType.UNEXPIRED_EMPLOYMENT_AUTH, I9DocumentType.TEMPORARY_RESIDENT_CARD]:
+            response_data["alienNumber"] = extracted_data.get("alien_number", "")
         
         return success_response(
             data=response_data,

@@ -7,86 +7,150 @@ times for less sensitive documents (policies, training materials).
 """
 
 # Expiration times in seconds
+# Updated to align with security_config.py
 EXPIRATION_TIMES = {
-    # Federal forms with PII (short expiration - 15 minutes)
-    'i9': 900,
-    'i9_section1': 900,
-    'i9_section2': 900,
-    'w4': 900,
-    'w4_form': 900,
-    'direct-deposit': 900,
-    'direct_deposit': 900,
-    
-    # Health insurance (medium expiration - 30 minutes)
-    'health-insurance': 1800,
-    'health_insurance': 1800,
-    
-    # Company policies (longer expiration - 1 hour)
-    'company-policies': 3600,
-    'company_policies': 3600,
-    'trafficking-awareness': 3600,
-    'trafficking_awareness': 3600,
-    'weapons-policy': 3600,
-    'weapons_policy': 3600,
-    'employee-handbook': 3600,
-    'employee_handbook': 3600,
-    
-    # Employee photos (long expiration - 24 hours)
-    'photo': 86400,
-    'employee_photo': 86400,
-    
-    # Training materials (1 hour)
-    'training': 3600,
-    'training_certificate': 3600,
-    
-    # Default (30 minutes)
-    'default': 1800
+    # Highly sensitive documents - SHORT expiration (30 minutes)
+    # I-9 Documents
+    'i9': 1800,
+    'i9_form': 1800,
+    'i9_section1': 1800,
+    'i9_section2': 1800,
+    'i9-section-1': 1800,
+    'i9-section-2': 1800,
+
+    # Identity Documents (highly sensitive)
+    'social_security_card': 1800,
+    'social-security-card': 1800,
+    'us_passport': 1800,
+    'us-passport': 1800,
+    'passport_card': 1800,
+    'passport-card': 1800,
+    'drivers_license': 1800,
+    'drivers-license': 1800,
+    'state_id': 1800,
+    'state-id': 1800,
+
+    # Work Authorization (highly sensitive)
+    'permanent_resident_card': 1800,
+    'permanent-resident-card': 1800,
+    'employment_authorization': 1800,
+    'employment-authorization': 1800,
+    'foreign_passport': 1800,
+    'foreign-passport': 1800,
+
+    # Banking Documents (highly sensitive)
+    'direct-deposit': 1800,
+    'direct_deposit': 1800,
+    'voided_check': 1800,
+    'voided-check': 1800,
+
+    # Moderately sensitive - MEDIUM expiration (1 hour)
+    # Tax Documents
+    'w4': 3600,
+    'w4_form': 3600,
+    'w4-form': 3600,
+    'w4_federal': 3600,
+    'w4-federal': 3600,
+    'w4_state': 3600,
+    'w4-state': 3600,
+
+    # Health insurance (medium expiration)
+    'health-insurance': 3600,
+    'health_insurance': 3600,
+    'new_hire_summary': 3600,
+
+    # Less sensitive - LONGER expiration (2 hours)
+    # Company policies
+    'company-policies': 7200,
+    'company_policies': 7200,
+    'trafficking-awareness': 7200,
+    'trafficking_awareness': 7200,
+    'weapons-policy': 7200,
+    'weapons_policy': 7200,
+    'employee-handbook': 7200,
+    'employee_handbook': 7200,
+    'policy_acknowledgment': 7200,
+    'policy-acknowledgment': 7200,
+    'final_onboarding_packet': 7200,
+    'emergency_contact': 7200,
+    'emergency-contact': 7200,
+
+    # Employee photos (2 hours)
+    'photo': 7200,
+    'employee_photo': 7200,
+    'profile_photo': 7200,
+    'profile-photo': 7200,
+
+    # Training materials (2 hours)
+    'training': 7200,
+    'training_certificate': 7200,
+    'training-certificate': 7200,
+
+    # Default (1 hour)
+    'default': 3600,
+    'other': 3600
 }
 
-# Role-based expiration overrides
-# Managers and HR get longer access times for review workflows
-MANAGER_REVIEW_EXPIRATION = 1800  # 30 minutes
-HR_REVIEW_EXPIRATION = 3600       # 1 hour
-EMPLOYEE_PREVIEW_EXPIRATION = 900  # 15 minutes
+# Role-based expiration multipliers
+# Aligned with security_config.py
+ROLE_EXPIRATION_MULTIPLIER = {
+    'employee': 1.0,      # Base expiration
+    'manager': 2.0,       # 2x longer (e.g., 30 min → 1 hour)
+    'hr': 4.0,            # 4x longer (e.g., 30 min → 2 hours)
+    'admin': 8.0,         # 8x longer (e.g., 30 min → 4 hours)
+    'system': 24.0,       # 24x longer (e.g., 30 min → 12 hours)
+}
+
+# Maximum expiration time (24 hours) - safety limit
+MAX_EXPIRATION_SECONDS = 86400
+
+# Legacy constants for backward compatibility
+MANAGER_REVIEW_EXPIRATION = 3600  # 1 hour (updated from 30 min)
+HR_REVIEW_EXPIRATION = 7200       # 2 hours (updated from 1 hour)
+EMPLOYEE_PREVIEW_EXPIRATION = 1800  # 30 minutes (updated from 15 min)
 
 
 def get_expiration_time(document_type: str, user_role: str = 'employee') -> int:
     """
     Get appropriate expiration time for document type and user role.
-    
+    Uses role-based multipliers for consistent scaling.
+
     Args:
         document_type: Type of document (i9, w4, direct-deposit, etc.)
-        user_role: Role of user accessing (employee, manager, hr)
-    
+        user_role: Role of user accessing (employee, manager, hr, admin, system)
+
     Returns:
-        Expiration time in seconds
-    
+        Expiration time in seconds (capped at MAX_EXPIRATION_SECONDS)
+
     Examples:
         >>> get_expiration_time('i9', 'employee')
-        900  # 15 minutes
-        
+        1800  # 30 minutes
+
         >>> get_expiration_time('i9', 'manager')
-        1800  # 30 minutes (manager review time)
-        
+        3600  # 1 hour (2x multiplier)
+
+        >>> get_expiration_time('i9', 'hr')
+        7200  # 2 hours (4x multiplier)
+
         >>> get_expiration_time('company-policies', 'employee')
-        3600  # 1 hour
+        7200  # 2 hours
     """
     # Normalize document type (handle both dash and underscore)
     doc_type = document_type.lower().replace('_', '-')
-    
+
     # Get base expiration for document type
     base_expiration = EXPIRATION_TIMES.get(doc_type, EXPIRATION_TIMES['default'])
-    
-    # Adjust based on user role
-    if user_role == 'hr':
-        # HR gets at least 1 hour for review
-        return max(base_expiration, HR_REVIEW_EXPIRATION)
-    elif user_role == 'manager':
-        # Managers get at least 30 minutes for review
-        return max(base_expiration, MANAGER_REVIEW_EXPIRATION)
-    else:  # employee
-        # Employees get base expiration time
-        return base_expiration
+
+    # Get role multiplier
+    multiplier = ROLE_EXPIRATION_MULTIPLIER.get(user_role.lower(), 1.0)
+
+    # Calculate final expiration
+    expiration = int(base_expiration * multiplier)
+
+    # Apply maximum limit
+    expiration = min(expiration, MAX_EXPIRATION_SECONDS)
+
+    return expiration
 
 
 def get_expiration_description(seconds: int) -> str:
@@ -213,4 +277,3 @@ if __name__ == '__main__':
     print()
     print("=" * 60)
     print("✅ Configuration loaded successfully")
-

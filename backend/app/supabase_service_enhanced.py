@@ -141,11 +141,15 @@ class EnhancedSupabaseService:
         
         # Initialize encryption
         self.encryption_key = os.getenv("ENCRYPTION_KEY")
-        if self.encryption_key:
-            self.cipher = Fernet(self.encryption_key.encode())
-        else:
-            logger.warning("ENCRYPTION_KEY not set, sensitive data will not be encrypted")
-            self.cipher = None
+        if not self.encryption_key:
+            raise RuntimeError(
+                "❌ ENCRYPTION_KEY environment variable not set!\n"
+                "   This is REQUIRED for storing sensitive data (SSN, bank accounts, etc.).\n"
+                "   Generate a key with: python backend/scripts/generate_encryption_key.py\n"
+                "   Then add it to your .env file: ENCRYPTION_KEY=<generated_key>"
+            )
+        self.cipher = Fernet(self.encryption_key.encode())
+        logger.info("✅ Field encryption enabled (Fernet/AES-128) in SupabaseService")
         
         # Connection pool for direct PostgreSQL access
         self.db_pool = None
@@ -3769,6 +3773,62 @@ class EnhancedSupabaseService:
         except Exception as e:
             logger.error(f"Failed to list employee documents: {e}")
             return []
+
+    async def get_latest_signed_document_record(
+        self,
+        employee_id: str,
+        document_type: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the most recent signed_documents row for the given type."""
+        try:
+            response = self.admin_client.table("signed_documents") \
+                .select("*") \
+                .eq("employee_id", employee_id) \
+                .eq("document_type", document_type) \
+                .order("created_at", desc=True) \
+                .limit(1) \
+                .execute()
+
+            data = response.data if response else None
+            if data:
+                return data[0]
+            return None
+        except Exception as e:
+            logger.warning(
+                "Failed to fetch latest signed document for employee %s (%s): %s",
+                employee_id,
+                document_type,
+                e,
+            )
+            return None
+
+    async def get_signed_document_bytes(self, record: Dict[str, Any]) -> Optional[bytes]:
+        """Download the binary content for a signed document record."""
+        if not record:
+            return None
+
+        metadata = record.get("metadata") or {}
+        bucket = metadata.get("bucket") or "onboarding-documents"
+        path = metadata.get("path")
+
+        if not path:
+            logger.warning(
+                "Signed document %s missing storage path metadata",
+                record.get("id"),
+            )
+            return None
+
+        try:
+            return self.admin_client.storage.from_(bucket).download(path)
+        except Exception as e:
+            logger.error(
+                "Failed to download signed document %s from %s/%s: %s",
+                record.get("id"),
+                bucket,
+                path,
+                e,
+            )
+            return None
     
     async def get_employee_generated_pdfs(self, employee_id: str) -> List[Dict[str, Any]]:
         """Get all generated PDFs for an employee"""

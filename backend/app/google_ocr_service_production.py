@@ -47,8 +47,9 @@ class GoogleDocumentOCRServiceProduction:
                 self.client = documentai_v1.DocumentProcessorServiceClient()
                 logger.info("📝 Using default Google credentials")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to initialize Google Document AI client: {e}")
-            logger.info("ℹ️ OCR service will not be available. Using fallback if configured.")
+            logger.error(f"❌ CRITICAL: Failed to initialize Google Document AI client: {e}")
+            logger.error("   NO FALLBACK AVAILABLE - I-9 OCR will not work without Google Document AI")
+            logger.error("   This is a hard requirement for government ID processing")
             self.client = None
         
         # Build processor name only if client initialized
@@ -119,12 +120,14 @@ class GoogleDocumentOCRServiceProduction:
         """
         # Check if client is available
         if not self.client:
-            logger.warning("Google Document AI client not available - OCR service disabled")
+            logger.error("❌ Google Document AI client not available - I-9 OCR DISABLED")
+            logger.error("   NO FALLBACK - This is a hard requirement for government documents")
             return {
-                "error": "OCR service not available",
-                "extracted_text": None,
-                "confidence": 0,
-                "fields": {}
+                "success": False,
+                "error": "Google Document AI not configured - required for government ID processing",
+                "extracted_data": {},
+                "confidence_score": 0.0,
+                "processing_notes": ["CRITICAL: Google Document AI is required but not available"]
             }
         
         try:
@@ -242,33 +245,90 @@ class GoogleDocumentOCRServiceProduction:
                             logger.debug(f"Form field: '{field_name}' = '{field_value}'")
                             
                             # Map common field names to our required I-9 fields
-                            # For document numbers
-                            if any(x in field_name_lower for x in ['dl', 'license number', 'license no', 'driver license', 
-                                                                   'passport no', 'passport number', 'document number',
-                                                                   'card number', 'id number', 'lic no']):
+                            # For document numbers (expanded for all document types)
+                            if any(x in field_name_lower for x in [
+                                # Driver's License & State ID
+                                'dl', 'license number', 'license no', 'driver license', 'lic no', 'id number',
+                                # Passports
+                                'passport no', 'passport number', 'passport #',
+                                # Green Cards & Immigration
+                                'card number', 'receipt number', 'alien number', 'a-number', 'uscis number',
+                                # Military IDs
+                                'dod id', 'military id', 'service number', 'edipi', 'cac number',
+                                # SSN
+                                'social security', 'ssn', 'ss number',
+                                # Birth Certificates
+                                'certificate number', 'registration number', 'file number',
+                                # Generic
+                                'document number', 'doc number', 'doc no', 'number'
+                            ]):
                                 if "document_number" not in extracted:
                                     extracted["document_number"] = field_value.strip()
                                     logger.info(f"Extracted document_number: {field_value}")
-                            
+
+                            # For SSN (specific field)
+                            elif any(x in field_name_lower for x in ['social security number', 'ssn', 'ss number', 'social security no']):
+                                if "ssn" not in extracted:
+                                    extracted["ssn"] = field_value.strip()
+                                    logger.info(f"Extracted ssn: {field_value}")
+
+                            # For Alien/USCIS numbers
+                            elif any(x in field_name_lower for x in ['alien number', 'a-number', 'a number', 'alien no', 'a#']):
+                                if "alien_number" not in extracted:
+                                    extracted["alien_number"] = field_value.strip()
+                                    logger.info(f"Extracted alien_number: {field_value}")
+
+                            elif any(x in field_name_lower for x in ['uscis number', 'uscis no', 'uscis #']):
+                                if "uscis_number" not in extracted:
+                                    extracted["uscis_number"] = field_value.strip()
+                                    logger.info(f"Extracted uscis_number: {field_value}")
+
                             # For expiration dates
                             elif any(x in field_name_lower for x in ['exp', 'expires', 'expiration', 'expiry',
-                                                                     'valid until', 'valid through']):
+                                                                     'valid until', 'valid through', 'valid thru',
+                                                                     'end date', 'exp date']):
                                 if "expiration_date" not in extracted:
                                     extracted["expiration_date"] = field_value.strip()
                                     logger.info(f"Extracted expiration_date: {field_value}")
-                            
-                            # For issuing authority (state/country)
-                            elif any(x in field_name_lower for x in ['state', 'issued by', 'issuing', 'authority',
-                                                                     'country', 'iss']):
+
+                            # For issuing authority (expanded for all document types)
+                            elif any(x in field_name_lower for x in [
+                                # States
+                                'state', 'issued by', 'issuing', 'authority',
+                                # Countries
+                                'country', 'nation', 'nationality',
+                                # Specific authorities
+                                'department of', 'bureau of', 'office of',
+                                # Generic
+                                'iss', 'issued'
+                            ]):
                                 if "issuing_authority" not in extracted:
                                     extracted["issuing_authority"] = field_value.strip()
                                     logger.info(f"Extracted issuing_authority: {field_value}")
-                            
-                            # For issue dates (less critical but useful)
-                            elif any(x in field_name_lower for x in ['issue', 'issued', 'iss date', 'date issued']):
+
+                            # For issue dates
+                            elif any(x in field_name_lower for x in ['issue', 'issued', 'iss date', 'date issued',
+                                                                     'issue date', 'date of issue']):
                                 if "issue_date" not in extracted:
                                     extracted["issue_date"] = field_value.strip()
                                     logger.info(f"Extracted issue_date: {field_value}")
+
+                            # For names
+                            elif any(x in field_name_lower for x in ['first name', 'given name', 'fname']):
+                                if "first_name" not in extracted:
+                                    extracted["first_name"] = field_value.strip()
+                                    logger.info(f"Extracted first_name: {field_value}")
+
+                            elif any(x in field_name_lower for x in ['last name', 'surname', 'family name', 'lname']):
+                                if "last_name" not in extracted:
+                                    extracted["last_name"] = field_value.strip()
+                                    logger.info(f"Extracted last_name: {field_value}")
+
+                            # For date of birth
+                            elif any(x in field_name_lower for x in ['date of birth', 'dob', 'birth date', 'birthdate', 'born']):
+                                if "date_of_birth" not in extracted:
+                                    extracted["date_of_birth"] = field_value.strip()
+                                    logger.info(f"Extracted date_of_birth: {field_value}")
         
         # SECOND: Check entities if available (some processors use entities instead of formFields)
         if hasattr(document, 'entities') and document.entities:
@@ -321,14 +381,146 @@ class GoogleDocumentOCRServiceProduction:
         return " ".join(text_segments).strip()
     
     def _extract_from_text(self, text: str, document_type: I9DocumentType) -> Dict[str, Any]:
-        """Extract fields from raw text using regex patterns"""
-        
+        """Extract fields from raw text using regex patterns - Enhanced for all I-9 document types"""
+
         extracted = {}
         lines = text.split('\n')
-        
-        # Document-specific patterns
-        if document_type in [I9DocumentType.DRIVERS_LICENSE, I9DocumentType.STATE_ID_CARD]:
-            # Process all lines for driver's license / state ID
+
+        # ========== LIST A DOCUMENTS ==========
+
+        # US Passport & Passport Card
+        if document_type in [I9DocumentType.US_PASSPORT, I9DocumentType.US_PASSPORT_CARD]:
+            for line in lines:
+                # Passport number (letter + 8 digits or just 9 digits)
+                if "document_number" not in extracted:
+                    passport_patterns = [
+                        r'(?:PASSPORT\s*(?:NO|NUMBER)?)[:\s]*([A-Z]?\d{8,9})',
+                        r'\b([A-Z]\d{8})\b',  # Letter + 8 digits
+                        r'\b(\d{9})\b'  # 9 digits
+                    ]
+                    for pattern in passport_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Expiration date
+                if "expiration_date" not in extracted:
+                    date_match = re.search(r'(?:DATE\s*OF\s*EXPIRATION|EXPIRATION\s*DATE|EXP)[:\s]*(\d{1,2}\s+\w{3}\s+\d{4}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line, re.I)
+                    if date_match:
+                        extracted["expiration_date"] = date_match.group(1)
+
+                # Issuing authority
+                if "issuing_authority" not in extracted:
+                    if any(x in line.upper() for x in ["UNITED STATES", "USA", "U.S.A", "AMERICA"]):
+                        extracted["issuing_authority"] = "United States of America"
+
+        # Permanent Resident Card (Green Card)
+        elif document_type in [I9DocumentType.PERMANENT_RESIDENT_CARD, I9DocumentType.PERMANENT_RESIDENT_CARD_I551]:
+            for line in lines:
+                # Green card number (3 letters + 10 digits or various formats)
+                if "document_number" not in extracted:
+                    card_patterns = [
+                        r'\b([A-Z]{3}\d{10})\b',  # Standard format
+                        r'(?:CARD\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{13})',
+                        r'(?:RECEIPT\s*(?:NO|NUMBER)?)[:\s]*([A-Z]{3}\d{10})'
+                    ]
+                    for pattern in card_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Alien number (A-number)
+                if "alien_number" not in extracted:
+                    alien_patterns = [
+                        r'(?:A-?NUMBER|ALIEN\s*(?:NO|NUMBER)?)[:\s]*([A-Z]?\d{7,9})',
+                        r'\b(A\d{8,9})\b'
+                    ]
+                    for pattern in alien_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["alien_number"] = match.group(1)
+                            break
+
+                # USCIS number
+                if "uscis_number" not in extracted:
+                    uscis_match = re.search(r'(?:USCIS\s*(?:NO|NUMBER)?)[:\s]*(\d{10})', line, re.I)
+                    if uscis_match:
+                        extracted["uscis_number"] = uscis_match.group(1)
+
+                # Expiration date
+                if "expiration_date" not in extracted:
+                    exp_match = re.search(r'(?:CARD\s*EXPIRES|EXPIRES)[:\s]*(\d{2}/\d{2}/\d{4})', line, re.I)
+                    if exp_match:
+                        extracted["expiration_date"] = exp_match.group(1)
+
+                # USCIS as issuing authority
+                if "issuing_authority" not in extracted and "USCIS" in line.upper():
+                    extracted["issuing_authority"] = "U.S. Citizenship and Immigration Services"
+
+        # Employment Authorization Card (EAD)
+        elif document_type == I9DocumentType.EMPLOYMENT_AUTHORIZATION_CARD:
+            for line in lines:
+                # EAD card number
+                if "document_number" not in extracted:
+                    ead_patterns = [
+                        r'(?:CARD\s*(?:NO|NUMBER)?)[:\s]*([A-Z]{3}\d{10})',
+                        r'\b([A-Z]{3}\d{10})\b'
+                    ]
+                    for pattern in ead_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Alien number
+                if "alien_number" not in extracted:
+                    alien_match = re.search(r'(?:A-?NUMBER)[:\s]*([A-Z]?\d{7,9})', line, re.I)
+                    if alien_match:
+                        extracted["alien_number"] = alien_match.group(1)
+
+                # USCIS number
+                if "uscis_number" not in extracted:
+                    uscis_match = re.search(r'(?:USCIS\s*(?:NO|NUMBER)?)[:\s]*(\d{10})', line, re.I)
+                    if uscis_match:
+                        extracted["uscis_number"] = uscis_match.group(1)
+
+                # Category code
+                if "category" not in extracted:
+                    cat_match = re.search(r'(?:CATEGORY)[:\s]*([A-Z0-9]{2,5})', line, re.I)
+                    if cat_match:
+                        extracted["category"] = cat_match.group(1)
+
+                if "issuing_authority" not in extracted and "USCIS" in line.upper():
+                    extracted["issuing_authority"] = "U.S. Citizenship and Immigration Services"
+
+        # Foreign Passport with I-551 stamp or I-94
+        elif document_type in [I9DocumentType.FOREIGN_PASSPORT_I551, I9DocumentType.FOREIGN_PASSPORT_I94]:
+            for line in lines:
+                # Passport number
+                if "document_number" not in extracted:
+                    passport_match = re.search(r'(?:PASSPORT\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{6,12})', line, re.I)
+                    if passport_match:
+                        extracted["document_number"] = passport_match.group(1)
+
+                # I-94 number
+                if "i94_number" not in extracted:
+                    i94_match = re.search(r'(?:I-?94\s*(?:NO|NUMBER)?)[:\s]*(\d{11})', line, re.I)
+                    if i94_match:
+                        extracted["i94_number"] = i94_match.group(1)
+
+                # Look for country of issuance
+                if "issuing_authority" not in extracted:
+                    country_match = re.search(r'(?:COUNTRY|NATIONALITY)[:\s]*([A-Z\s]+)', line, re.I)
+                    if country_match:
+                        extracted["issuing_authority"] = country_match.group(1).strip()
+
+        # ========== LIST B DOCUMENTS ==========
+
+        # Driver's License & State ID Card
+        elif document_type in [I9DocumentType.DRIVERS_LICENSE, I9DocumentType.STATE_ID_CARD,
+                               I9DocumentType.CANADIAN_DRIVERS_LICENSE]:
             for line in lines:
                 # Look for DL/ID number with various formats
                 if "document_number" not in extracted:
@@ -347,7 +539,7 @@ class GoogleDocumentOCRServiceProduction:
                             if len(potential_number) >= 5 and not potential_number.isalpha():
                                 extracted["document_number"] = potential_number
                                 break
-                
+
                 # Look for expiration date
                 if "expiration_date" not in extracted:
                     exp_patterns = [
@@ -361,14 +553,14 @@ class GoogleDocumentOCRServiceProduction:
                         if match:
                             extracted["expiration_date"] = match.group(1)
                             break
-                
+
                 # Look for state/issuing authority
                 if "issuing_authority" not in extracted:
                     # State abbreviations
                     state_abbr = r'\b(AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b'
                     # Full state names
                     state_names = r'\b(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)\b'
-                    
+
                     state_match = re.search(state_abbr, line)
                     if state_match:
                         extracted["issuing_authority"] = state_match.group(1)
@@ -376,67 +568,204 @@ class GoogleDocumentOCRServiceProduction:
                         state_match = re.search(state_names, line, re.I)
                         if state_match:
                             extracted["issuing_authority"] = state_match.group(1)
-        
-        elif document_type == I9DocumentType.US_PASSPORT:
+
+        # US Military Card & Military Dependent Card
+        elif document_type in [I9DocumentType.US_MILITARY_CARD, I9DocumentType.MILITARY_DEPENDENT_CARD,
+                               I9DocumentType.US_COAST_GUARD_CARD]:
             for line in lines:
-                # Passport number (letter + 8 digits or just 9 digits)
+                # Military ID number (DoD ID / EDIPI)
                 if "document_number" not in extracted:
-                    passport_patterns = [
-                        r'(?:PASSPORT\s*(?:NO|NUMBER)?)[:\s]*([A-Z]?\d{8,9})',
-                        r'\b([A-Z]\d{8})\b',  # Letter + 8 digits
-                        r'\b(\d{9})\b'  # 9 digits
+                    mil_patterns = [
+                        r'(?:DOD\s*ID|EDIPI|ID\s*(?:NO|NUMBER)?)[:\s]*(\d{10})',
+                        r'(?:SERVICE\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{8,12})',
+                        r'\b(\d{10})\b'  # 10-digit DoD ID
                     ]
-                    for pattern in passport_patterns:
+                    for pattern in mil_patterns:
                         match = re.search(pattern, line, re.I)
                         if match:
                             extracted["document_number"] = match.group(1)
                             break
-                
-                # Look for expiration date
-                if "expiration_date" not in extracted:
-                    date_match = re.search(r'(?:DATE\s*OF\s*EXPIRATION|EXPIRATION\s*DATE|EXP)[:\s]*(\d{1,2}\s+\w{3}\s+\d{4}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line, re.I)
-                    if date_match:
-                        extracted["expiration_date"] = date_match.group(1)
-                
-                # Issuing authority for US passport
-                if "issuing_authority" not in extracted:
-                    if any(x in line.upper() for x in ["UNITED STATES", "USA", "U.S.A", "AMERICA"]):
-                        extracted["issuing_authority"] = "United States of America"
-        
-        elif document_type == I9DocumentType.PERMANENT_RESIDENT_CARD:
-            for line in lines:
-                # Green card number (3 letters + 10 digits)
-                if "document_number" not in extracted:
-                    card_match = re.search(r'\b([A-Z]{3}\d{10})\b', line)
-                    if card_match:
-                        extracted["document_number"] = card_match.group(1)
-                
+
                 # Expiration date
                 if "expiration_date" not in extracted:
-                    exp_match = re.search(r'(?:CARD\s*EXPIRES|EXPIRES)[:\s]*(\d{2}/\d{2}/\d{4})', line, re.I)
+                    exp_match = re.search(r'(?:EXP|EXPIRES?)[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line, re.I)
                     if exp_match:
                         extracted["expiration_date"] = exp_match.group(1)
-                
-                # USCIS as issuing authority
-                if "issuing_authority" not in extracted and "USCIS" in line.upper():
-                    extracted["issuing_authority"] = "U.S. Citizenship and Immigration Services"
-        
+
+                # Issuing authority
+                if "issuing_authority" not in extracted:
+                    if any(x in line.upper() for x in ["DEPARTMENT OF DEFENSE", "DOD", "U.S. MILITARY",
+                                                        "COAST GUARD", "ARMY", "NAVY", "AIR FORCE", "MARINES"]):
+                        extracted["issuing_authority"] = "U.S. Department of Defense"
+
+        # School ID, Voter Registration, Native American Tribal Document
+        elif document_type in [I9DocumentType.SCHOOL_ID_PHOTO, I9DocumentType.VOTER_REGISTRATION_CARD,
+                               I9DocumentType.NATIVE_AMERICAN_TRIBAL_DOCUMENT]:
+            for line in lines:
+                # Generic ID number
+                if "document_number" not in extracted:
+                    id_patterns = [
+                        r'(?:ID\s*(?:NO|NUMBER)?|CARD\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{5,15})',
+                        r'(?:REGISTRATION\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{5,15})',
+                        r'\b([A-Z0-9]{6,12})\b'
+                    ]
+                    for pattern in id_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Look for issuing organization
+                if "issuing_authority" not in extracted:
+                    # School names, tribal names, county names
+                    if any(x in line.upper() for x in ["UNIVERSITY", "COLLEGE", "SCHOOL", "TRIBE", "TRIBAL",
+                                                        "COUNTY", "REGISTRAR", "ELECTION"]):
+                        extracted["issuing_authority"] = line.strip()
+
+        # School/Clinic/Daycare Records (for minors under 18)
+        elif document_type in [I9DocumentType.SCHOOL_RECORD, I9DocumentType.CLINIC_RECORD,
+                               I9DocumentType.DAYCARE_RECORD]:
+            for line in lines:
+                # Record number
+                if "document_number" not in extracted:
+                    record_match = re.search(r'(?:RECORD\s*(?:NO|NUMBER)?|FILE\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{4,15})', line, re.I)
+                    if record_match:
+                        extracted["document_number"] = record_match.group(1)
+
+                # Issuing institution
+                if "issuing_authority" not in extracted:
+                    if any(x in line.upper() for x in ["SCHOOL", "CLINIC", "DAYCARE", "CENTER", "HOSPITAL"]):
+                        extracted["issuing_authority"] = line.strip()
+
+        # ========== LIST C DOCUMENTS ==========
+
+        # Social Security Card
         elif document_type == I9DocumentType.SSN_CARD:
             for line in lines:
                 # SSN pattern
-                if "document_number" not in extracted:
+                if "ssn" not in extracted and "document_number" not in extracted:
                     ssn_match = re.search(r'(\d{3}[-\s]?\d{2}[-\s]?\d{4})', line)
                     if ssn_match:
-                        extracted["document_number"] = ssn_match.group(1)
-                
+                        ssn_value = ssn_match.group(1)
+                        extracted["ssn"] = ssn_value
+                        extracted["document_number"] = ssn_value
+
                 # SSN cards don't expire
                 extracted["expiration_date"] = "N/A"
-                
+
                 # Look for Social Security Administration
                 if "issuing_authority" not in extracted:
                     if "SOCIAL SECURITY" in line.upper():
                         extracted["issuing_authority"] = "Social Security Administration"
-        
+
+        # Birth Certificate / Certification of Birth Abroad
+        elif document_type == I9DocumentType.CERTIFICATION_BIRTH_CITIZEN:
+            for line in lines:
+                # Certificate number
+                if "document_number" not in extracted:
+                    cert_patterns = [
+                        r'(?:CERTIFICATE\s*(?:NO|NUMBER)?|REGISTRATION\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{5,20})',
+                        r'(?:FILE\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{5,20})',
+                        r'\b([A-Z]{2}\d{6,10})\b'
+                    ]
+                    for pattern in cert_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Birth certificates don't expire
+                extracted["expiration_date"] = "N/A"
+
+                # Issuing authority (state vital records office)
+                if "issuing_authority" not in extracted:
+                    if any(x in line.upper() for x in ["VITAL RECORDS", "REGISTRAR", "HEALTH DEPARTMENT",
+                                                        "BUREAU OF VITAL STATISTICS", "STATE OF"]):
+                        extracted["issuing_authority"] = line.strip()
+
+        # Citizen ID Card / Resident Citizen Card
+        elif document_type in [I9DocumentType.CITIZEN_ID_CARD, I9DocumentType.RESIDENT_CITIZEN_CARD]:
+            for line in lines:
+                # Card number
+                if "document_number" not in extracted:
+                    card_patterns = [
+                        r'(?:CARD\s*(?:NO|NUMBER)?|ID\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{6,15})',
+                        r'\b([A-Z]{2}\d{7,10})\b'
+                    ]
+                    for pattern in card_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # These typically don't expire
+                if "expiration_date" not in extracted:
+                    exp_match = re.search(r'(?:EXP|EXPIRES?)[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line, re.I)
+                    if exp_match:
+                        extracted["expiration_date"] = exp_match.group(1)
+                    else:
+                        extracted["expiration_date"] = "N/A"
+
+                # Issuing authority
+                if "issuing_authority" not in extracted:
+                    if any(x in line.upper() for x in ["USCIS", "CITIZENSHIP", "IMMIGRATION"]):
+                        extracted["issuing_authority"] = "U.S. Citizenship and Immigration Services"
+
+        # Unexpired Employment Authorization / Temporary Resident Card
+        elif document_type in [I9DocumentType.UNEXPIRED_EMPLOYMENT_AUTH, I9DocumentType.TEMPORARY_RESIDENT_CARD]:
+            for line in lines:
+                # Document number
+                if "document_number" not in extracted:
+                    doc_patterns = [
+                        r'(?:CARD\s*(?:NO|NUMBER)?|DOCUMENT\s*(?:NO|NUMBER)?)[:\s]*([A-Z0-9]{8,15})',
+                        r'\b([A-Z]{3}\d{10})\b'
+                    ]
+                    for pattern in doc_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Alien number
+                if "alien_number" not in extracted:
+                    alien_match = re.search(r'(?:A-?NUMBER)[:\s]*([A-Z]?\d{7,9})', line, re.I)
+                    if alien_match:
+                        extracted["alien_number"] = alien_match.group(1)
+
+                # Expiration date (required for these documents)
+                if "expiration_date" not in extracted:
+                    exp_match = re.search(r'(?:EXP|EXPIRES?|VALID\s*(?:UNTIL|THROUGH))[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line, re.I)
+                    if exp_match:
+                        extracted["expiration_date"] = exp_match.group(1)
+
+                # Issuing authority
+                if "issuing_authority" not in extracted:
+                    if any(x in line.upper() for x in ["USCIS", "IMMIGRATION", "DHS"]):
+                        extracted["issuing_authority"] = "U.S. Citizenship and Immigration Services"
+
+        # Generic fallback for any other document type
+        else:
+            logger.info(f"Using generic extraction for document type: {document_type}")
+            for line in lines:
+                # Try to find any document number
+                if "document_number" not in extracted:
+                    generic_patterns = [
+                        r'(?:DOCUMENT|ID|CARD|LICENSE|NUMBER)[:\s#]*([A-Z0-9]{5,20})',
+                        r'\b([A-Z]{2,3}\d{6,12})\b',
+                        r'\b(\d{7,12})\b'
+                    ]
+                    for pattern in generic_patterns:
+                        match = re.search(pattern, line, re.I)
+                        if match:
+                            extracted["document_number"] = match.group(1)
+                            break
+
+                # Try to find expiration date
+                if "expiration_date" not in extracted:
+                    exp_match = re.search(r'(?:EXP|EXPIRES?)[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line, re.I)
+                    if exp_match:
+                        extracted["expiration_date"] = exp_match.group(1)
+
         return extracted
     
     def _normalize_date(self, date_str: str) -> Optional[str]:
@@ -537,20 +866,54 @@ class GoogleDocumentOCRServiceProduction:
         return validation_result
     
     def _get_required_fields(self, document_type: I9DocumentType) -> List[str]:
-        """Get required fields for document type"""
-        
-        common_fields = ["document_number", "first_name", "last_name"]
-        
+        """Get required fields for document type - Enhanced for all I-9 documents"""
+
+        common_fields = ["document_number"]
+
+        # LIST A - Documents that establish both identity and employment authorization
         if document_type in [I9DocumentType.US_PASSPORT, I9DocumentType.US_PASSPORT_CARD]:
-            return common_fields + ["date_of_birth", "expiration_date", "issuing_authority"]
-        elif document_type in [I9DocumentType.DRIVERS_LICENSE, I9DocumentType.STATE_ID_CARD]:
-            return common_fields + ["date_of_birth", "expiration_date", "issuing_authority"]
-        elif document_type == I9DocumentType.PERMANENT_RESIDENT_CARD:
-            return common_fields + ["date_of_birth", "expiration_date", "alien_number"]
-        elif document_type == I9DocumentType.SSN_CARD:
-            return ["ssn", "first_name", "last_name"]
+            return common_fields + ["expiration_date", "issuing_authority"]
+
+        elif document_type in [I9DocumentType.PERMANENT_RESIDENT_CARD, I9DocumentType.PERMANENT_RESIDENT_CARD_I551]:
+            return common_fields + ["expiration_date", "alien_number"]
+
         elif document_type == I9DocumentType.EMPLOYMENT_AUTHORIZATION_CARD:
-            return common_fields + ["date_of_birth", "expiration_date", "alien_number"]
+            return common_fields + ["expiration_date", "alien_number"]
+
+        elif document_type in [I9DocumentType.FOREIGN_PASSPORT_I551, I9DocumentType.FOREIGN_PASSPORT_I94]:
+            return common_fields + ["expiration_date", "issuing_authority"]
+
+        # LIST B - Documents that establish identity
+        elif document_type in [I9DocumentType.DRIVERS_LICENSE, I9DocumentType.STATE_ID_CARD,
+                               I9DocumentType.CANADIAN_DRIVERS_LICENSE]:
+            return common_fields + ["expiration_date", "issuing_authority"]
+
+        elif document_type in [I9DocumentType.US_MILITARY_CARD, I9DocumentType.MILITARY_DEPENDENT_CARD,
+                               I9DocumentType.US_COAST_GUARD_CARD]:
+            return common_fields + ["expiration_date"]
+
+        elif document_type in [I9DocumentType.SCHOOL_ID_PHOTO, I9DocumentType.VOTER_REGISTRATION_CARD,
+                               I9DocumentType.NATIVE_AMERICAN_TRIBAL_DOCUMENT]:
+            return common_fields + ["issuing_authority"]
+
+        elif document_type in [I9DocumentType.SCHOOL_RECORD, I9DocumentType.CLINIC_RECORD,
+                               I9DocumentType.DAYCARE_RECORD]:
+            return common_fields + ["issuing_authority"]
+
+        # LIST C - Documents that establish employment authorization
+        elif document_type == I9DocumentType.SSN_CARD:
+            return ["ssn"]  # SSN is the document number for SSN cards
+
+        elif document_type == I9DocumentType.CERTIFICATION_BIRTH_CITIZEN:
+            return common_fields + ["issuing_authority"]
+
+        elif document_type in [I9DocumentType.CITIZEN_ID_CARD, I9DocumentType.RESIDENT_CITIZEN_CARD]:
+            return common_fields
+
+        elif document_type in [I9DocumentType.UNEXPIRED_EMPLOYMENT_AUTH, I9DocumentType.TEMPORARY_RESIDENT_CARD]:
+            return common_fields + ["expiration_date"]
+
+        # Default fallback
         else:
             return common_fields
     

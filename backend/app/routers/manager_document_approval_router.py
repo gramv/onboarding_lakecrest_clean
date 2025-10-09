@@ -2,18 +2,26 @@
 Manager Document Approval Router
 Handles sequential document review and approval workflow
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-from uuid import uuid4
+import base64
+import io
+import json
 import logging
+from datetime import datetime
+from typing import Optional, List, Dict, Any
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from PyPDF2 import PdfReader, PdfWriter
 
 from app.dependencies import get_current_user
 from app.document_path_utils import document_path_manager
 from app.models import User
 from app.supabase_service_enhanced import get_enhanced_supabase_service
 from app.pdf_forms import PDFFormFiller
+from app.generators.new_hire_summary_pdf import NewHireSummaryPDFGenerator
+from app.services.employee_data_service import get_employee_data_service
+from app.services.document_merger_service import DocumentMergerService
 
 logger = logging.getLogger(__name__)
 
@@ -29,32 +37,38 @@ router = APIRouter(
 DOCUMENT_WORKFLOW = [
     {
         "order": 1,
+        "type": "new_hire_summary",
+        "name": "New Hire Summary",
+        "path": "forms/new_hire_summary"
+    },
+    {
+        "order": 2,
         "type": "company_policies",
         "name": "Company Policies Acknowledgment",
         "path": "forms/company_policies"
     },
     {
-        "order": 2,
+        "order": 3,
         "type": "i9",
         "name": "I-9 Employment Eligibility Verification",
         "path": "forms/i9_form",
         "upload_path": "uploads/i9_verification"
     },
     {
-        "order": 3,
+        "order": 4,
         "type": "w4",
         "name": "W-4 Federal Tax Withholding",
         "path": "forms/w4_form",
         "upload_path": "uploads/i9_verification/ssn_card"
     },
     {
-        "order": 4,
+        "order": 5,
         "type": "direct_deposit",
         "name": "Direct Deposit Authorization",
         "path": "forms/direct_deposit"
     },
     {
-        "order": 5,
+        "order": 6,
         "type": "health_insurance",
         "name": "Health Insurance Enrollment",
         "path": "forms/health_insurance"
@@ -93,6 +107,114 @@ def _entry_name(entry: Any) -> Optional[str]:
     value = _entry_value(entry, 'name')
     return value if isinstance(value, str) else None
 
+
+def _format_phone_number(phone: Optional[str]) -> str:
+    if not phone:
+        return ""
+    digits = ''.join(filter(str.isdigit, phone))
+    if len(digits) == 10:
+        return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+    if len(digits) == 11 and digits.startswith('1'):
+        return f"({digits[1:4]}) {digits[4:7]}-{digits[7:]}"
+    return phone
+
+
+def _format_currency(value: Optional[Any]) -> str:
+    if value is None or value == "":
+        return ""
+    try:
+        amount = float(value)
+        return f"${amount:,.2f}"
+    except (ValueError, TypeError):
+        return str(value)
+
+
+def _format_date(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    try:
+        if 'T' in value:
+            dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        else:
+            dt = datetime.strptime(value, "%Y-%m-%d")
+        return dt.strftime("%m/%d/%Y")
+    except Exception:
+        return value
+
+
+def _build_address_block(address1: Optional[str], address2: Optional[str], city: Optional[str], state: Optional[str], zip_code: Optional[str]) -> str:
+    parts: List[str] = []
+    if address1:
+        parts.append(address1)
+    if address2:
+        parts.append(address2)
+    city_state_zip = " ".join(filter(None, [city, state, zip_code]))
+    if city_state_zip:
+        parts.append(city_state_zip)
+    return "\n".join(parts)
+
+
+def _format_ssn(ssn: Optional[str]) -> str:
+    if not ssn:
+        return ""
+    digits = ''.join(filter(str.isdigit, ssn))
+    if len(digits) == 9:
+        return f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
+    return ssn
+
+
+def _infer_health_selections(health_data: Dict[str, Any]) -> List[str]:
+    selections: List[str] = []
+    if not health_data:
+        return selections
+
+    # Check if insurance was waived/declined
+    is_waived = health_data.get("isWaived") or health_data.get("is_waived") or health_data.get("waived")
+    if is_waived:
+        # Return special "declined" option
+        return ["insurance_declined"]
+
+    possible_values: List[str] = []
+
+    for key in ("selectedPlan", "selected_plan", "medicalPlan", "medical_plan", "planChoice", "plan_choice"):
+        value = health_data.get(key)
+        if isinstance(value, str):
+            possible_values.append(value)
+
+    list_fields = [
+        "selectedPlans",
+        "planSelections",
+        "plan_selections",
+        "plans",
+    ]
+    for key in list_fields:
+        value = health_data.get(key)
+        if isinstance(value, list):
+            possible_values.extend(str(item) for item in value)
+
+    joined_text = " ".join(possible_values).lower()
+    if "hra" in joined_text and "base" in joined_text:
+        selections.append("uhc_hra_base")
+    if "hra" in joined_text and ("buy" in joined_text or "buy-up" in joined_text or "buyup" in joined_text):
+        selections.append("uhc_hra_buy_up")
+    if "minimum" in joined_text and "essential" in joined_text:
+        selections.append("cwi_minimum_essential")
+    if "minimum" in joined_text and "indemnity" in joined_text:
+        selections.append("cwi_minimum_indemnity")
+
+    if health_data.get("dentalCoverage") or health_data.get("dental_coverage"):
+        selections.append("uhc_dental")
+    if health_data.get("visionCoverage") or health_data.get("vision_coverage"):
+        selections.append("uhc_vision")
+
+    # Ensure uniqueness while preserving order
+    seen = set()
+    ordered: List[str] = []
+    for item in selections:
+        if item not in seen:
+            seen.add(item)
+            ordered.append(item)
+    return ordered
 
 class ApproveDocumentRequest(BaseModel):
     form_data: Optional[Dict[str, Any]] = None
@@ -147,6 +269,37 @@ class CompleteHealthInsuranceRequest(BaseModel):
     notes: Optional[str] = None
 
 
+class NewHireSummaryRequest(BaseModel):
+    hotelName: Optional[str] = None
+    hotelAddress: Optional[str] = None
+    hotelCity: Optional[str] = None
+    hotelState: Optional[str] = None
+    hotelZipCode: Optional[str] = None
+    stateOfEmployment: Optional[str] = None
+    employeeFirstName: Optional[str] = None
+    employeeLastName: Optional[str] = None
+    address1: Optional[str] = None
+    address2: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zipCode: Optional[str] = None
+    employmentType: Optional[str] = None
+    gender: Optional[str] = None
+    employeePhone: Optional[str] = None
+    employeeEmail: Optional[str] = None
+    ssn: Optional[str] = None
+    maritalStatus: Optional[str] = None
+    dependents: Optional[str] = None
+    dateOfBirth: Optional[str] = None
+    rateOfPay: Optional[str] = None
+    hireDate: Optional[str] = None
+    department: Optional[str] = None
+    position: Optional[str] = None
+    healthInsuranceSelections: List[str] = []
+    healthInsuranceCopay: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class CompleteReviewRequest(BaseModel):
     """Request model for completing manager review and activating employee"""
     startDate: str  # ISO format: "2025-10-07"
@@ -155,6 +308,439 @@ class CompleteReviewRequest(BaseModel):
     dressCode: str = "Business casual"
     parkingDetails: str = "Employee parking available on-site"
     notes: Optional[str] = None
+
+
+def _coerce_dict(value: Any) -> Dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if hasattr(value, "dict"):
+        return value.dict()  # type: ignore[attr-defined]
+    if hasattr(value, "__dict__"):
+        return value.__dict__  # type: ignore[attr-defined]
+    return {}
+
+
+@router.get("/{employee_id}/summary")
+async def get_new_hire_summary(
+    employee_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Provide auto-filled data for the New Hire Summary step."""
+    try:
+        if current_user.role not in ['manager', 'hr', 'admin']:
+            raise HTTPException(status_code=403, detail="Only managers can access summary data")
+
+        try:
+            employee_response = supabase_service.admin_client.table('employees') \
+                .select('*') \
+                .eq('id', employee_id) \
+                .single() \
+                .execute()
+        except Exception as db_exc:
+            logger.exception("[SUMMARY] Failed to load employee %s: %s", employee_id, db_exc)
+            raise HTTPException(status_code=500, detail="Failed to load summary data")
+
+        employee = employee_response.data if employee_response else None
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee not found")
+
+        property_id = employee.get('property_id')
+        if current_user.role == 'manager' and property_id and current_user.property_id != property_id:
+            raise HTTPException(status_code=403, detail="You don't have access to this employee")
+
+        employee_data_service = get_employee_data_service(supabase_service)
+        try:
+            complete_data = await employee_data_service.get_complete_employee_data(
+                employee_id,
+                include_encrypted=True
+            )
+        except Exception as data_exc:
+            logger.warning("[SUMMARY] Unable to load complete employee data for %s: %s", employee_id, data_exc)
+            complete_data = {}
+
+        # Try to get personal info from complete_data first
+        personal_info = complete_data.get('personal_info', {}) or {}
+        form_data = complete_data.get('form_data', {}) or {}
+
+        # If personal_info is empty or missing key fields, load directly from onboarding_form_data
+        if not personal_info or not personal_info.get('firstName'):
+            try:
+                logger.info(f"[SUMMARY] Loading personal info directly from onboarding_form_data for {employee_id}")
+                personal_data_response = supabase_service.admin_client.table('onboarding_form_data') \
+                    .select('*') \
+                    .eq('employee_id', employee_id) \
+                    .eq('step_id', 'personal-info') \
+                    .order('created_at', desc=True) \
+                    .limit(1) \
+                    .execute()
+
+                if personal_data_response and personal_data_response.data:
+                    onboarding_form_data = personal_data_response.data[0]['form_data']
+
+                    # Extract personalInfo from the form data
+                    if 'personalInfo' in onboarding_form_data:
+                        personal_info_raw = onboarding_form_data['personalInfo']
+                    else:
+                        personal_info_raw = onboarding_form_data
+
+                    # Build personal_info dict with correct structure
+                    personal_info = {
+                        'firstName': personal_info_raw.get('firstName', ''),
+                        'lastName': personal_info_raw.get('lastName', ''),
+                        'middleInitial': personal_info_raw.get('middleInitial', ''),
+                        'email': personal_info_raw.get('email', ''),
+                        'phone': personal_info_raw.get('phone', ''),
+                        'dateOfBirth': personal_info_raw.get('dateOfBirth', ''),
+                        'ssn': personal_info_raw.get('ssn', ''),
+                        'gender': personal_info_raw.get('gender', ''),
+                        'maritalStatus': personal_info_raw.get('maritalStatus', ''),
+                        'address': {
+                            'street': personal_info_raw.get('address', ''),
+                            'apt': personal_info_raw.get('aptNumber', ''),
+                            'city': personal_info_raw.get('city', ''),
+                            'state': personal_info_raw.get('state', ''),
+                            'zip': personal_info_raw.get('zipCode', '')
+                        }
+                    }
+                    logger.info(f"[SUMMARY] Successfully loaded personal info from onboarding_form_data")
+                else:
+                    logger.warning(f"[SUMMARY] No personal-info data found in onboarding_form_data for {employee_id}")
+            except Exception as load_exc:
+                logger.error(f"[SUMMARY] Failed to load personal info from onboarding_form_data: {load_exc}")
+
+        health_raw = form_data.get('health-insurance')
+        health_data = health_raw if isinstance(health_raw, dict) else {}
+        w4_raw = form_data.get('w4-form')
+        w4_data = w4_raw if isinstance(w4_raw, dict) else {}
+
+        property_dict: Dict[str, Any] = {}
+        if property_id:
+            try:
+                property_obj = await supabase_service.get_property_by_id(property_id)
+                property_dict = _coerce_dict(property_obj)
+            except Exception as property_err:
+                logger.warning("[SUMMARY] Failed to load property %s for employee %s: %s", property_id, employee_id, property_err)
+                property_dict = {}
+
+        hotel_name = property_dict.get('name') or property_dict.get('property_name') or ''
+        hotel_address1 = property_dict.get('address') or property_dict.get('street_address') or ''
+        hotel_address2 = property_dict.get('address_line_2') or property_dict.get('suite_apt') or ''
+        hotel_city = property_dict.get('city') or ''
+        hotel_state = property_dict.get('state') or ''
+        hotel_zip = property_dict.get('zip_code') or property_dict.get('postal_code') or ''
+
+        hotel_address_block_parts = []
+        if hotel_name:
+            hotel_address_block_parts.append(hotel_name)
+        address_block = _build_address_block(hotel_address1, hotel_address2, hotel_city, hotel_state, hotel_zip)
+        if address_block:
+            hotel_address_block_parts.append(address_block)
+        hotel_address_block = "\n".join(hotel_address_block_parts)
+
+        dependents_summary = ''
+        health_dependents = health_data.get('dependents')
+        if isinstance(health_dependents, list) and health_dependents:
+            names = [dep.get('name') for dep in health_dependents if isinstance(dep, dict) and dep.get('name')]
+            if names:
+                dependents_summary = ', '.join(names)
+            else:
+                dependents_summary = str(len(health_dependents))
+        elif isinstance(w4_data.get('dependents'), (int, float, str)):
+            dependents_summary = str(w4_data.get('dependents'))
+        elif w4_data.get('qualifyingChildrenUnder17') or w4_data.get('otherDependents'):  # type: ignore[attr-defined]
+            numbers = [w4_data.get('qualifyingChildrenUnder17'), w4_data.get('otherDependents')]
+            dependents_summary = ", ".join(str(n) for n in numbers if n not in (None, ''))
+
+        employment_type = employee.get('employment_type') or ''
+        if employment_type:
+            employment_type = employment_type.replace('_', ' ').replace('-', ' ').title()
+
+        # Extract address fields from personal_info
+        # Note: get_complete_employee_data() returns address as a dict with keys: street, apt, city, state, zip
+        address_dict = personal_info.get('address', {}) or {}
+        employee_address1 = address_dict.get('street', '') or ''
+        employee_address2 = address_dict.get('apt', '') or ''
+        employee_city = address_dict.get('city', '') or ''
+        employee_state = address_dict.get('state', '') or ''
+        employee_zip = address_dict.get('zip', '') or ''
+
+        # Try to get pay rate and hire date from job application if not in employee record
+        pay_rate = employee.get('pay_rate')
+        hire_date = employee.get('start_date') or employee.get('hire_date')
+
+        # If not in employee record, try to get from job application
+        if not pay_rate or not hire_date:
+            application_id = employee.get('application_id')
+            if application_id:
+                try:
+                    app_response = supabase_service.admin_client.table('job_applications') \
+                        .select('applicant_data') \
+                        .eq('id', application_id) \
+                        .single() \
+                        .execute()
+                    if app_response and app_response.data:
+                        applicant_data = app_response.data.get('applicant_data', {})
+                        if not pay_rate:
+                            pay_rate = applicant_data.get('salary_desired') or applicant_data.get('pay_rate')
+                        if not hire_date:
+                            hire_date = applicant_data.get('start_date')
+                except Exception as app_exc:
+                    logger.warning("[SUMMARY] Failed to load job application for employee %s: %s", employee_id, app_exc)
+
+        summary_defaults: Dict[str, Any] = {
+            "hotelName": hotel_name,
+            "hotelAddress": hotel_address1,
+            "hotelCity": hotel_city,
+            "hotelState": hotel_state,
+            "hotelZipCode": hotel_zip,
+            "stateOfEmployment": hotel_state or employee.get('state_of_employment'),
+            "employeeFirstName": personal_info.get('firstName') or personal_info.get('first_name'),
+            "employeeLastName": personal_info.get('lastName') or personal_info.get('last_name'),
+            "address1": employee_address1,
+            "address2": employee_address2,
+            "city": employee_city,
+            "state": employee_state,
+            "zipCode": employee_zip,
+            "employmentType": employment_type,
+            "gender": personal_info.get('gender'),
+            "employeePhone": _format_phone_number(personal_info.get('phone')),
+            "employeeEmail": personal_info.get('email'),
+            "ssn": _format_ssn(personal_info.get('ssn')),
+            "maritalStatus": personal_info.get('maritalStatus'),
+            "dependents": dependents_summary,
+            "dateOfBirth": _format_date(personal_info.get('dateOfBirth')),
+            "rateOfPay": _format_currency(pay_rate),
+            "hireDate": _format_date(hire_date),
+            "department": employee.get('department'),
+            "position": employee.get('position'),
+            "healthInsuranceSelections": _infer_health_selections(health_data),
+            "healthInsuranceCopay": _format_currency(
+                health_data.get('paycheckContribution')
+                or health_data.get('employeeContribution')
+                or health_data.get('perPayPeriod')
+                or health_data.get('contributionPerPayPeriod')
+                or health_data.get('employeeCostPerPay')
+            )
+        }
+
+        summary_defaults["hotelAddressBlock"] = hotel_address_block
+        summary_defaults["employeeAddressBlock"] = _build_address_block(
+            summary_defaults.get('address1'),
+            summary_defaults.get('address2'),
+            summary_defaults.get('city'),
+            summary_defaults.get('state'),
+            summary_defaults.get('zipCode'),
+        )
+
+        approval_record = supabase_service.admin_client.table('document_approvals') \
+            .select('*') \
+            .eq('employee_id', employee_id) \
+            .eq('document_type', 'new_hire_summary') \
+            .limit(1) \
+            .execute()
+
+        approval_data = approval_record.data[0] if approval_record and approval_record.data else None
+        if approval_data:
+            existing_form_data = approval_data.get('form_data')
+            if isinstance(existing_form_data, str):
+                try:
+                    existing_form_data = json.loads(existing_form_data)
+                except json.JSONDecodeError:
+                    existing_form_data = None
+            if isinstance(existing_form_data, dict):
+                summary_defaults.update(existing_form_data)
+
+        pdf_record = await supabase_service.get_latest_signed_document_record(employee_id, 'new_hire_summary')
+        pdf_url = None
+        if pdf_record:
+            metadata = pdf_record.get('metadata') or {}
+            path = metadata.get('path')
+            bucket = metadata.get('bucket') or 'onboarding-documents'
+            if path:
+                signed = supabase_service.create_signed_document_url(bucket=bucket, path=path, expires_in_seconds=3600)
+                if signed:
+                    pdf_url = signed.get('signed_url')
+            if not pdf_url:
+                pdf_url = pdf_record.get('pdf_url')
+
+        uploaded_documents: List[Dict[str, Any]] = []
+        if property_id:
+            try:
+                sanitized_property = await document_path_manager.get_property_name(property_id)
+                sanitized_employee = await document_path_manager.get_employee_folder_name(employee_id, property_id)
+                bucket_name = 'onboarding-documents'
+                base_path = f"{sanitized_property}/{sanitized_employee}"
+                upload_path = f"{base_path}/uploads/i9_verification"
+
+                storage_accessor = supabase_service.admin_client
+                folders = storage_accessor.storage.from_(bucket_name).list(upload_path)
+                folders = _normalize_storage_list(bucket_name, upload_path, folders)
+
+                for folder in folders or []:
+                    folder_name = _entry_name(folder)
+                    if not folder_name:
+                        continue
+                    folder_path = f"{upload_path}/{folder_name}"
+                    try:
+                        files = storage_accessor.storage.from_(bucket_name).list(folder_path)
+                        files = _normalize_storage_list(bucket_name, folder_path, files)
+                        for file in files or []:
+                            file_name = _entry_name(file)
+                            if not file_name:
+                                continue
+                            signed = storage_accessor.storage.from_(bucket_name).create_signed_url(
+                                f"{folder_path}/{file_name}",
+                                3600
+                            )
+                            file_url = signed.get('signedURL') if isinstance(signed, dict) else signed
+                            uploaded_documents.append({
+                                "id": _entry_value(file, 'id') or str(uuid4()),
+                                "document_type": folder_name,
+                                "file_name": file_name,
+                                "url": file_url
+                            })
+                    except Exception as upload_err:
+                        logger.warning(
+                            "[SUMMARY] Failed to list uploaded docs in %s: %s",
+                            folder_path,
+                            upload_err,
+                        )
+            except Exception as uploads_err:
+                logger.warning("[SUMMARY] Unable to enumerate uploaded documents for %s: %s", employee_id, uploads_err)
+
+        return {
+            "success": True,
+            "data": {
+                "summary": summary_defaults,
+                "status": approval_data.get('status') if approval_data else 'pending',
+                "pdfUrl": pdf_url,
+                "approvedAt": approval_data.get('approved_at') if approval_data else None,
+                "approvedBy": approval_data.get('approved_by') if approval_data else None,
+                "uploadedDocuments": uploaded_documents,
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to load new hire summary for %s: %s", employee_id, exc)
+        raise HTTPException(status_code=500, detail=f"Failed to load summary data: {exc}")
+
+
+@router.post("/{employee_id}/summary/approve")
+async def approve_new_hire_summary(
+    employee_id: str,
+    payload: NewHireSummaryRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    """Persist manager reviewed summary, generate PDF, and mark as approved."""
+    try:
+        if current_user.role not in ['manager', 'hr', 'admin']:
+            raise HTTPException(status_code=403, detail="Only managers can approve summary")
+
+        employee_response = supabase_service.admin_client.table('employees') \
+            .select('*') \
+            .eq('id', employee_id) \
+            .single() \
+            .execute()
+
+        employee = employee_response.data if employee_response else None
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee not found")
+
+        property_id = employee.get('property_id')
+        if current_user.role == 'manager' and property_id and current_user.property_id != property_id:
+            raise HTTPException(status_code=403, detail="You don't have access to this employee")
+
+        summary_data = payload.dict()
+
+        # Derive blocks for PDF rendering
+        hotel_address_block = "\n".join(filter(None, [
+            summary_data.get('hotelName'),
+            _build_address_block(
+                summary_data.get('hotelAddress'),
+                None,
+                summary_data.get('hotelCity'),
+                summary_data.get('hotelState'),
+                summary_data.get('hotelZipCode'),
+            )
+        ]))
+
+        employee_address_block = _build_address_block(
+            summary_data.get('address1'),
+            summary_data.get('address2'),
+            summary_data.get('city'),
+            summary_data.get('state'),
+            summary_data.get('zipCode'),
+        )
+
+        pdf_context = {
+            "hotelAddressBlock": hotel_address_block,
+            "stateOfEmployment": summary_data.get('stateOfEmployment'),
+            "employeeFirstName": summary_data.get('employeeFirstName'),
+            "employeeLastName": summary_data.get('employeeLastName'),
+            "employeeAddressBlock": employee_address_block,
+            "employmentType": summary_data.get('employmentType'),
+            "gender": summary_data.get('gender'),
+            "employeePhone": summary_data.get('employeePhone'),
+            "employeeEmail": summary_data.get('employeeEmail'),
+            "ssn": summary_data.get('ssn'),
+            "maritalStatus": summary_data.get('maritalStatus'),
+            "dependents": summary_data.get('dependents'),
+            "dateOfBirth": summary_data.get('dateOfBirth'),
+            "rateOfPay": summary_data.get('rateOfPay'),
+            "hireDate": summary_data.get('hireDate'),
+            "department": summary_data.get('department'),
+            "position": summary_data.get('position'),
+            "healthInsuranceSelections": summary_data.get('healthInsuranceSelections') or [],
+            "healthInsuranceCopay": summary_data.get('healthInsuranceCopay'),
+        }
+
+        # Generate the new hire summary PDF (page 1 only)
+        generator = NewHireSummaryPDFGenerator()
+        summary_pdf_bytes = generator.generate(pdf_context)
+
+        # Save ONLY the new hire summary (not merged yet)
+        # Merging happens in Step 7 (Complete Onboarding)
+        save_result = await supabase_service.save_signed_document(
+            employee_id=employee_id,
+            property_id=property_id,
+            form_type='new_hire_summary',
+            pdf_bytes=summary_pdf_bytes,
+            is_edit=True,
+            user_role='manager',
+            request=request,
+        )
+
+        logger.info(f"[APPROVAL] New hire summary saved: {len(summary_pdf_bytes)} bytes")
+
+        approval_payload = {
+            'employee_id': employee_id,
+            'document_type': 'new_hire_summary',
+            'status': 'approved',
+            'approved_by': current_user.id,
+            'approved_at': datetime.utcnow().isoformat(),
+            'notes': summary_data.get('notes'),
+            'form_data': summary_data,
+        }
+
+        supabase_service.admin_client.table('document_approvals') \
+            .upsert(approval_payload, on_conflict='employee_id,document_type') \
+            .execute()
+
+        logger.info(f"[APPROVAL] New hire summary approved for employee {employee_id}, moving to next step")
+
+        return {
+            "success": True,
+            "message": "New hire summary approved",
+            "pdf": save_result.get('signed_url'),
+            "expiresAt": save_result.get('signed_url_expires_at')
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to approve new hire summary for %s: %s", employee_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to approve summary")
 
 
 @router.get("/{employee_id}/documents-status")
@@ -1806,7 +2392,8 @@ async def complete_health_insurance_document(
 @router.post("/{employee_id}/complete-review")
 async def complete_employee_review(
     employee_id: str,
-    request: CompleteReviewRequest,
+    payload: CompleteReviewRequest,
+    http_request: Request,
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -1832,13 +2419,13 @@ async def complete_employee_review(
         property_id = employee.get('property_id')
 
         # Verify manager has access
-        if current_user.property_id != property_id:
+        if current_user.role == 'manager' and current_user.property_id != property_id:
             raise HTTPException(status_code=403, detail="Access denied")
 
         logger.info(f"[COMPLETE-REVIEW] Employee: {employee.get('first_name')} {employee.get('last_name')}")
 
         # Step 1: Verify all required documents are approved
-        required_docs = ['company_policies', 'i9', 'w4', 'direct_deposit', 'health_insurance']
+        required_docs = ['new_hire_summary', 'company_policies', 'i9', 'w4', 'direct_deposit', 'health_insurance']
 
         approvals_response = supabase_service.admin_client.table('document_approvals')\
             .select('*')\
@@ -1891,10 +2478,10 @@ async def complete_employee_review(
 
         # Format start date
         try:
-            start_dt = datetime.fromisoformat(request.startDate.replace('Z', '+00:00'))
+            start_dt = datetime.fromisoformat(payload.startDate.replace('Z', '+00:00'))
             formatted_start_date = start_dt.strftime('%A, %B %d, %Y')  # "Monday, October 7, 2025"
         except:
-            formatted_start_date = request.startDate
+            formatted_start_date = payload.startDate
 
         # Build property address
         property_address = employer_profile.get('street_address', '')
@@ -1906,6 +2493,14 @@ async def complete_employee_review(
             property_address += f", {employer_profile.get('state')}"
         if employer_profile.get('zip_code'):
             property_address += f" {employer_profile.get('zip_code')}"
+        if not property_address and property_data:
+            property_address = property_data.get('address', '') or ''
+            if property_data.get('city'):
+                property_address += f", {property_data.get('city')}"
+            if property_data.get('state'):
+                property_address += f", {property_data.get('state')}"
+            if property_data.get('zip_code'):
+                property_address += f" {property_data.get('zip_code')}"
 
         # Manager info
         manager_name = f"{manager.get('first_name', '')} {manager.get('last_name', '')}".strip()
@@ -1933,8 +2528,8 @@ async def complete_employee_review(
         }
 
         # Update start_date if provided and different
-        if request.startDate and request.startDate != employee.get('start_date'):
-            update_data['start_date'] = request.startDate
+        if payload.startDate and payload.startDate != employee.get('start_date'):
+            update_data['start_date'] = payload.startDate
 
         supabase_service.admin_client.table('employees')\
             .update(update_data)\
@@ -1947,6 +2542,65 @@ async def complete_employee_review(
         # Format: EMP-{first 8 chars of ID}
         display_employee_number = f"EMP-{employee_id[:8].upper()}"
 
+        # Step 5: Build final onboarding packet
+        document_plan = [
+            ("New Hire Summary", 'new_hire_summary'),
+            ("Company Policies", 'company_policies'),
+            ("I-9 (Completed)", 'i9_form_completed'),
+            ("W-4 (Completed)", 'w4_form_completed'),
+            ("Direct Deposit", 'direct_deposit'),
+            ("Human Trafficking Certificate", 'human_trafficking'),
+            ("Weapons Policy", 'weapons_policy'),
+            ("Health Insurance (Completed)", 'health_insurance_completed'),
+        ]
+
+        packet_writer = PdfWriter()
+        missing_documents: List[str] = []
+
+        for display_name, document_type in document_plan:
+            record = await supabase_service.get_latest_signed_document_record(employee_id, document_type)
+            pdf_bytes = await supabase_service.get_signed_document_bytes(record) if record else None
+            if not pdf_bytes:
+                missing_documents.append(display_name)
+                continue
+            try:
+                reader = PdfReader(io.BytesIO(pdf_bytes))
+                for page in reader.pages:
+                    packet_writer.add_page(page)
+            except Exception as pdf_err:
+                logger.warning(
+                    "[COMPLETE-REVIEW] Failed to append %s (%s): %s",
+                    display_name,
+                    document_type,
+                    pdf_err,
+                )
+                missing_documents.append(display_name)
+
+        if missing_documents:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Cannot complete review. The following documents are missing or could not be processed: "
+                    + ", ".join(missing_documents)
+                )
+            )
+
+        packet_buffer = io.BytesIO()
+        packet_writer.write(packet_buffer)
+        packet_bytes = packet_buffer.getvalue()
+
+        packet_save = await supabase_service.save_signed_document(
+            employee_id=employee_id,
+            property_id=property_id,
+            form_type='final_onboarding_packet',
+            pdf_bytes=packet_bytes,
+            is_edit=True,
+            user_role='manager',
+            request=http_request,
+        )
+
+        packet_base64 = base64.b64encode(packet_bytes).decode('utf-8')
+
         # Step 5: Send completion email
         from app.email_service import email_service
 
@@ -1957,14 +2611,14 @@ async def complete_employee_review(
             position=position,
             department=department,
             start_date=formatted_start_date,
-            start_time=request.startTime,
+            start_time=payload.startTime,
             property_name=property_name,
             property_address=property_address,
             manager_name=manager_name,
             manager_email=manager_email,
             manager_phone=manager_phone,
-            dress_code=request.dressCode,
-            parking_details=request.parkingDetails,
+            dress_code=payload.dressCode,
+            parking_details=payload.parkingDetails,
             cc_manager=True
         )
 
@@ -1972,6 +2626,96 @@ async def complete_employee_review(
             logger.info(f"[COMPLETE-REVIEW] ✅ Completion email sent to {employee_email}")
         else:
             logger.warning(f"[COMPLETE-REVIEW] ⚠️ Failed to send completion email to {employee_email}")
+
+        # Send New Hire Notification email to employee
+        try:
+            # Get payment method from direct deposit approval
+            payment_method = "Direct Deposit"  # Default
+            try:
+                dd_approval = supabase_service.admin_client.table('document_approvals') \
+                    .select('form_data') \
+                    .eq('employee_id', employee_id) \
+                    .eq('document_type', 'direct_deposit') \
+                    .single() \
+                    .execute()
+
+                if dd_approval and dd_approval.data:
+                    dd_form_data = dd_approval.data.get('form_data', {})
+                    # Check if they have bank account info
+                    if dd_form_data.get('accountNumber') or dd_form_data.get('routingNumber'):
+                        payment_method = "Direct Deposit"
+                    else:
+                        payment_method = "Check"
+            except Exception as dd_exc:
+                logger.warning(f"[COMPLETE-REVIEW] Could not determine payment method: {dd_exc}")
+
+            # Get pay rate and frequency from new hire summary
+            summary_approval = approvals.get('new_hire_summary', {})
+            summary_form_data = summary_approval.get('form_data', {})
+            pay_rate = summary_form_data.get('rateOfPay', employee.get('pay_rate', ''))
+            pay_frequency = summary_form_data.get('payFrequency', employee.get('pay_frequency', 'bi-weekly'))
+
+            # Get supervisor name from personal info
+            personal_info = employee.get('personal_info', {})
+            supervisor_name = personal_info.get('supervisor', manager_name)
+
+            # Get start time
+            start_time = personal_info.get('start_time', payload.startTime)
+
+            new_hire_email_sent = await email_service.send_new_hire_notification_email(
+                to_email=employee_email,
+                employee_first_name=employee.get('first_name', ''),
+                employee_last_name=employee.get('last_name', ''),
+                hotel_name=property_name,
+                hotel_address=property_address,
+                department=department,
+                job_title=position,
+                supervisor_name=supervisor_name,
+                job_start_date=formatted_start_date,
+                start_time=start_time,
+                pay_rate=str(pay_rate) if pay_rate else '',
+                pay_frequency=pay_frequency,
+                payment_method=payment_method,
+            )
+
+            if new_hire_email_sent:
+                logger.info(f"[COMPLETE-REVIEW] ✅ New hire notification sent to {employee_email}")
+            else:
+                logger.warning(f"[COMPLETE-REVIEW] ⚠️ Failed to send new hire notification")
+        except Exception as new_hire_email_exc:
+            logger.error(f"[COMPLETE-REVIEW] Error sending new hire notification: {new_hire_email_exc}")
+
+        # Step 6: Send packet to manager + HR recipients
+        manager_primary_email = manager_email or current_user.email
+        # Create filename with employee name
+        safe_employee_name = employee_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        packet_filename = f"onboarding_packet_{safe_employee_name}_{employee_id[:8]}.pdf"
+        hr_recipients: List[str] = []
+        try:
+            recipients_response = supabase_service.client.table('global_email_recipients').select('email,is_active').execute()
+            hr_recipients = [
+                row['email']
+                for row in (recipients_response.data or [])
+                if row.get('email') and row.get('is_active', True)
+            ]
+        except Exception as recipients_error:
+            logger.warning("[COMPLETE-REVIEW] Failed to load HR notification recipients: %s", recipients_error)
+
+        cc_emails = [email for email in hr_recipients if email != manager_primary_email]
+        packet_email_sent = False
+        if manager_primary_email:
+            packet_email_sent = await email_service.send_manager_review_packet_email(
+                to_email=manager_primary_email,
+                cc_emails=cc_emails,
+                employee_name=employee_name,
+                property_name=property_name,
+                packet_filename=packet_filename,
+                packet_base64=packet_base64,
+            )
+            if packet_email_sent:
+                logger.info("[COMPLETE-REVIEW] ✅ Sent onboarding packet to manager %s", manager_primary_email)
+            else:
+                logger.warning("[COMPLETE-REVIEW] ⚠️ Failed to send onboarding packet email")
 
         # Step 6: Return success
         return {
@@ -1981,8 +2725,10 @@ async def complete_employee_review(
                 "id": employee_id,
                 "employeeNumber": display_employee_number,
                 "status": "active",
-                "startDate": request.startDate,
-                "emailSent": email_sent
+                "startDate": payload.startDate,
+                "emailSent": email_sent,
+                "packetUrl": packet_save.get('signed_url'),
+                "packetEmailSent": packet_email_sent,
             }
         }
 
