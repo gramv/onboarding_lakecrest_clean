@@ -9,7 +9,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
+from reportlab.platypus import Paragraph, Table, TableStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
 
 class NewHireSummaryPDFGenerator:
@@ -21,40 +22,67 @@ class NewHireSummaryPDFGenerator:
         self.right_margin = 0.5 * inch
         self.top_margin = 0.75 * inch
         self.row_height = 20
+        self.styles = getSampleStyleSheet()
+        self.value_style = ParagraphStyle(
+            name="Value",
+            parent=self.styles["BodyText"],
+            fontName="Helvetica",
+            fontSize=9,
+            leading=11,
+            textColor=colors.HexColor("#1F2937"),
+        )
+        self.label_style = ParagraphStyle(
+            name="Label",
+            parent=self.styles["BodyText"],
+            fontName="Helvetica-Bold",
+            fontSize=9,
+            leading=11,
+            textColor=colors.HexColor("#374151"),
+        )
+        self.subheader_style = ParagraphStyle(
+            name="Subheader",
+            parent=self.styles["Heading3"],
+            fontName="Helvetica-Bold",
+            fontSize=10,
+            leading=12,
+            textColor=colors.HexColor("#111827"),
+            spaceAfter=6,
+        )
 
     def _draw_table(
         self,
         c: canvas.Canvas,
         x: float,
         y: float,
-        data: List[List[str]],
+        data: List[List[Any]],
         col_widths: List[float],
         title: str = None,
-        header_row: bool = False
+        header_row: bool = False,
+        alternate: bool = False,
     ) -> float:
         """Draw a table and return the new Y position."""
 
-        # Draw title if provided
         if title:
-            c.setFont("Helvetica-Bold", 11)
-            c.setFillColor(colors.HexColor("#1F2937"))
-            c.drawString(x, y, title)
-            y -= 20
-            c.setFillColor(colors.black)
+            title_para = Paragraph(title, self.subheader_style)
+            tw, th = title_para.wrap(self.page_width - x - self.right_margin, self.row_height)
+            title_para.drawOn(c, x, y - th)
+            y -= th + 6
 
-        # Create table
-        table = Table(data, colWidths=col_widths, rowHeights=self.row_height)
+        table = Table(data, colWidths=col_widths)
 
         # Style the table
         style = [
-            # Grid
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
+            ('BOX', (0, 0), (-1, -1), 0.75, colors.HexColor("#D1D5DB")),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ]
+
+        if alternate:
+            style.append(('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]))
 
         # Header row styling
         if header_row:
@@ -81,15 +109,11 @@ class NewHireSummaryPDFGenerator:
 
         table.setStyle(TableStyle(style))
 
-        # Calculate table height
         table.wrapOn(c, self.page_width, self.page_height)
         table_height = table._height
-
-        # Draw the table
         table.drawOn(c, x, y - table_height)
 
-        # Return new Y position
-        return y - table_height - 15
+        return y - table_height - 18
 
     def generate(self, summary: Dict[str, Any]) -> bytes:
         buffer = io.BytesIO()
@@ -115,55 +139,95 @@ class NewHireSummaryPDFGenerator:
         label_width = 2.2 * inch
         value_width = self.page_width - self.left_margin - self.right_margin - label_width
 
-        # Section 1: Employment Location
+        # Section 1: Employment & Property
         employment_data = [
-            ["Hotel Name / Address", summary.get("hotelAddressBlock", "-")],
-            ["State of Employment", summary.get("stateOfEmployment", "-")],
+            [
+                Paragraph("Hotel Name", self.label_style),
+                Paragraph(summary.get("hotelName", "-"), self.value_style),
+                Paragraph("Hotel Address", self.label_style),
+                Paragraph(summary.get("hotelAddressBlock", "-"), self.value_style),
+            ],
+            [
+                Paragraph("State of Employment", self.label_style),
+                Paragraph(summary.get("stateOfEmployment", "-"), self.value_style),
+                Paragraph("Hire Date", self.label_style),
+                Paragraph(summary.get("hireDate", "-"), self.value_style),
+            ],
         ]
         y = self._draw_table(
-            c, self.left_margin, y, employment_data,
-            [label_width, value_width],
-            title="Employment Location"
+            c,
+            self.left_margin,
+            y,
+            employment_data,
+            [label_width * 0.9, label_width * 1.1, label_width * 0.9, label_width * 1.1],
+            title="Property & Employment",
+            header_row=False,
         )
 
-        # Section 2: Employee Information
+        # Section 2: Employee Information (split columns)
         name_block = f"{summary.get('employeeFirstName', '')} {summary.get('employeeLastName', '')}".strip() or "-"
-        employee_data = [
-            ["Employee Name", name_block],
-            ["Residential Address", summary.get("employeeAddressBlock", "-")],
-            ["Phone", summary.get("employeePhone", "-")],
-            ["Email", summary.get("employeeEmail", "-")],
-            ["Date of Birth", summary.get("dateOfBirth", "-")],
-            ["Social Security Number", summary.get("ssn", "-")],
-            ["Gender", summary.get("gender", "-")],
-            ["Marital Status", summary.get("maritalStatus", "-")],
-            ["Dependents", summary.get("dependents", "-")],
+        employee_rows = [
+            [
+                Paragraph("Employee Name", self.label_style),
+                Paragraph(name_block, self.value_style),
+                Paragraph("Phone", self.label_style),
+                Paragraph(summary.get("employeePhone", "-"), self.value_style),
+            ],
+            [
+                Paragraph("Residential Address", self.label_style),
+                Paragraph(summary.get("employeeAddressBlock", "-"), self.value_style),
+                Paragraph("Email", self.label_style),
+                Paragraph(summary.get("employeeEmail", "-"), self.value_style),
+            ],
+            [
+                Paragraph("Date of Birth", self.label_style),
+                Paragraph(summary.get("dateOfBirth", "-"), self.value_style),
+                Paragraph("Social Security Number", self.label_style),
+                Paragraph(summary.get("ssn", "-"), self.value_style),
+            ],
+            [
+                Paragraph("Gender", self.label_style),
+                Paragraph(summary.get("gender", "-"), self.value_style),
+                Paragraph("Marital Status", self.label_style),
+                Paragraph(summary.get("maritalStatus", "-"), self.value_style),
+            ],
+            [
+                Paragraph("Dependents", self.label_style),
+                Paragraph(summary.get("dependents", "-"), self.value_style),
+                Paragraph("Pay Frequency", self.label_style),
+                Paragraph(summary.get("payFrequency", "-"), self.value_style),
+            ],
         ]
         y = self._draw_table(
-            c, self.left_margin, y, employee_data,
-            [label_width, value_width],
-            title="Employee Information"
+            c,
+            self.left_margin,
+            y,
+            employee_rows,
+            [label_width * 0.8, label_width * 1.2, label_width * 0.8, label_width * 1.2],
+            title="Employee Information",
+            alternate=True,
         )
 
-        # Section 3: Employment Details
+        # Section 3: Role & Compensation
         employment_details = [
-            ["Employment Type", summary.get("employmentType", "-")],
-            ["Department", summary.get("department", "-")],
-            ["Position", summary.get("position", "-")],
-            ["Rate of Pay", summary.get("rateOfPay", "-")],
-            ["Pay Frequency", summary.get("payFrequency", "-")],
-            ["Hire Date", summary.get("hireDate", "-")],
+            [Paragraph("Department", self.label_style), Paragraph(summary.get("department", "-"), self.value_style)],
+            [Paragraph("Position", self.label_style), Paragraph(summary.get("position", "-"), self.value_style)],
+            [Paragraph("Employment Type", self.label_style), Paragraph(summary.get("employmentType", "-"), self.value_style)],
+            [Paragraph("Rate of Pay", self.label_style), Paragraph(summary.get("rateOfPay", "-"), self.value_style)],
         ]
         y = self._draw_table(
-            c, self.left_margin, y, employment_details,
+            c,
+            self.left_margin,
+            y,
+            employment_details,
             [label_width, value_width],
-            title="Employment Details"
+            title="Role & Compensation",
+            alternate=True,
         )
 
-        # Section 4: Health Insurance Selections
-        selections = summary.get("healthInsuranceSelections", [])
-        selection_lookup = set(selections)
-
+        # Section 4: Benefits Overview
+        selections = summary.get("healthInsuranceSelections", []) or []
+        selection_lookup = set(s.lower() for s in selections)
         insurance_options = [
             ("UHC HRA Base Plan", "uhc_hra_base"),
             ("UHC HRA Buy Up Plan", "uhc_hra_buy_up"),
@@ -174,21 +238,45 @@ class NewHireSummaryPDFGenerator:
             ("Insurance Declined", "insurance_declined"),
         ]
 
-        selected_plans = []
+        checkbox_rows: List[List[Any]] = []
         for label, key in insurance_options:
-            if key in selection_lookup:
-                selected_plans.append(f"☑ {label}")
-            else:
-                selected_plans.append(f"☐ {label}")
+            checked = key in selection_lookup
+            checkbox_rows.append([
+                Paragraph("☑" if checked else "☐", self.value_style),
+                Paragraph(label, self.value_style),
+            ])
 
-        insurance_data = [
-            ["Health Insurance Selections", "\n".join(selected_plans)],
-            ["Copay per Pay Period", summary.get("healthInsuranceCopay", "-")],
+        insurance_section = Table(
+            checkbox_rows,
+            colWidths=[0.3 * inch, value_width - 0.3 * inch],
+            hAlign='LEFT',
+        )
+        insurance_section.setStyle(
+            TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ])
+        )
+
+        benefits_data: List[List[Any]] = [
+            [Paragraph("Selected Benefit Plans", self.label_style), insurance_section],
+            [
+                Paragraph("Copay per Pay Period", self.label_style),
+                Paragraph(summary.get("healthInsuranceCopay", "-"), self.value_style),
+            ],
         ]
+
         y = self._draw_table(
-            c, self.left_margin, y, insurance_data,
+            c,
+            self.left_margin,
+            y,
+            benefits_data,
             [label_width, value_width],
-            title="Health Insurance"
+            title="Benefits Overview",
+            alternate=False,
         )
 
         # Footer

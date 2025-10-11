@@ -45,6 +45,8 @@ import time
 import asyncio
 from collections import defaultdict
 from openai import OpenAI  # OpenAI GPT-5 for voided check OCR validation
+from app.services.encryption_service import get_encryption_service
+from app.services.document_encryption_service import get_document_encryption_service
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -691,6 +693,55 @@ bulk_application_ops = BulkApplicationOperations()
 bulk_employee_ops = BulkEmployeeOperations()
 bulk_communication_service = BulkCommunicationService()
 bulk_audit_service = BulkOperationAuditService()
+# Minimal encryption startup self-tests (fail-fast in prod/staging)
+def _encryption_startup_self_test() -> None:
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    require_keys = env in ("production", "staging")
+
+    # Field encryption key presence (legacy Fernet fallback allowed for dual-decrypt)
+    field_key = os.getenv("FIELD_ENCRYPTION_KEY")
+    doc_key = os.getenv("DOCUMENT_ENCRYPTION_KEY") or field_key
+
+    if require_keys:
+        if not field_key:
+            raise RuntimeError("FIELD_ENCRYPTION_KEY is required in production/staging")
+        if not doc_key:
+            raise RuntimeError("DOCUMENT_ENCRYPTION_KEY (or FIELD_ENCRYPTION_KEY) is required in production/staging")
+
+    try:
+        svc = get_encryption_service()
+        # Round trip AES-GCM using service encrypt/decrypt of a known string via encrypt_field/decrypt_field
+        sample = {"ssn": "123-45-6789"}
+        enc, _ = svc.encrypt_dict(sample)
+        dec = svc.decrypt_dict(enc)
+        assert dec.get("ssn") == "123-45-6789"
+    except Exception as e:
+        if require_keys:
+            raise RuntimeError(f"Encryption self-test failed: {e}")
+        else:
+            logger.warning(f"Encryption self-test warning (non-prod): {e}")
+
+    try:
+        dsvc = get_document_encryption_service()
+        content = b"test-pdf"
+        enc_bytes, meta = dsvc.encrypt_document(content, document_type="selftest")
+        dec_bytes, was_encrypted = dsvc.decrypt_document(enc_bytes, document_type="selftest")
+        assert was_encrypted and dec_bytes == content
+    except Exception as e:
+        if require_keys:
+            raise RuntimeError(f"Document encryption self-test failed: {e}")
+        else:
+            logger.warning(f"Document encryption self-test warning (non-prod): {e}")
+
+
+# Run startup self-test early
+try:
+    _encryption_startup_self_test()
+    logger.info("✅ Encryption startup self-tests passed")
+except Exception as e:
+    logger.error(str(e))
+    # Fail-fast to avoid running without proper encryption
+    raise
 
 # Initialize OCR services with fallback pattern
 ocr_service = None
@@ -8165,7 +8216,7 @@ async def get_signed_document_metadata(
     token: str = Query(...),
     force_refresh: bool = Query(False)
 ):
-    """Return metadata (and a fresh signed URL) for a signed onboarding document."""
+    """Return metadata (and decrypted PDF content) for a signed onboarding document."""
     try:
         from app.auth import OnboardingTokenManager
 
@@ -8186,6 +8237,7 @@ async def get_signed_document_metadata(
 
         step_record = await supabase_service.get_onboarding_step_data(employee_id, step_id)
         document_metadata: Optional[Dict[str, Any]] = None
+        pdf_base64: Optional[str] = None
 
         if isinstance(step_record, dict):
             form_payload = step_record.get("form_data") or step_record.get("data")
@@ -8194,6 +8246,40 @@ async def get_signed_document_metadata(
                 if isinstance(meta_candidate, dict) and meta_candidate.get("path") and meta_candidate.get("bucket"):
                     document_metadata = dict(meta_candidate)
 
+        # If we have document metadata, download and decrypt the PDF
+        if document_metadata:
+            try:
+                bucket = document_metadata.get("bucket")
+                path = document_metadata.get("path")
+
+                if bucket and path:
+                    logger.info(f"📥 Downloading encrypted PDF: {path}")
+
+                    # Download encrypted PDF from storage
+                    encrypted_bytes = supabase_service.admin_client.storage.from_(bucket).download(path)
+
+                    # Decrypt the PDF
+                    logger.info(f"🔓 Decrypting PDF: {step_id} for employee {employee_id}")
+                    decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                        encrypted_bytes,
+                        document_type=step_id,
+                        employee_id=employee_id
+                    )
+
+                    if was_encrypted:
+                        logger.info(f"✅ PDF decrypted: {len(encrypted_bytes)} → {len(decrypted_bytes)} bytes")
+                    else:
+                        logger.warning(f"⚠️  Legacy unencrypted PDF: {step_id}")
+
+                    # Convert to base64 for frontend
+                    pdf_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+                    logger.info(f"✅ PDF ready for frontend: {len(pdf_base64)} base64 chars")
+
+            except Exception as decrypt_error:
+                logger.error(f"❌ Failed to decrypt PDF for {employee_id}/{step_id}: {decrypt_error}")
+                # Continue without PDF content - frontend will show error
+
+        # Also create signed URL for backward compatibility (though it won't work for encrypted docs)
         if document_metadata and (force_refresh or not document_metadata.get("signed_url")):
             refreshed = supabase_service.create_signed_document_url(
                 bucket=document_metadata["bucket"],
@@ -8206,7 +8292,8 @@ async def get_signed_document_metadata(
         return success_response(
             data={
                 "document_metadata": document_metadata,
-                "has_document": document_metadata is not None
+                "has_document": document_metadata is not None,
+                "pdf": pdf_base64  # Add decrypted PDF content
             },
             message="Document metadata retrieved"
         )
@@ -14664,17 +14751,49 @@ async def get_human_trafficking_document(employee_id: str, token: Optional[str] 
 
             # Generate fresh signed URL if document exists in storage
             signed_url = None
+            pdf_base64 = None
+
             if metadata.get('bucket') and metadata.get('path'):
                 try:
+                    # Download and decrypt the document for preview
+                    logger.info(f"🔓 Downloading and decrypting Human Trafficking certificate...")
+                    raw_bytes = supabase_service.admin_client.storage.from_(metadata['bucket']).download(metadata['path'])
+
+                    # Decrypt the document
+                    decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                        raw_bytes,
+                        document_type="human-trafficking",
+                        employee_id=employee_id
+                    )
+
+                    if was_encrypted:
+                        logger.info(f"✅ Decrypted Human Trafficking certificate: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+                    else:
+                        logger.info(f"ℹ️  Human Trafficking certificate was not encrypted (legacy)")
+
+                    # Convert to base64 for frontend preview
+                    pdf_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+
+                    # Also generate signed URL as fallback
                     url_response = supabase_service.admin_client.storage.from_(metadata['bucket']).create_signed_url(
                         metadata['path'],
                         expires_in=3600  # 1 hour validity
                     )
                     if url_response and url_response.get('signedURL'):
                         signed_url = url_response['signedURL']
-                        logger.info(f"✅ Generated fresh signed URL (expires in 1 hour)")
+
                 except Exception as e:
-                    logger.warning(f"Failed to generate signed URL for Human Trafficking certificate: {e}")
+                    logger.error(f"❌ Failed to download/decrypt Human Trafficking certificate: {e}")
+                    # Try to generate signed URL as fallback
+                    try:
+                        url_response = supabase_service.admin_client.storage.from_(metadata['bucket']).create_signed_url(
+                            metadata['path'],
+                            expires_in=3600
+                        )
+                        if url_response and url_response.get('signedURL'):
+                            signed_url = url_response['signedURL']
+                    except Exception as url_err:
+                        logger.warning(f"Failed to generate signed URL: {url_err}")
 
             return success_response(
                 data={
@@ -14685,7 +14804,8 @@ async def get_human_trafficking_document(employee_id: str, token: Optional[str] 
                         "signed_at": doc.get('signed_at'),
                         "bucket": metadata.get('bucket'),
                         "path": metadata.get('path')
-                    }
+                    },
+                    "pdf_data": pdf_base64  # Add decrypted PDF data for preview
                 },
                 message="Human Trafficking certificate found"
             )

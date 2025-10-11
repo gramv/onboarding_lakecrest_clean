@@ -1002,11 +1002,71 @@ async def get_document_for_review(
         pdf_url = storage_accessor.storage.from_(bucket_name)\
             .create_signed_url(f"{doc_path}/{pdf_name}", 3600)  # 1 hour
 
+        # Attempt to download + decrypt so managers can preview encrypted PDFs inline
+        pdf_base64 = None
+        raw_bytes: Optional[bytes] = None
+        try:
+            raw_bytes = storage_accessor.storage.from_(bucket_name).download(f"{doc_path}/{pdf_name}")
+            decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                raw_bytes,
+                document_type=document_type,
+                employee_id=employee_id
+            )
+
+            if was_encrypted:
+                logger.info(
+                    "[manager-docs] decrypted PDF for %s (%s): %s bytes → %s bytes",
+                    employee_id,
+                    document_type,
+                    len(raw_bytes),
+                    len(decrypted_bytes)
+                )
+            else:
+                logger.debug(
+                    "[manager-docs] PDF already plaintext for %s (%s)",
+                    employee_id,
+                    document_type
+                )
+
+            pdf_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+        except Exception as decrypt_err:
+            logger.error(
+                "[manager-docs] failed to decrypt PDF %s/%s for %s (%s): %s",
+                bucket_name,
+                pdf_name,
+                employee_id,
+                document_type,
+                decrypt_err
+            )
+            # As a fallback, try to return plaintext bytes (legacy unencrypted documents)
+            try:
+                legacy_source = raw_bytes if raw_bytes is not None else storage_accessor.storage.from_(bucket_name).download(
+                    f"{doc_path}/{pdf_name}"
+                )
+                pdf_base64 = base64.b64encode(legacy_source).decode('utf-8')
+                logger.info(
+                    "[manager-docs] served legacy plaintext PDF for %s (%s)",
+                    employee_id,
+                    document_type
+                )
+            except Exception as legacy_err:
+                logger.error(
+                    "[manager-docs] failed to fallback to legacy PDF for %s (%s): %s",
+                    employee_id,
+                    document_type,
+                    legacy_err
+                )
+
         result = {
             "pdfUrl": pdf_url['signedURL'],
             "documentType": document_type,
-            "documentName": workflow_step['name']
+            "documentName": workflow_step['name'],
         }
+
+        if pdf_base64:
+            # Provide inline data so the frontend can render encrypted PDFs without another round-trip
+            result["pdfData"] = pdf_base64
+            result["pdfDataUrl"] = f"data:application/pdf;base64,{pdf_base64}"
 
         # If document has uploaded supporting docs (like I-9 verification docs)
         if 'upload_path' in workflow_step:
@@ -1511,15 +1571,45 @@ async def get_i9_review_detail(
                                 file_name = _entry_name(file)
                                 logger.info(f"[I9-UPLOADS] Processing file: {file_name}")
                                 if file_name and file_name.lower().endswith(('.jpg', '.jpeg', '.png', '.pdf')):
-                                    file_url = storage_accessor.storage.from_(bucket_name) \
-                                        .create_signed_url(f"{folder_path}/{file_name}", 3600)
+                                    file_path_full = f"{folder_path}/{file_name}"
+
+                                    # Download and decrypt the uploaded document
+                                    file_base64 = None
+                                    file_url = None
+                                    try:
+                                        logger.info(f"[I9-UPLOADS] Downloading and decrypting: {file_path_full}")
+                                        raw_bytes = storage_accessor.storage.from_(bucket_name).download(file_path_full)
+
+                                        # Decrypt the document
+                                        decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                                            raw_bytes,
+                                            document_type=f"i9_upload_{folder_name}",
+                                            employee_id=employee_id
+                                        )
+
+                                        if was_encrypted:
+                                            logger.info(f"[I9-UPLOADS] Decrypted {file_name}: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+
+                                        # Convert to base64 for frontend
+                                        file_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+
+                                    except Exception as decrypt_err:
+                                        logger.warning(f"[I9-UPLOADS] Failed to decrypt {file_name}: {decrypt_err}")
+                                        # Fallback to signed URL
+                                        try:
+                                            file_url_response = storage_accessor.storage.from_(bucket_name).create_signed_url(file_path_full, 3600)
+                                            file_url = file_url_response.get('signedURL') if isinstance(file_url_response, dict) else file_url_response
+                                        except Exception as url_err:
+                                            logger.error(f"[I9-UPLOADS] Failed to generate signed URL for {file_name}: {url_err}")
+
                                     uploaded_docs.append({
                                         "id": _entry_value(file, 'id') or str(uuid4()),
                                         "document_type": folder_name,
                                         "file_name": file_name,
-                                        "url": file_url.get('signedURL') if isinstance(file_url, dict) else file_url
+                                        "url": file_url,  # Fallback signed URL
+                                        "data": file_base64  # Decrypted base64 data
                                     })
-                                    logger.info(f"[I9-UPLOADS] Added document: {folder_name}/{file_name}")
+                                    logger.info(f"[I9-UPLOADS] Added document: {folder_name}/{file_name} (decrypted: {file_base64 is not None})")
                         except Exception as folder_err:
                             logger.error(f"[I9-UPLOADS] Error reading folder {folder_path}: {folder_err}")
             except Exception as upload_err:
@@ -2093,16 +2183,45 @@ async def get_w4_review_detail(
                         for file in folder_files or []:
                             file_name = _entry_name(file)
                             if file_name and file_name.lower().endswith(('.jpg', '.jpeg', '.png', '.pdf')):
-                                file_url = storage_accessor.storage.from_(bucket_name).create_signed_url(
-                                    f"{folder_path}/{file_name}", 3600
-                                )
+                                file_path_full = f"{folder_path}/{file_name}"
+
+                                # Download and decrypt the uploaded document
+                                file_base64 = None
+                                file_url = None
+                                try:
+                                    logger.info(f"[W4-DETAIL] Downloading and decrypting: {file_path_full}")
+                                    raw_bytes = storage_accessor.storage.from_(bucket_name).download(file_path_full)
+
+                                    # Decrypt the document
+                                    decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                                        raw_bytes,
+                                        document_type=f"i9_upload_{folder_name}",
+                                        employee_id=employee_id
+                                    )
+
+                                    if was_encrypted:
+                                        logger.info(f"[W4-DETAIL] Decrypted {file_name}: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+
+                                    # Convert to base64 for frontend
+                                    file_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+
+                                except Exception as decrypt_err:
+                                    logger.warning(f"[W4-DETAIL] Failed to decrypt {file_name}: {decrypt_err}")
+                                    # Fallback to signed URL
+                                    try:
+                                        file_url_response = storage_accessor.storage.from_(bucket_name).create_signed_url(file_path_full, 3600)
+                                        file_url = file_url_response.get('signedURL') if isinstance(file_url_response, dict) else file_url_response
+                                    except Exception as url_err:
+                                        logger.error(f"[W4-DETAIL] Failed to generate signed URL for {file_name}: {url_err}")
+
                                 uploaded_docs.append({
                                     "id": _entry_value(file, 'id') or str(uuid4()),
                                     "document_type": folder_name,
                                     "file_name": file_name,
-                                    "url": file_url.get('signedURL') if isinstance(file_url, dict) else file_url
+                                    "url": file_url,  # Fallback signed URL
+                                    "data": file_base64  # Decrypted base64 data
                                 })
-                                logger.info(f"[W4-DETAIL] Added document: {folder_name}/{file_name}")
+                                logger.info(f"[W4-DETAIL] Added document: {folder_name}/{file_name} (decrypted: {file_base64 is not None})")
                     except Exception as folder_err:
                         logger.error(f"[W4-DETAIL] Error reading folder {folder_path}: {folder_err}")
         except Exception as upload_err:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, FileText, Upload, Camera, Globe, AlertTriangle } from 'lucide-react'
@@ -40,6 +40,7 @@ export default function I9CompleteStep({
   language = 'en',
   employee,
   property,
+  sessionToken,
   canProceedToNext: _canProceedToNext
 }: StepProps) {
   // State for tabs
@@ -67,12 +68,16 @@ export default function I9CompleteStep({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [remotePdfUrl, setRemotePdfUrl] = useState<string | null>(null)
+  const [inlinePdfData, setInlinePdfData] = useState<string | null>(null)
   const [documentMetadata, setDocumentMetadata] = useState<StepDocumentMetadata | null>(null)
   const [metadataLoading, setMetadataLoading] = useState(false)
   const [metadataError, setMetadataError] = useState<string | null>(null)
   const [metadataRequested, setMetadataRequested] = useState(false)
   const [uploadedDocsMetadata, setUploadedDocsMetadata] = useState<any>(null)
-  const [sessionToken, setSessionToken] = useState<string>('')
+
+  // Use refs to track component lifecycle (persists across renders)
+  const isMountedRef = useRef(true)
+  const fetchStartedRef = useRef(false)
 
   // Track which files are missing from Supabase
   const [missingFiles, setMissingFiles] = useState<{
@@ -98,7 +103,10 @@ export default function I9CompleteStep({
     isSigned,
     ssnMismatch,
     signatureData,
-    signedFormDataHash
+    signedFormDataHash,
+    inlinePdfData,
+    remotePdfUrl,
+    documentMetadata
   }
   
   // Debug log citizenship status and check for SSN mismatches
@@ -127,12 +135,6 @@ export default function I9CompleteStep({
       sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(saveData))
     }
   })
-
-  // Get session token
-  useEffect(() => {
-    const token = sessionStorage.getItem('hotel_onboarding_token') || ''
-    setSessionToken(token)
-  }, [])
 
   // Load existing data
   useEffect(() => {
@@ -172,6 +174,12 @@ export default function I9CompleteStep({
           if (dataToUse.remotePdfUrl) {
             setRemotePdfUrl(dataToUse.remotePdfUrl as string)
             console.log('Restored remote I-9 PDF URL:', dataToUse.remotePdfUrl)
+          }
+
+          // ✅ FIX: Restore decrypted inline PDF data if available
+          if (dataToUse.inlinePdfData) {
+            setInlinePdfData(dataToUse.inlinePdfData as string)
+            console.log('Restored inline I-9 PDF data from session, length:', dataToUse.inlinePdfData.length)
           }
         } catch (e) {
           console.error('Failed to parse saved data:', e)
@@ -289,12 +297,22 @@ export default function I9CompleteStep({
 
   // Fetch latest I-9 document metadata from backend when available
   useEffect(() => {
+    console.log('I9CompleteStep: useEffect running, isMountedRef.current:', isMountedRef.current, 'fetchStarted:', fetchStartedRef.current)
+
     if (!sessionToken || !employee?.id) {
+      console.log('I9CompleteStep: No session token or employee ID, skipping')
+      return
+    }
+
+    // Skip if we've already started fetching
+    if (fetchStartedRef.current) {
+      console.log('I9CompleteStep: Fetch already started, skipping')
       return
     }
 
     // Skip if we've already requested and have the data
     if (metadataRequested && documentMetadata?.signed_url) {
+      console.log('I9CompleteStep: Already requested and have data, skipping')
       return
     }
 
@@ -303,32 +321,64 @@ export default function I9CompleteStep({
                         !remotePdfUrl ||
                         (isSigned && !documentMetadata?.signed_url)
 
+    console.log('I9CompleteStep: shouldFetch?', shouldFetch, {
+      isComplete: progress.completedSteps.includes(currentStep.id),
+      hasRemotePdfUrl: !!remotePdfUrl,
+      isSigned,
+      hasSignedUrl: !!documentMetadata?.signed_url
+    })
+
     if (!shouldFetch) {
       return
     }
 
-    let isMounted = true
+    // Mark that we've started fetching
+    fetchStartedRef.current = true
+    console.log('I9CompleteStep: Starting fetch, setting isMounted to true')
+    isMountedRef.current = true
     setMetadataRequested(true)
     setMetadataLoading(true)
     setMetadataError(null)
 
-    // Use 'i9-section1' as the step ID for fetching I-9 document
-    fetchStepDocumentMetadata(employee.id, 'i9-section1', sessionToken)
+    // ✅ FIX: Use 'i9-complete' to fetch the COMPLETE signed I-9 (Section 1 + Section 2)
+    // NOT 'i9-section1' which only has Section 1
+    fetchStepDocumentMetadata(employee.id, 'i9-complete', sessionToken)
       .then(async response => {
-        if (!isMounted) {
+        console.log('I9CompleteStep: Received document metadata response:', response)
+        console.log('I9CompleteStep: Response has pdf field?', 'pdf' in response, 'PDF length:', response.pdf?.length)
+        console.log('I9CompleteStep: isMounted?', isMountedRef.current)
+        if (!isMountedRef.current) {
+          console.log('I9CompleteStep: Component not mounted, skipping')
           return
         }
+
         if (response.document_metadata) {
           setDocumentMetadata(response.document_metadata)
-          if (response.document_metadata.signed_url) {
-            // Verify the URL is still valid by doing a HEAD request
+
+          // ✅ FIX: Use decrypted PDF data from backend
+          if (response.pdf) {
+            setInlinePdfData(response.pdf)
+            console.log('I9CompleteStep: ✅ Loaded decrypted I-9 PDF from backend, length:', response.pdf.length)
+
+            // Clear remote URL since we have decrypted data
+            setRemotePdfUrl(null)
+
+            // If we have a signed document, ensure states are set
+            if (response.has_document) {
+              setIsSigned(true)
+              setFormComplete(true)
+              setSupplementsComplete(true)
+              setDocumentsComplete(true)
+            }
+          } else if (response.document_metadata.signed_url) {
+            // Fallback: Verify the URL is still valid by doing a HEAD request
             try {
               const checkResponse = await fetch(response.document_metadata.signed_url, {
                 method: 'HEAD'
               })
               if (checkResponse.ok) {
                 setRemotePdfUrl(response.document_metadata.signed_url)
-                console.log('Found existing I-9 document in Supabase:', response.document_metadata.signed_url)
+                console.log('Found existing I-9 document in Supabase (fallback URL):', response.document_metadata.signed_url)
 
                 // If we have a signed document, ensure states are set
                 if (response.has_document) {
@@ -363,7 +413,7 @@ export default function I9CompleteStep({
         }
       })
       .catch(error => {
-        if (isMounted) {
+        if (isMountedRef.current) {
           console.log('Document metadata not found or error:', error)
           // Don't set error if document simply doesn't exist yet
           if (error instanceof Error && !error.message.includes('404')) {
@@ -372,15 +422,22 @@ export default function I9CompleteStep({
         }
       })
       .finally(() => {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setMetadataLoading(false)
         }
       })
 
     return () => {
-      isMounted = false
+      console.log('I9CompleteStep: Cleanup running, setting isMounted to false, fetchStarted:', fetchStartedRef.current)
+      // Don't reset isMounted if we've started fetching - let the fetch complete
+      if (!fetchStartedRef.current) {
+        isMountedRef.current = false
+      } else {
+        console.log('I9CompleteStep: Fetch in progress, keeping isMounted = true')
+      }
     }
-  }, [sessionToken, employee?.id, currentStep.id, progress.completedSteps, metadataRequested, documentMetadata?.signed_url, remotePdfUrl, isSigned])
+  }, [sessionToken, employee?.id, currentStep.id, progress.completedSteps, isSigned])
+  // Removed: metadataRequested, documentMetadata?.signed_url, remotePdfUrl - these cause unnecessary re-runs
 
   // Check for uploaded I-9 documents (DL/SSN) and validate their availability
   useEffect(() => {
@@ -1172,7 +1229,7 @@ export default function I9CompleteStep({
   }
 
   const renderDocumentPreview = () => {
-    if (pdfUrl || remotePdfUrl) {
+    if (pdfUrl || inlinePdfData || remotePdfUrl) {
       return (
         <div>
           {documentMetadata && (
@@ -1216,7 +1273,7 @@ export default function I9CompleteStep({
           {!metadataError && (
             <PDFViewer
               pdfUrl={remotePdfUrl || documentMetadata?.signed_url || undefined}
-              pdfData={!remotePdfUrl && !documentMetadata?.signed_url ? pdfUrl ?? undefined : undefined}
+              pdfData={inlinePdfData || pdfUrl || undefined}
               height="600px"
               title="Signed I-9 Form"
             />

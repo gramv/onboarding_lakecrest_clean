@@ -14,6 +14,7 @@ interface UploadedDocument {
 
 interface DocumentPDFViewerProps {
   pdfUrl: string;
+  pdfDataUrl?: string;
   documentName: string;
   uploadedDocs?: UploadedDocument[];
   showSideBySide?: boolean;
@@ -21,6 +22,7 @@ interface DocumentPDFViewerProps {
 
 export const DocumentPDFViewer: React.FC<DocumentPDFViewerProps> = ({
   pdfUrl,
+  pdfDataUrl,
   documentName,
   uploadedDocs = [],
   showSideBySide = false
@@ -36,8 +38,13 @@ export const DocumentPDFViewer: React.FC<DocumentPDFViewerProps> = ({
     setImageModalOpen(true);
   };
 
+  const viewerSrc = pdfDataUrl || pdfUrl;
+
   const handleDownloadPDF = () => {
-    window.open(pdfUrl, '_blank');
+    const target = pdfUrl || pdfDataUrl;
+    if (target) {
+      window.open(target, '_blank');
+    }
   };
 
   return (
@@ -63,7 +70,7 @@ export const DocumentPDFViewer: React.FC<DocumentPDFViewerProps> = ({
         <div className={`${showSideBySide && uploadedDocs.length > 0 ? 'w-1/2' : 'w-full'} border-r`}>
           <div className="h-full overflow-auto bg-gray-100 p-4">
             <iframe
-              src={pdfUrl}
+              src={viewerSrc}
               className="w-full h-full border-0 rounded-lg shadow-lg bg-white"
               title={documentName}
             />
@@ -153,4 +160,3 @@ export const DocumentPDFViewer: React.FC<DocumentPDFViewerProps> = ({
 };
 
 export default DocumentPDFViewer;
-

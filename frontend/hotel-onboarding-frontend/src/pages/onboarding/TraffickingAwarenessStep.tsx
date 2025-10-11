@@ -115,16 +115,22 @@ export default function TraffickingAwarenessStep({
         setTrainingComplete(true)
         setIsLoadingPdf(true)
 
-        // ✅ FIX #6: Add token to API call
+        // ✅ FIX #6: Add token to API call and handle decrypted PDF data
         if (employee?.id && !employee.id.startsWith('demo-') && sessionToken) {
           try {
             const response = await axios.get(
               `${getApiUrl()}/onboarding/${employee.id}/documents/human-trafficking?token=${sessionToken}`
             )
 
-            if (response.data?.success && response.data?.data?.document_metadata?.signed_url) {
-              setRemotePdfUrl(response.data.data.document_metadata.signed_url)
-              console.log('✅ Fetched signed PDF from database:', response.data.data.document_metadata.signed_url)
+            if (response.data?.success) {
+              // ✅ FIX: Prioritize decrypted pdf_data over signed_url (encrypted)
+              if (response.data?.data?.pdf_data) {
+                setPdfUrl(`data:application/pdf;base64,${response.data.data.pdf_data}`)
+                console.log('✅ Fetched and decrypted PDF from database (base64)')
+              } else if (response.data?.data?.document_metadata?.signed_url) {
+                setRemotePdfUrl(response.data.data.document_metadata.signed_url)
+                console.log('✅ Fetched signed PDF URL from database:', response.data.data.document_metadata.signed_url)
+              }
             }
           } catch (error) {
             console.error('❌ Failed to fetch signed PDF from database:', error)
@@ -368,8 +374,8 @@ export default function TraffickingAwarenessStep({
             {/* ✅ FIX: Use PDFViewer (like I-9/W-4) to handle both base64 and remote URLs */}
             <div className="max-w-4xl mx-auto">
               <PDFViewer
-                pdfUrl={remotePdfUrl || undefined}
-                pdfData={!remotePdfUrl ? pdfUrl ?? undefined : undefined}
+                pdfData={pdfUrl ?? undefined}
+                pdfUrl={!pdfUrl ? remotePdfUrl ?? undefined : undefined}
                 height="600px"
                 title="Signed Human Trafficking Awareness Certificate"
               />

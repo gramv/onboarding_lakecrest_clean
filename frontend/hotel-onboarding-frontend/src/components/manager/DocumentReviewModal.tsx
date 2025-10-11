@@ -30,6 +30,7 @@ export const DocumentReviewModal: React.FC<DocumentReviewModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState('');
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([]);
+  const [pdfDataUrl, setPdfDataUrl] = useState<string | undefined>();
   const [notes, setNotes] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -46,6 +47,7 @@ export const DocumentReviewModal: React.FC<DocumentReviewModalProps> = ({
     try {
       setLoading(true);
       setError(null);
+      setPdfDataUrl(undefined);
 
       const data = await DocumentVerificationService.getDocumentForReview(
         employeeId,
@@ -53,6 +55,7 @@ export const DocumentReviewModal: React.FC<DocumentReviewModalProps> = ({
       );
 
       setPdfUrl(data.pdfUrl);
+      setPdfDataUrl(data.pdfDataUrl ?? (data.pdfData ? `data:application/pdf;base64,${data.pdfData}` : undefined));
       setUploadedDocs(data.uploadedDocsUrls || []);
     } catch (err: any) {
       console.error('Error loading document:', err);
@@ -158,6 +161,7 @@ export const DocumentReviewModal: React.FC<DocumentReviewModalProps> = ({
             ) : (
               <DocumentPDFViewer
                 pdfUrl={pdfUrl}
+                pdfDataUrl={pdfDataUrl}
                 documentName={documentName}
                 uploadedDocs={uploadedDocs}
                 showSideBySide={showSideBySide}
@@ -261,4 +265,3 @@ export const DocumentReviewModal: React.FC<DocumentReviewModalProps> = ({
 };
 
 export default DocumentReviewModal;
-

@@ -1,0 +1,52 @@
+# Production Environment Configuration
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control!
+
+# AWS Configuration
+aws_region  = "us-east-1"
+environment = "prod"
+app_name    = "hotel-onboarding"
+
+# Domain Configuration
+domain_name     = "yourdomain.com"
+certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxx"  # Create in ACM first
+
+# Networking
+vpc_cidr = "10.0.0.0/16"
+
+# Database Configuration
+db_instance_class    = "db.t4g.small"  # For production, consider db.t4g.medium or larger
+db_allocated_storage = 20              # GB
+db_name              = "hotel_onboarding"
+db_username          = "admin"
+# db_password - Set via environment variable: export TF_VAR_db_password="your-secure-password"
+db_multi_az          = true            # Enable for production
+db_backup_retention  = 7               # Days
+
+# Redis Configuration
+redis_node_type = "cache.t4g.micro"
+redis_num_nodes = 1
+
+# ECS Configuration
+ecs_task_cpu       = "512"   # 0.5 vCPU
+ecs_task_memory    = "1024"  # 1 GB
+ecs_desired_count  = 2       # Number of tasks to run
+ecs_min_capacity   = 2       # Minimum for auto-scaling
+ecs_max_capacity   = 10      # Maximum for auto-scaling
+
+# Application Configuration
+frontend_url = "https://yourdomain.com"
+
+# Secrets - Set via environment variables:
+# export TF_VAR_jwt_secret="your-super-secret-jwt-key-min-32-chars"
+# export TF_VAR_smtp_username="your-email@gmail.com"
+# export TF_VAR_smtp_password="your-gmail-app-password"
+
+# Monitoring
+alarm_email = "alerts@yourdomain.com"
+
+# Cost Optimization Notes:
+# - For development: Use db.t4g.micro, ecs_desired_count=1, disable multi_az
+# - For staging: Use db.t4g.small, ecs_desired_count=1, enable multi_az
+# - For production: Use db.t4g.medium+, ecs_desired_count=2+, enable multi_az
+

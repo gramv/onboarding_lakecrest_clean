@@ -15,6 +15,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.exceptions import InvalidTag
+from cryptography.fernet import Fernet, InvalidToken as FernetInvalidToken
 
 from app.config.encryption_config import (
     ENCRYPTION_CONFIG,
@@ -139,8 +140,8 @@ class EncryptionService:
                 plaintext = str(value).encode('utf-8')
             
             # Generate random salt and nonce
-            salt = secrets.token_bytes(ENCRYPTION_CONFIG["salt_bytes"])
-            nonce = secrets.token_bytes(ENCRYPTION_CONFIG["nonce_bytes"])
+            salt = secrets.token_bytes(ENCRYPTION_CONFIG["salt_length"])  # bytes
+            nonce = secrets.token_bytes(ENCRYPTION_CONFIG["nonce_length"])  # bytes
             
             # Derive key
             key = self._derive_key(salt, self.current_key_version)
@@ -194,14 +195,23 @@ class EncryptionService:
         if encrypted_data is None:
             return None
         
-        # Handle backward compatibility - if it's not encrypted, return as-is
+        # Handle backward compatibility
         if isinstance(encrypted_data, str) and not encrypted_data.startswith('{'):
-            # Check if it might be a plain value (backward compatibility)
-            try:
-                json.loads(encrypted_data)
-            except:
-                # Not JSON, might be plain text
-                return encrypted_data
+            # Try legacy Fernet decrypt if token-like
+            if encrypted_data.startswith('gAAAA'):
+                legacy_key = os.getenv('FIELD_ENCRYPTION_KEY')
+                if legacy_key:
+                    try:
+                        f = Fernet(legacy_key.encode())
+                        decrypted = f.decrypt(encrypted_data.encode()).decode()
+                        if AUDIT_CONFIG.get("log_decryption_events") and field_name:
+                            logger.info(f"Decrypted legacy Fernet field '{field_name}'")
+                        return decrypted
+                    except Exception as fe:
+                        logger.warning(f"Legacy Fernet decrypt failed for '{field_name}': {fe}")
+                        # Fall through to treat as plaintext
+            # Not JSON, treat as plain text
+            return encrypted_data
         
         try:
             # Parse encrypted data structure

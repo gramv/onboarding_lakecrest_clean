@@ -165,7 +165,13 @@ export class DocumentVerificationService {
         throw new Error(`Failed to fetch ${documentType} document`);
       }
 
-      return await response.json();
+      const payload = await response.json();
+
+      if (payload?.pdfData && !payload?.pdfDataUrl) {
+        payload.pdfDataUrl = `data:application/pdf;base64,${payload.pdfData}`;
+      }
+
+      return payload;
     } catch (error) {
       console.error(`Error fetching ${documentType}:`, error);
       throw error;

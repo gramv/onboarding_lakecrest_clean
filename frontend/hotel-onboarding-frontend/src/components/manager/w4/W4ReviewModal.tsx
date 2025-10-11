@@ -17,6 +17,7 @@ interface UploadedDocument {
   document_type: string;
   file_name: string;
   url: string;
+  data?: string;  // Decrypted base64 data
 }
 
 interface W4ReviewData {
@@ -243,9 +244,11 @@ export const W4ReviewModal: React.FC<W4ReviewModalProps> = ({
                         {/* All Uploaded Documents */}
                         {data?.uploadedDocuments && data.uploadedDocuments.length > 0 ? (
                           <ImageViewer images={data.uploadedDocuments.map(doc => ({
-                            type: doc.document_type,
+                            id: doc.id,
+                            document_type: doc.document_type,
+                            file_name: doc.file_name,
                             url: doc.url,
-                            filename: doc.file_name
+                            data: doc.data  // Decrypted base64 data
                           }))} />
                         ) : (
                           <div className="text-center py-8 text-gray-500">

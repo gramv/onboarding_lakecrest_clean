@@ -239,6 +239,19 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
 
               // ✅ FIX: Clean large data before saving to sessionStorage
               // Remove base64 files that can exceed quota (especially for direct-deposit)
+              // But PRESERVE document-related fields (inlinePdfData, remotePdfUrl, documentMetadata)
+
+              // First, get existing session data to preserve document fields
+              const existingData = sessionStorage.getItem(`onboarding_${stepId}_data`)
+              let existingParsed: any = {}
+              if (existingData) {
+                try {
+                  existingParsed = JSON.parse(existingData)
+                } catch (e) {
+                  console.warn(`Failed to parse existing session data for ${stepId}`)
+                }
+              }
+
               const cleanFormData = { ...formData }
 
               // Remove large file data
@@ -262,6 +275,21 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
                   ipAddress: cleanFormData.signatureData.ipAddress,
                   userAgent: cleanFormData.signatureData.userAgent
                 }
+              }
+
+              // ✅ PRESERVE document-related fields from existing sessionStorage
+              // These are fetched separately via documentService and should not be overwritten
+              if (existingParsed.inlinePdfData) {
+                cleanFormData.inlinePdfData = existingParsed.inlinePdfData
+                console.log(`✅ Preserved inlinePdfData for ${stepId} (${existingParsed.inlinePdfData.length} chars)`)
+              }
+              if (existingParsed.remotePdfUrl) {
+                cleanFormData.remotePdfUrl = existingParsed.remotePdfUrl
+                console.log(`✅ Preserved remotePdfUrl for ${stepId}`)
+              }
+              if (existingParsed.documentMetadata) {
+                cleanFormData.documentMetadata = existingParsed.documentMetadata
+                console.log(`✅ Preserved documentMetadata for ${stepId}`)
               }
 
               try {
@@ -452,6 +480,19 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
         flowController.setStepData(stepId, data)
 
         // ✅ FIX: Clean large data before saving to sessionStorage
+        // But PRESERVE document-related fields (inlinePdfData, remotePdfUrl, documentMetadata)
+
+        // First, get existing session data to preserve document fields
+        const existingData = sessionStorage.getItem(`onboarding_${stepId}_data`)
+        let existingParsed: any = {}
+        if (existingData) {
+          try {
+            existingParsed = JSON.parse(existingData)
+          } catch (e) {
+            console.warn(`Failed to parse existing session data for ${stepId}`)
+          }
+        }
+
         const cleanData = { ...data }
 
         // Remove large file data
@@ -475,6 +516,18 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
             ipAddress: cleanData.signatureData.ipAddress,
             userAgent: cleanData.signatureData.userAgent
           }
+        }
+
+        // ✅ PRESERVE document-related fields from existing sessionStorage
+        // These are fetched separately via documentService and should not be overwritten
+        if (existingParsed.inlinePdfData && !cleanData.inlinePdfData) {
+          cleanData.inlinePdfData = existingParsed.inlinePdfData
+        }
+        if (existingParsed.remotePdfUrl && !cleanData.remotePdfUrl) {
+          cleanData.remotePdfUrl = existingParsed.remotePdfUrl
+        }
+        if (existingParsed.documentMetadata && !cleanData.documentMetadata) {
+          cleanData.documentMetadata = existingParsed.documentMetadata
         }
 
         try {

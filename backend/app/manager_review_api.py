@@ -499,8 +499,6 @@ async def approve_review(
 
         logger.info(f"Manager {current_user.id} approved review for employee {employee_id}")
 
-        # TODO: Send notification to HR for final approval
-
         return {
             "success": True,
             "message": "Employee onboarding approved successfully"

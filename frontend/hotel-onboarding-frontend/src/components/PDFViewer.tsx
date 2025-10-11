@@ -25,21 +25,28 @@ export default function PDFViewer({
 
     if (pdfData) {
       try {
+        console.log('PDFViewer: Decoding base64 PDF data, length:', pdfData.length)
         const bytes = Uint8Array.from(atob(pdfData), c => c.charCodeAt(0))
+        console.log('PDFViewer: Decoded bytes, length:', bytes.length)
         const blob = new Blob([bytes], { type: 'application/pdf' })
+        console.log('PDFViewer: Created blob, size:', blob.size)
         url = URL.createObjectURL(blob)
+        console.log('PDFViewer: Created blob URL:', url)
         setBlobUrl(url)
         setError(null)
         setLoading(false)
       } catch (err) {
+        console.error('PDFViewer: Error rendering PDF:', err)
         setError('Unable to render PDF preview')
         setLoading(false)
       }
     } else if (pdfUrl) {
+      console.log('PDFViewer: Using PDF URL:', pdfUrl)
       setBlobUrl(pdfUrl)
       setError(null)
       setLoading(false)
     } else {
+      console.log('PDFViewer: No PDF data or URL available')
       setBlobUrl(null)
       setError('No PDF available')
       setLoading(false)

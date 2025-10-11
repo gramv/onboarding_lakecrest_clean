@@ -105,7 +105,7 @@ const NewHireSummaryModal: React.FC<NewHireSummaryModalProps> = ({
       const result = await DocumentVerificationService.getNewHireSummary(employeeId);
       const payload = result?.data?.summary || {};
       const selections = Array.isArray(payload.healthInsuranceSelections)
-        ? payload.healthInsuranceSelections
+        ? payload.healthInsuranceSelections.filter((key: string) => typeof key === 'string')
         : [];
       const nextState: SummaryFormState = {
         ...emptyState,

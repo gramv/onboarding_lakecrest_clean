@@ -13,24 +13,14 @@ class EncryptionLevel(Enum):
     LOW = "LOW"         # Standard PII
     NONE = "NONE"       # No encryption needed
 
-# Get encryption key from environment - REQUIRED, no fallback
-ENCRYPTION_KEY_RAW = os.getenv('ENCRYPTION_KEY')
-if not ENCRYPTION_KEY_RAW:
-    raise RuntimeError(
-        "❌ ENCRYPTION_KEY environment variable not set!\n"
-        "   This is REQUIRED for storing sensitive data (SSN, bank accounts, etc.)\n"
-        "   \n"
-        "   To generate a secure key:\n"
-        "   python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'\n"
-        "   \n"
-        "   Then add to your .env file:\n"
-        "   ENCRYPTION_KEY=<your-generated-key>\n"
-        "   \n"
-        "   ⚠️  IMPORTANT: Backup this key securely! Loss = data loss!"
-    )
-
-ENCRYPTION_KEY = ENCRYPTION_KEY_RAW.encode()[:32]
+# Algorithm settings (keys are provided via services; do not enforce key presence here)
 ENCRYPTION_ALGORITHM = 'AES-256-GCM'
+
+# Optional env-driven key version (defaults to 1). Services may read this.
+try:
+    KEY_VERSION = int(os.getenv('CURRENT_ENCRYPTION_KEY_VERSION', '1'))
+except ValueError:
+    KEY_VERSION = 1
 
 # Fields that require encryption at database level
 ENCRYPTED_FIELDS: Set[str] = {
@@ -116,6 +106,7 @@ ENCRYPTION_SETTINGS = {
     'salt_length': 16,
     'tag_length': 16,
     'nonce_length': 12,
+    'key_version': KEY_VERSION,
 }
 
 def should_encrypt_field(field_name: str) -> bool:

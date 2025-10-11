@@ -7,6 +7,7 @@ interface UploadedImage {
   document_type: string;
   file_name: string;
   url: string;
+  data?: string;  // Decrypted base64 data
 }
 
 interface ImageViewerProps {
@@ -61,7 +62,7 @@ const FullScreenModal: React.FC<FullScreenModalProps> = ({ image, onClose }) => 
         <div className="flex-1 overflow-auto p-4 bg-gray-100">
           <div className="flex items-center justify-center min-h-full">
             <img
-              src={image.url}
+              src={image.data ? `data:image/jpeg;base64,${image.data}` : image.url}
               alt={image.file_name}
               style={{ width: `${zoom}%` }}
               className="max-w-none"
@@ -118,7 +119,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ images }) => {
                 {/* Image Preview */}
                 <div className="relative h-56 bg-gray-50 group">
                   <img
-                    src={image.url}
+                    src={image.data ? `data:image/jpeg;base64,${image.data}` : image.url}
                     alt={image.file_name}
                     className="w-full h-full object-contain p-2"
                   />

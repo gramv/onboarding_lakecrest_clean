@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getApiUrl } from '@/config/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -51,11 +51,16 @@ export default function W4FormStep({
   const [autoFillNotification, setAutoFillNotification] = useState<string | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [remotePdfUrl, setRemotePdfUrl] = useState<string | null>(null)
+  const [inlinePdfData, setInlinePdfData] = useState<string | null>(null)
   const [documentMetadata, setDocumentMetadata] = useState<StepDocumentMetadata | null>(null)
   const [metadataLoading, setMetadataLoading] = useState(false)
   const [metadataError, setMetadataError] = useState<string | null>(null)
   const [sessionToken, setSessionToken] = useState<string>('')
   const [hasStoredDocument, setHasStoredDocument] = useState(false)
+
+  // Use refs to track component lifecycle (persists across renders)
+  const isMountedRef = useRef(true)
+  const fetchStartedRef = useRef(false)
 
   // Validation hooks
   const { errors, fieldErrors, validate } = useStepValidation(w4FormValidator)
@@ -67,13 +72,24 @@ export default function W4FormStep({
     formData,
     showReview,
     isSigned,
-    pdfUrl
+    pdfUrl,
+    inlinePdfData,
+    remotePdfUrl,
+    documentMetadata
   }
 
   // Auto-save hook
   const { saveStatus } = useAutoSave(autoSaveData, {
     onSave: async (data) => {
-    await saveProgress(currentStep.id, data)
+      await saveProgress(currentStep.id, data)
+      // Also save to sessionStorage with metadata
+      const saveData = {
+        ...data,
+        documentMetadata,
+        remotePdfUrl,
+        inlinePdfData
+      }
+      sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify(saveData))
     }
   })
 
@@ -90,6 +106,8 @@ export default function W4FormStep({
   }, [])
 
   useEffect(() => {
+    console.log('W4FormStep: useEffect running, isMountedRef.current:', isMountedRef.current, 'fetchStarted:', fetchStartedRef.current)
+
     const loadFormData = async () => {
       try {
         setMetadataLoading(true)
@@ -97,15 +115,58 @@ export default function W4FormStep({
 
         // Load metadata first if employee has saved docs
         if (employee?.id && !employee.id.startsWith('demo-') && sessionToken) {
+          // Determine if we should fetch metadata
+          const isStepComplete = progress.completedSteps.includes(currentStep.id)
+          const hasInlineData = !!inlinePdfData
+          const hasRemoteUrl = !!remotePdfUrl
+
+          const shouldFetch = isStepComplete || !hasInlineData || (isSigned && !hasRemoteUrl)
+
+          console.log('W4FormStep: shouldFetch?', shouldFetch, {
+            isStepComplete,
+            hasInlineData,
+            hasRemoteUrl,
+            isSigned
+          })
+
+          if (!shouldFetch) {
+            console.log('W4FormStep: Skipping fetch - already have data')
+            return
+          }
+
           try {
+            // Mark that we've started fetching
+            if (!fetchStartedRef.current) {
+              fetchStartedRef.current = true
+              console.log('W4FormStep: Starting metadata fetch, setting isMounted to true')
+              isMountedRef.current = true
+            }
+
             const [metadataResponse, documents] = await Promise.all([
               fetchStepDocumentMetadata(employee.id, currentStep.id, sessionToken),
               listStepDocuments(employee.id, currentStep.id, sessionToken)
             ])
 
-            if (metadataResponse.document_metadata?.signed_url) {
+            console.log('W4FormStep: Received document metadata response:', metadataResponse)
+            console.log('W4FormStep: Response has pdf field?', 'pdf' in metadataResponse, 'PDF length:', metadataResponse.pdf?.length)
+            console.log('W4FormStep: isMounted?', isMountedRef.current)
+
+            if (!isMountedRef.current) {
+              console.log('W4FormStep: Component not mounted, skipping')
+              return
+            }
+
+            // Handle decrypted PDF data from backend
+            if (metadataResponse.pdf) {
+              console.log('W4FormStep: ✅ Loaded decrypted W-4 PDF from backend, length:', metadataResponse.pdf.length)
+              setInlinePdfData(metadataResponse.pdf) // Set decrypted PDF data
+              setPdfUrl(metadataResponse.pdf) // Also set pdfUrl for backward compatibility
+              setRemotePdfUrl(null) // Clear encrypted URL
+            } else if (metadataResponse.document_metadata?.signed_url) {
+              console.log('W4FormStep: Using signed URL from metadata')
               setRemotePdfUrl(metadataResponse.document_metadata.signed_url)
             }
+
             setDocumentMetadata(metadataResponse.document_metadata ?? null)
             setHasStoredDocument((metadataResponse.document_metadata?.signed_url?.length ?? 0) > 0 || documents.length > 0)
 
@@ -114,7 +175,9 @@ export default function W4FormStep({
             }
           } catch (metaError) {
             console.error('Failed to load W-4 document metadata:', metaError)
-            setMetadataError(metaError instanceof Error ? metaError.message : 'Unable to load stored W-4 document')
+            if (isMountedRef.current) {
+              setMetadataError(metaError instanceof Error ? metaError.message : 'Unable to load stored W-4 document')
+            }
           }
         }
         
@@ -175,6 +238,13 @@ export default function W4FormStep({
               }
               if (parsed.inlinePdfData) {
                 savedInlinePdf = parsed.inlinePdfData
+              }
+              // Restore document metadata and remote PDF URL
+              if (parsed.documentMetadata) {
+                setDocumentMetadata(parsed.documentMetadata)
+              }
+              if (parsed.remotePdfUrl) {
+                setRemotePdfUrl(parsed.remotePdfUrl)
               }
             } else {
               // Flat structure - data directly in parsed object
@@ -342,8 +412,11 @@ export default function W4FormStep({
           setIsSigned(true)
           setShowReview(false)
           if (savedInlinePdf) {
+            console.log('W4FormStep: Restoring inline PDF data from saved state, length:', savedInlinePdf.length)
+            setInlinePdfData(savedInlinePdf)
             setPdfUrl(savedInlinePdf)
           } else if (savedPdfUrl) {
+            console.log('W4FormStep: Restoring PDF URL from saved state:', savedPdfUrl)
             setPdfUrl(savedPdfUrl)
           }
         }
@@ -353,8 +426,18 @@ export default function W4FormStep({
         setMetadataLoading(false)
       }
     }
-    
+
     loadFormData()
+
+    return () => {
+      console.log('W4FormStep: Cleanup running, fetchStarted:', fetchStartedRef.current)
+      // Don't reset isMounted if we've started fetching - let the fetch complete
+      if (!fetchStartedRef.current) {
+        isMountedRef.current = false
+      } else {
+        console.log('W4FormStep: Fetch in progress, keeping isMounted = true')
+      }
+    }
   }, [currentStep.id, language, employee?.id, sessionToken]) // Removed progress.completedSteps to prevent reload after signing
 
   const handleFormComplete = async (data: any) => {
@@ -805,8 +888,8 @@ export default function W4FormStep({
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <PDFViewer
-                  pdfUrl={remotePdfUrl || documentMetadata?.signed_url || undefined}
-                  pdfData={!remotePdfUrl && !documentMetadata?.signed_url ? pdfUrl ?? undefined : undefined}
+                  pdfData={inlinePdfData || pdfUrl || undefined}
+                  pdfUrl={!inlinePdfData && !pdfUrl ? (remotePdfUrl || documentMetadata?.signed_url || undefined) : undefined}
                   height="600px"
                 />
               </CardContent>

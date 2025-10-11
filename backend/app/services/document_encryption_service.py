@@ -118,7 +118,9 @@ class DocumentEncryptionService:
                 'original_size': len(file_content),
                 'encrypted_size': len(encrypted_content),
                 'document_type': document_type,
-                'employee_id': employee_id
+                'employee_id': employee_id,
+                # Minimal version metadata to support future rotation by env
+                'version': int(os.getenv('CURRENT_ENCRYPTION_KEY_VERSION', '1'))
             }
             
             logger.info(

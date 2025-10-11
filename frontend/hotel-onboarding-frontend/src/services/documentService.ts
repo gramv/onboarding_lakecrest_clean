@@ -306,6 +306,7 @@ export interface StepDocumentMetadata {
 export interface StepDocumentResponse {
   document_metadata: StepDocumentMetadata | null
   has_document: boolean
+  pdf?: string  // Base64-encoded decrypted PDF content
 }
 
 export async function fetchStepDocumentMetadata(
@@ -340,7 +341,8 @@ export async function fetchStepDocumentMetadata(
 
   return {
     document_metadata: data.document_metadata ?? null,
-    has_document: Boolean(data.has_document)
+    has_document: Boolean(data.has_document),
+    pdf: data.pdf ?? undefined  // Include decrypted PDF content if available
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getApiUrl } from '@/config/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -349,6 +349,11 @@ export default function CompanyPoliciesStep({
   const [metadataError, setMetadataError] = useState<string | null>(null)
   const [metadataRequested, setMetadataRequested] = useState(false)
 
+  // Use a ref to track if component is mounted (persists across renders)
+  const isMountedRef = useRef(true)
+  // Use a ref to track if we've already started fetching (prevents double-fetch)
+  const fetchStartedRef = useRef(false)
+
   const hrContactEmail = singleStepMeta?.hrContactEmail || singleStepMeta?.hr_contact_email
 
   const employeeIdEncoded = React.useMemo(() => {
@@ -511,6 +516,12 @@ export default function CompanyPoliciesStep({
           console.log('Restored remote PDF URL:', parsed.remotePdfUrl)
         }
 
+        // Restore decrypted PDF data if available
+        if (parsed.inlinePdfData) {
+          setInlinePdfData(parsed.inlinePdfData as string)
+          console.log('Restored inline PDF data from session, length:', parsed.inlinePdfData.length)
+        }
+
         // Legacy storage of signedPdfUrl (base64 or URL)
         if (parsed.signedPdfUrl) {
           const legacyValue = parsed.signedPdfUrl as string
@@ -563,12 +574,28 @@ export default function CompanyPoliciesStep({
 
   // Fetch latest document metadata from backend when available
   useEffect(() => {
+    console.log('CompanyPoliciesStep: useEffect running, isMountedRef.current:', isMountedRef.current, 'fetchStarted:', fetchStartedRef.current)
+
     if (!sessionToken || !employee?.id) {
+      console.log('CompanyPoliciesStep: No session token or employee ID, skipping')
+      return
+    }
+
+    // ✅ FIX: Skip fetch if we already have decrypted PDF data
+    if (inlinePdfData && inlinePdfData.length > 1000) {
+      console.log('CompanyPoliciesStep: Already have decrypted PDF data, skipping fetch')
+      return
+    }
+
+    // Skip if we've already started fetching
+    if (fetchStartedRef.current) {
+      console.log('CompanyPoliciesStep: Fetch already started, skipping')
       return
     }
 
     // Skip if we've already requested and have the data
     if (metadataRequested && documentMetadata?.signed_url) {
+      console.log('CompanyPoliciesStep: Already requested and have data, skipping')
       return
     }
 
@@ -577,30 +604,84 @@ export default function CompanyPoliciesStep({
                         !remotePdfUrl ||
                         (isSigned && !documentMetadata?.signed_url)
 
+    console.log('CompanyPoliciesStep: shouldFetch?', shouldFetch, {
+      isComplete: progress.completedSteps.includes(currentStep.id),
+      hasRemotePdfUrl: !!remotePdfUrl,
+      isSigned,
+      hasSignedUrl: !!documentMetadata?.signed_url
+    })
+
     if (!shouldFetch) {
       return
     }
 
-    let isMounted = true
+    // Mark that we've started fetching
+    fetchStartedRef.current = true
+    console.log('CompanyPoliciesStep: Starting fetch, setting isMounted to true')
+    isMountedRef.current = true
     setMetadataRequested(true)
     setMetadataLoading(true)
     setMetadataError(null)
 
     fetchStepDocumentMetadata(employee.id, currentStep.id, sessionToken)
       .then(response => {
-        if (!isMounted) {
+        console.log('CompanyPoliciesStep: Received document metadata response:', response)
+        console.log('CompanyPoliciesStep: Response has pdf field?', 'pdf' in response, 'PDF length:', response.pdf?.length)
+        console.log('CompanyPoliciesStep: isMounted?', isMountedRef.current)
+
+        // ✅ FIX: Save to session storage even if unmounted (data persistence)
+        const savedDataKey = `onboarding_${currentStep.id}_data`
+        try {
+          const currentSaved = JSON.parse(sessionStorage.getItem(savedDataKey) || '{}')
+          const updatedData: any = { ...currentSaved }
+
+          if (response.document_metadata) {
+            updatedData.documentMetadata = response.document_metadata
+          }
+
+          if (response.pdf) {
+            updatedData.inlinePdfData = response.pdf
+            updatedData.remotePdfUrl = null  // Clear remote URL when we have decrypted PDF
+            console.log('CompanyPoliciesStep: ✅ Saved decrypted PDF to session storage, length:', response.pdf.length)
+          } else if (response.document_metadata?.signed_url) {
+            updatedData.remotePdfUrl = response.document_metadata.signed_url
+          }
+
+          sessionStorage.setItem(savedDataKey, JSON.stringify(updatedData))
+          console.log('CompanyPoliciesStep: ✅ Persisted PDF data to session storage')
+        } catch (e) {
+          console.warn('Failed to save PDF to session:', e)
+        }
+
+        // Only update state if component is still mounted
+        if (!isMountedRef.current) {
+          console.log('CompanyPoliciesStep: Component not mounted, data saved to session but skipping state updates')
           return
         }
+
         if (response.document_metadata) {
+          console.log('CompanyPoliciesStep: Setting document metadata')
           setDocumentMetadata(response.document_metadata)
-          if (response.document_metadata.signed_url) {
+        }
+        // Use decrypted PDF content if available (preferred over signed URL)
+        if (response.pdf) {
+          console.log('CompanyPoliciesStep: ✅ Setting inline PDF data, length:', response.pdf.length)
+          setInlinePdfData(response.pdf)
+          // Clear the remote URL so PDFViewer uses the decrypted data instead
+          setRemotePdfUrl(null)
+          console.log('CompanyPoliciesStep: ✅ Cleared remote PDF URL')
+        } else {
+          console.log('CompanyPoliciesStep: ❌ No PDF data in response, using signed URL')
+          // Only use signed URL if no decrypted PDF is available
+          if (response.document_metadata?.signed_url) {
             setRemotePdfUrl(response.document_metadata.signed_url)
+            console.log('CompanyPoliciesStep: Set remote PDF URL from metadata')
           }
         }
         return listStepDocuments(employee.id, currentStep.id, sessionToken)
       })
       .then(documents => {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return
         }
         if ((!documents || documents.length === 0) && !remotePdfUrl && !inlinePdfData) {
@@ -608,7 +689,7 @@ export default function CompanyPoliciesStep({
         }
       })
       .catch(error => {
-        if (isMounted) {
+        if (isMountedRef.current) {
           if (process.env.NODE_ENV === 'development' && !(error instanceof Error && error.message.includes('404'))) {
             console.warn('CompanyPolicies: metadata fetch error', error)
           }
@@ -621,15 +702,18 @@ export default function CompanyPoliciesStep({
         }
       })
       .finally(() => {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setMetadataLoading(false)
         }
       })
 
     return () => {
-      isMounted = false
+      console.log('CompanyPoliciesStep: Cleanup running, setting isMounted to false')
+      isMountedRef.current = false
     }
-  }, [sessionToken, employee?.id, currentStep.id, progress.completedSteps, metadataRequested, documentMetadata?.signed_url, remotePdfUrl, isSigned])
+  }, [sessionToken, employee?.id, currentStep.id, progress.completedSteps, isSigned])
+  // Removed: metadataRequested - was causing double-fetch!
+  // Removed: documentMetadata?.signed_url, remotePdfUrl - these cause unnecessary re-runs
 
 
   // Handle signature completion
@@ -1449,8 +1533,8 @@ export default function CompanyPoliciesStep({
                   </Alert>
 
                   <PDFViewer
-                    pdfUrl={remotePdfUrl || documentMetadata?.signed_url || undefined}
-                    pdfData={!remotePdfUrl && !documentMetadata?.signed_url ? inlinePdfData ?? undefined : undefined}
+                    pdfData={inlinePdfData ?? undefined}
+                    pdfUrl={!inlinePdfData ? (remotePdfUrl || documentMetadata?.signed_url || undefined) : undefined}
                     height="600px"
                     title="Signed Company Policies"
                   />

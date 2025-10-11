@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { getApiUrl } from '@/config/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -48,6 +48,10 @@ export default function DirectDepositStep({
   const [ssnFromI9, setSsnFromI9] = useState<string>('')
   const [hasStoredDocument, setHasStoredDocument] = useState(false)
   const [pendingDocuments, setPendingDocuments] = useState<{ voided?: StepDocumentMetadata; bankLetter?: StepDocumentMetadata }>({})
+
+  // Use refs to track component lifecycle (persists across renders)
+  const isMountedRef = useRef(true)
+  const fetchStartedRef = useRef(false)
 
   const effectiveSessionToken = useMemo(() => sessionToken || sessionTokenState, [sessionToken, sessionTokenState])
 
@@ -160,12 +164,26 @@ export default function DirectDepositStep({
   }, [sessionToken, sessionTokenState])
 
   useEffect(() => {
+    console.log('DirectDepositStep: useEffect running, isMountedRef.current:', isMountedRef.current, 'fetchStarted:', fetchStartedRef.current)
+
     if (!employee?.id || employee.id.startsWith('demo-') || !effectiveSessionToken) {
+      console.log('DirectDepositStep: No employee ID or session token, skipping')
+      return
+    }
+
+    // Skip if we've already started fetching
+    if (fetchStartedRef.current) {
+      console.log('DirectDepositStep: Fetch already started, skipping')
       return
     }
 
     const loadMetadata = async () => {
       try {
+        // Mark that we've started fetching
+        fetchStartedRef.current = true
+        console.log('DirectDepositStep: Starting metadata fetch, setting isMounted to true')
+        isMountedRef.current = true
+
         setMetadataLoading(true)
         setMetadataError(null)
 
@@ -184,7 +202,21 @@ export default function DirectDepositStep({
           listStepDocuments(employee.id, currentStep.id, effectiveSessionToken)
         ])
 
-        if (metadataResponse.document_metadata?.signed_url) {
+        console.log('DirectDepositStep: Received document metadata response:', metadataResponse)
+        console.log('DirectDepositStep: Response has pdf field?', 'pdf' in metadataResponse, 'PDF length:', metadataResponse.pdf?.length)
+        console.log('DirectDepositStep: isMounted?', isMountedRef.current)
+
+        if (!isMountedRef.current) {
+          console.log('DirectDepositStep: Component not mounted, skipping')
+          return
+        }
+
+        // Handle decrypted PDF data from backend
+        if (metadataResponse.pdf) {
+          console.log('DirectDepositStep: ✅ Loaded decrypted Direct Deposit PDF from backend, length:', metadataResponse.pdf.length)
+          setPdfUrl(metadataResponse.pdf) // Set decrypted PDF data
+        } else if (metadataResponse.document_metadata?.signed_url) {
+          console.log('DirectDepositStep: Using signed URL from metadata')
           setPdfUrl(metadataResponse.document_metadata.signed_url)
         }
 
@@ -193,14 +225,29 @@ export default function DirectDepositStep({
         setHasStoredDocument(Boolean(metadataResponse.document_metadata?.signed_url) || documents.length > 0)
       } catch (err) {
         console.error('Failed to load direct deposit metadata:', err)
-        setMetadataError(err instanceof Error ? err.message : 'Unable to load direct deposit document')
+        if (isMountedRef.current) {
+          setMetadataError(err instanceof Error ? err.message : 'Unable to load direct deposit document')
+        }
       } finally {
-        setMetadataLoading(false)
+        if (isMountedRef.current) {
+          setMetadataLoading(false)
+        }
       }
     }
 
     loadMetadata()
-  }, [employee?.id, currentStep.id, effectiveSessionToken, loadLocalFormState, pdfUrl])
+
+    return () => {
+      console.log('DirectDepositStep: Cleanup running, fetchStarted:', fetchStartedRef.current)
+      // Don't reset isMounted if we've started fetching - let the fetch complete
+      if (!fetchStartedRef.current) {
+        isMountedRef.current = false
+      } else {
+        console.log('DirectDepositStep: Fetch in progress, keeping isMounted = true')
+      }
+    }
+  }, [employee?.id, currentStep.id, effectiveSessionToken, loadLocalFormState])
+  // Removed pdfUrl from dependencies to prevent re-runs
 
   const hrContactEmail = singleStepMeta?.hrContactEmail || singleStepMeta?.hr_contact_email
 
