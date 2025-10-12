@@ -457,6 +457,23 @@ export default function HealthInsuranceStep({
             </div>
           </Alert>
 
+          {/* Eligibility Information Banner */}
+          <Alert className="bg-gradient-to-r from-green-50 to-green-100 border-green-300 shadow-sm max-w-4xl mx-auto p-3 sm:p-4">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500 flex items-center justify-center">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-green-900 mb-1 text-sm sm:text-base">{language === 'es' ? 'Elegibilidad' : 'Eligibility'}</h3>
+                <AlertDescription className="text-green-800 text-xs sm:text-sm">
+                  {language === 'es' 
+                    ? 'Como asociado regular de tiempo completo (trabajando al menos 30 horas por semana), usted es elegible para cobertura el primer día del mes siguiente a 60 días de empleo.'
+                    : 'As a regular, full-time associate (working at least 30 hours per week), you are eligible for coverage on the first of the month following 60 days of employment.'}
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+
           {/* Completion Status - Enhanced */}
           {isStepComplete && (
             <Alert className="bg-gradient-to-r from-green-50 to-green-100 border-green-300 shadow-sm max-w-4xl mx-auto p-3 sm:p-4">

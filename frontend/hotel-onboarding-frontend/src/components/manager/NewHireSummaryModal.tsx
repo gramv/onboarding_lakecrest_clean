@@ -37,10 +37,12 @@ interface SummaryFormState {
   department: string;
   position: string;
   healthInsuranceSelections: string[];
+  healthInsuranceDisplay?: any; // Structured health insurance display data
   healthInsuranceCopay: string;
   notes?: string;
 }
 
+// Legacy plan options - kept for backward compatibility but not used in new display
 const planOptions = [
   { key: 'uhc_hra_base', label: 'UHC HRA Base Plan' },
   { key: 'uhc_hra_buy_up', label: 'UHC HRA Buy Up Plan' },
@@ -79,6 +81,7 @@ const emptyState: SummaryFormState = {
   department: '',
   position: '',
   healthInsuranceSelections: [],
+  healthInsuranceDisplay: undefined,
   healthInsuranceCopay: '',
   notes: ''
 };
@@ -96,7 +99,7 @@ const NewHireSummaryModal: React.FC<NewHireSummaryModalProps> = ({
   const [form, setForm] = useState<SummaryFormState>(emptyState);
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [uploadedDocs, setUploadedDocs] = useState<Array<{ id: string; document_type: string; file_name: string; url?: string }>>([]);
+  const [uploadedDocs, setUploadedDocs] = useState<Array<{ id: string; document_type: string; file_name: string; url?: string; data?: string }>>([]);
 
   const loadSummary = useCallback(async () => {
     try {
@@ -138,34 +141,10 @@ const NewHireSummaryModal: React.FC<NewHireSummaryModalProps> = ({
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  // Legacy function - no longer used with read-only display
   const togglePlanSelection = (key: string) => {
-    setForm(prev => {
-      const current = new Set(prev.healthInsuranceSelections || []);
-
-      // If selecting "Insurance Declined", clear all other selections
-      if (key === 'insurance_declined') {
-        if (current.has(key)) {
-          current.delete(key);
-        } else {
-          current.clear();
-          current.add(key);
-        }
-      } else {
-        // If selecting any other plan, remove "Insurance Declined"
-        current.delete('insurance_declined');
-
-        if (current.has(key)) {
-          current.delete(key);
-        } else {
-          current.add(key);
-        }
-      }
-
-      return {
-        ...prev,
-        healthInsuranceSelections: Array.from(current)
-      };
-    });
+    // This function is kept for backward compatibility but not used
+    console.warn('togglePlanSelection is deprecated - health insurance is now read-only');
   };
 
   const handleApprove = async () => {
@@ -190,6 +169,7 @@ const NewHireSummaryModal: React.FC<NewHireSummaryModalProps> = ({
     }
   };
 
+  // Legacy variable - no longer used with read-only display
   const planSelectionSet = useMemo(() => new Set(form.healthInsuranceSelections || []), [form.healthInsuranceSelections]);
 
   if (!isOpen) {
@@ -240,26 +220,66 @@ const NewHireSummaryModal: React.FC<NewHireSummaryModalProps> = ({
 
           {uploadedDocs.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-gray-800">Uploaded Identification Documents</h3>
-              <ul className="space-y-2">
-                {uploadedDocs.map(doc => (
-                  <li key={doc.id} className="flex items-center justify-between text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                    <span className="truncate mr-3">
-                      {doc.document_type?.replace('_', ' ')} – {doc.file_name}
-                    </span>
-                    {doc.url && (
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
-                      >
-                        View
-                      </a>
-                    )}
-                  </li>
+              <h3 className="text-sm font-semibold text-gray-800 mb-3">Uploaded Identification Documents</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {uploadedDocs.map((doc, index) => (
+                  <div key={doc.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
+                    {/* Document Header */}
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-3 py-2 border-b">
+                      <h4 className="font-semibold text-xs text-gray-900">
+                        {doc.document_type?.replace(/_/g, ' ').toUpperCase()}
+                      </h4>
+                    </div>
+
+                    {/* Image Preview */}
+                    <div className="relative h-40 bg-gray-50">
+                      {doc.data ? (
+                        <img
+                          src={`data:image/jpeg;base64,${doc.data}`}
+                          alt={doc.file_name}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : doc.url ? (
+                        <img
+                          src={doc.url}
+                          alt={doc.file_name}
+                          className="w-full h-full object-contain p-2"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement!.innerHTML = `
+                              <div class="flex items-center justify-center h-full text-gray-500">
+                                <div class="text-center">
+                                  <svg class="h-12 w-12 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <p class="text-xs">Document not available</p>
+                                </div>
+                              </div>
+                            `;
+                          }}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                          <div className="text-center">
+                            <svg className="h-12 w-12 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p className="text-xs">Document not available</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* File Info */}
+                    <div className="px-3 py-2 bg-gray-50 border-t">
+                      <p className="text-xs text-gray-600 truncate" title={doc.file_name}>
+                        📎 {doc.file_name}
+                      </p>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
@@ -494,25 +514,126 @@ const NewHireSummaryModal: React.FC<NewHireSummaryModalProps> = ({
 
               <section>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Health Insurance</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {planOptions.map(option => (
-                    <label key={option.key} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:border-blue-400 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={planSelectionSet.has(option.key)}
-                        onChange={() => togglePlanSelection(option.key)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-800">{option.label}</span>
-                    </label>
-                  ))}
-                </div>
+                
+                {/* Read-only Health Insurance Display */}
+                {form.healthInsuranceDisplay && Object.keys(form.healthInsuranceDisplay).length > 0 ? (
+                  <div className="space-y-4">
+                    {form.healthInsuranceDisplay.is_waived || 
+                     form.healthInsuranceDisplay.display_text?.toLowerCase().includes('declined') ||
+                     form.healthInsuranceDisplay.selections?.includes('declined') ? (
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-yellow-800">Health Insurance Declined</h4>
+                            <p className="text-sm text-yellow-700 mt-1">
+                              {form.healthInsuranceDisplay.display_text || 'Employee has waived health insurance coverage'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : form.healthInsuranceDisplay.medical_plan || 
+                         form.healthInsuranceDisplay.dental || 
+                         form.healthInsuranceDisplay.vision ? (
+                      <div className="space-y-3">
+                        {/* Medical Plan */}
+                        {form.healthInsuranceDisplay.medical_plan && (
+                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="text-sm font-medium text-blue-900">Medical Plan</h4>
+                                <p className="text-sm text-blue-800 mt-1">
+                                  {form.healthInsuranceDisplay.medical_plan} - {form.healthInsuranceDisplay.medical_tier}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-blue-900">
+                                  ${form.healthInsuranceDisplay.medical_cost?.toFixed(2) || '0.00'}
+                                </p>
+                                <p className="text-xs text-blue-600">bi-weekly</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Dental Coverage */}
+                        {form.healthInsuranceDisplay.dental && (
+                          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="text-sm font-medium text-green-900">Dental Coverage</h4>
+                                <p className="text-sm text-green-800 mt-1">
+                                  {form.healthInsuranceDisplay.dental.tier}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-green-900">
+                                  ${form.healthInsuranceDisplay.dental.cost?.toFixed(2) || '0.00'}
+                                </p>
+                                <p className="text-xs text-green-600">bi-weekly</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Vision Coverage */}
+                        {form.healthInsuranceDisplay.vision && (
+                          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="text-sm font-medium text-purple-900">Vision Coverage</h4>
+                                <p className="text-sm text-purple-800 mt-1">
+                                  {form.healthInsuranceDisplay.vision.tier}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-purple-900">
+                                  ${form.healthInsuranceDisplay.vision.cost?.toFixed(2) || '0.00'}
+                                </p>
+                                <p className="text-xs text-purple-600">bi-weekly</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Total Cost */}
+                        {form.healthInsuranceDisplay.total_biweekly_cost > 0 && (
+                          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <h4 className="text-sm font-medium text-gray-900">Total Bi-weekly Cost</h4>
+                              <p className="text-lg font-bold text-gray-900">
+                                ${form.healthInsuranceDisplay.total_biweekly_cost?.toFixed(2) || '0.00'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                          Health insurance information incomplete - please verify with employee
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600">No health insurance information available</p>
+                  </div>
+                )}
+
+                {/* Editable Copay Field */}
                 <div className="mt-4">
                   <label className="text-sm font-medium text-gray-700">Copay per Pay Period</label>
                   <input
                     value={form.healthInsuranceCopay}
                     onChange={(e) => handleFieldChange('healthInsuranceCopay', e.target.value)}
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={form.healthInsuranceDisplay?.total_biweekly_cost ? `Calculated: $${form.healthInsuranceDisplay.total_biweekly_cost.toFixed(2)}` : ''}
                   />
                 </div>
               </section>

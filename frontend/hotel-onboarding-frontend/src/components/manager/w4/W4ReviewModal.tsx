@@ -22,6 +22,7 @@ interface UploadedDocument {
 
 interface W4ReviewData {
   pdfUrl: string;
+  pdfData?: string; // Decrypted PDF as base64
   uploadedDocuments: UploadedDocument[];
   employeeData: {
     name: string;
@@ -136,7 +137,11 @@ export const W4ReviewModal: React.FC<W4ReviewModalProps> = ({
   };
 
   const handleComplete = async () => {
-    // Signature is optional, so no validation needed
+    // Validate signature is present (mandatory)
+    if (!employerData.signature) {
+      alert('Manager signature is required to complete W-4 review.');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -146,7 +151,7 @@ export const W4ReviewModal: React.FC<W4ReviewModalProps> = ({
         employerAddress: employerData.employerAddress,
         employerEIN: employerData.employerEIN,
         firstDayOfEmployment: employerData.firstDayOfEmployment,
-        signature: employerData.signature || null,  // Can be null
+        signature: employerData.signature,  // Required
         ssnVerified,
         notes
       });
@@ -221,6 +226,7 @@ export const W4ReviewModal: React.FC<W4ReviewModalProps> = ({
                       <div className="p-4">
                         <PDFViewer
                           pdfUrl={data?.pdfUrl || ''}
+                          pdfData={data?.pdfData}
                           title="W-4 Form"
                           height="600px"
                         />
@@ -272,8 +278,8 @@ export const W4ReviewModal: React.FC<W4ReviewModalProps> = ({
                               </p>
                               <ul className="text-sm text-gray-700 mt-2 space-y-1 ml-4 list-disc">
                                 <li>Social Security Number: ***-**-{data?.employeeData.ssn?.slice(-4) || '****'}</li>
-                                <li>Full legal name: {data?.employeeData.name}</li>
-                                <li>Current address: {data?.employeeData.address}</li>
+                                <li>Full legal name: {data?.employeeData.name || 'Not provided'}</li>
+                                <li>Current address: {data?.employeeData.address || 'Not provided'}</li>
                               </ul>
                               <p className="text-xs text-gray-600 mt-2">
                                 Required before proceeding to employer information
@@ -367,36 +373,41 @@ export const W4ReviewModal: React.FC<W4ReviewModalProps> = ({
                   {/* Manager Signature */}
                   <div className="border-t pt-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Manager Signature <span className="text-gray-500">(Optional)</span>
+                      Manager Signature <span className="text-red-500">*</span>
                     </label>
                     <p className="text-xs text-gray-600 mb-3">
-                      Note: Employer signature is not required by IRS for W-4, but recommended for internal records
+                      Your signature is required to verify employer information and complete the W-4 review
                     </p>
                     {!employerData.signature ? (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                      <div className="border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg p-8 text-center">
+                        <FileText className="h-10 w-10 text-gray-600 mx-auto mb-3" />
                         <button
                           onClick={() => setShowSignatureCapture(true)}
                           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                         >
-                          Add Signature (Optional)
+                          Sign W-4
                         </button>
-                        <p className="text-sm text-gray-500 mt-2">
-                          Click to add your digital signature for internal records
+                        <p className="text-sm text-gray-600 mt-2">
+                          Manager signature is required to complete W-4 review
                         </p>
                       </div>
                     ) : (
-                      <div className="border border-gray-300 rounded-lg p-4">
+                      <div className="border border-green-300 bg-green-50 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <span className="text-sm font-semibold text-green-700">Signature Captured</span>
+                        </div>
                         <img
                           src={employerData.signature.dataUrl}
                           alt="Manager Signature"
-                          className="h-20 mx-auto"
+                          className="h-20 mx-auto border border-gray-200 rounded p-2 bg-white"
                         />
                         <p className="text-xs text-gray-500 text-center mt-2">
                           Signed on {new Date(employerData.signature.timestamp).toLocaleString()}
                         </p>
                         <button
                           onClick={() => setEmployerData({ ...employerData, signature: null })}
-                          className="text-sm text-red-600 hover:text-red-700 mt-2 block mx-auto"
+                          className="text-sm text-red-600 hover:text-red-700 mt-2 block mx-auto font-medium"
                         >
                           Clear Signature
                         </button>

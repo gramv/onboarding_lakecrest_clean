@@ -29,12 +29,15 @@ from functools import wraps
 # Supabase and database imports
 from supabase import create_client, Client
 from postgrest.exceptions import APIError
-import asyncpg
+try:
+    import asyncpg
+except ImportError:
+    asyncpg = None  # Optional dependency
 from cryptography.fernet import Fernet
 
 # Import existing models
 from .models import (
-    User, Property, JobApplication, Employee, 
+    User, Property, JobApplication,
     ApplicationStatus, UserRole, JobApplicationData,
     OnboardingSession, OnboardingStatus, OnboardingStep,
     # Task 2 Models
@@ -43,6 +46,9 @@ from .models import (
     AnalyticsEvent, AnalyticsEventType, ReportTemplate, ReportType,
     ReportFormat, ReportSchedule, SavedFilter
 )
+
+# Import Employee from models_enhanced (has manager_review fields)
+from .models_enhanced import Employee
 
 # Import OnboardingPhase from models_enhanced
 from .models_enhanced import OnboardingPhase
@@ -215,6 +221,10 @@ class EnhancedSupabaseService:
     
     async def initialize_db_pool(self):
         """Initialize direct PostgreSQL connection pool for complex queries"""
+        if not asyncpg:
+            logger.info("⏭️ Skipping DB pool initialization - asyncpg not installed")
+            return
+            
         try:
             database_url = os.getenv("DATABASE_URL")
             if database_url:
@@ -2569,25 +2579,54 @@ class EnhancedSupabaseService:
         try:
             response = self.client.table('employees').select('*').in_('property_id', property_ids).execute()
             employees = []
-            for row in response.data:
-                employees.append(Employee(
-                    id=row['id'],
-                    user_id=row.get('user_id', row['id']),  # Use employee ID if user_id not set
-                    property_id=row['property_id'],
-                    manager_id=row.get('manager_id', ''),  # May not be set yet
-                    department=row.get('department', 'General'),
-                    position=row.get('position', 'Staff'),
-                    hire_date=datetime.fromisoformat(row['hire_date']).date() if row.get('hire_date') else datetime.now(timezone.utc).date(),
-                    pay_rate=row.get('pay_rate', 0.0),
-                    employment_type=row.get('employment_type', 'full_time'),
-                    employment_status=row.get('employment_status', 'active'),
-                    onboarding_status=OnboardingStatus(row.get('onboarding_status', 'not_started')),
-                    personal_info=row.get('personal_info', {}),
-                    created_at=datetime.fromisoformat(row['created_at'].replace('Z', '+00:00')) if row.get('created_at') else datetime.now(timezone.utc)
-                ))
+            for idx, row in enumerate(response.data):
+                # Debug logging for first row
+                if idx == 0:
+                    logger.info(f"🔍 First database row has manager_review_status: {row.get('manager_review_status')}")
+                    logger.info(f"🔍 First database row has manager_review_completed_at: {row.get('manager_review_completed_at')}")
+
+                try:
+                    emp = Employee(
+                        id=row['id'],
+                        user_id=row.get('user_id', row['id']),  # Use employee ID if user_id not set
+                        property_id=row['property_id'],
+                        manager_id=row.get('manager_id', ''),  # May not be set yet
+                        department=row.get('department', 'General'),
+                        position=row.get('position', 'Staff'),
+                        hire_date=datetime.fromisoformat(row['hire_date']).date() if row.get('hire_date') else datetime.now(timezone.utc).date(),
+                        pay_rate=row.get('pay_rate', 0.0),
+                        employment_type=row.get('employment_type', 'full_time'),
+                        employment_status=row.get('employment_status', 'active'),
+                        onboarding_status=OnboardingStatus(row.get('onboarding_status', 'not_started')),
+                        personal_info=row.get('personal_info', {}),
+                        # Manager review fields (handle NULL values from database)
+                        manager_review_status=row.get('manager_review_status') or 'pending_review',
+                        manager_reviewed_by=row.get('manager_reviewed_by'),
+                        manager_review_started_at=safe_parse_timestamp(row['manager_review_started_at'], None) if row.get('manager_review_started_at') else None,
+                        manager_review_completed_at=safe_parse_timestamp(row['manager_review_completed_at'], None) if row.get('manager_review_completed_at') else None,
+                        manager_review_comments=row.get('manager_review_comments'),
+                        created_at=safe_parse_timestamp(row['created_at'], datetime.now(timezone.utc)) if row.get('created_at') else datetime.now(timezone.utc)
+                    )
+
+                    # Debug: Check if the created employee has the fields
+                    if idx == 0:
+                        logger.info(f"🔍 Created Employee object - hasattr manager_review_status: {hasattr(emp, 'manager_review_status')}")
+                        logger.info(f"🔍 Created Employee object - manager_review_status value: {getattr(emp, 'manager_review_status', 'NOT_FOUND')}")
+
+                    employees.append(emp)
+                except Exception as emp_error:
+                    logger.error(f"Error creating Employee object for row {idx} (id={row.get('id')}): {emp_error}")
+                    logger.error(f"  Row data keys: {list(row.keys())}")
+                    import traceback
+                    logger.error(f"  Traceback: {traceback.format_exc()}")
+                    # Continue to next employee instead of failing completely
+                    continue
+
             return employees
         except Exception as e:
             logger.error(f"Error getting employees by properties: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return []
 
     async def get_users(self) -> List[User]:

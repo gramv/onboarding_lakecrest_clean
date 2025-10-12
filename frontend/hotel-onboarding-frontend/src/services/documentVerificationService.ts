@@ -376,6 +376,33 @@ export class DocumentVerificationService {
       throw error;
     }
   }
+
+  /**
+   * Get comprehensive employee details including personal info, employment info, and emergency contacts
+   */
+  static async getEmployeeDetails(employeeId: string) {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/manager/review/employees/${employeeId}/details`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch employee details');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+      throw error;
+    }
+  }
 }
 
 export default DocumentVerificationService;

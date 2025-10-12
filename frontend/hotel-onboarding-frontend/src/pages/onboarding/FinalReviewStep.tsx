@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import DigitalSignatureCapture from '@/components/DigitalSignatureCapture'
-import { CheckCircle, FileText, Users, Shield, Clock } from 'lucide-react'
+import SignatureCanvas from 'react-signature-canvas'
+import { CheckCircle, FileText, Users, Shield, Clock, Pen, AlertCircle, Info } from 'lucide-react'
 import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
@@ -32,6 +32,9 @@ export default function FinalReviewStep({
   const [signatureData, setSignatureData] = useState(null)
   const [reviewData, setReviewData] = useState(null)
   const [isAdvancing, setIsAdvancing] = useState(false)
+  const [hasAgreed, setHasAgreed] = useState(false)
+  const [signatureError, setSignatureError] = useState('')
+  const signatureRef = useRef<SignatureCanvas>(null)
 
   // Validation hook
   const { errors, validate } = useStepValidation(finalReviewValidator)
@@ -354,27 +357,109 @@ export default function FinalReviewStep({
       <Card>
         <CardHeader className="p-4 sm:p-6">
           <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+            <Pen className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
             <span>{t.finalSignature}</span>
           </CardTitle>
           <p className="text-xs sm:text-sm text-gray-600">{t.signatureDesc}</p>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <DigitalSignatureCapture
-            documentName="Employee Onboarding Completion"
-            signerName={employee?.firstName + ' ' + employee?.lastName || 'Employee'}
-            signerTitle={employee?.position}
-            acknowledgments={[
-              t.acknowledgment1,
-              t.acknowledgment2,
-              t.acknowledgment3,
-              t.acknowledgment4
-            ]}
-            requireIdentityVerification={false}
-            language={language}
-            onSignatureComplete={handleSignatureComplete}
-            submitButtonText={t.submitButton}
-          />
+        <CardContent className="p-4 sm:p-6 space-y-6">
+          <p className="text-gray-600 text-sm">Please sign in the box below using your mouse or touch screen</p>
+          
+          {/* Signature Canvas */}
+          <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white">
+            <SignatureCanvas
+              ref={signatureRef}
+              canvasProps={{
+                className: 'w-full h-48'
+              }}
+              backgroundColor="rgba(255,255,255,1)"
+              penColor="black"
+            />
+          </div>
+          
+          {/* Electronic Signature Legal Notice */}
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-xs text-blue-800 flex items-start">
+              <Info className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
+              {language === 'es' 
+                ? 'Las firmas electrónicas tienen el mismo nivel de autenticidad y validez legal que las firmas físicas según la Ley ESIGN y UETA.'
+                : 'Electronic signatures have the same level of authenticity and legal validity as physical signatures under the ESIGN Act and UETA.'}
+            </p>
+          </div>
+
+          {/* Agreement Checkbox */}
+          <div className="space-y-3">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hasAgreed}
+                onChange={(e) => {
+                  setHasAgreed(e.target.checked)
+                  setSignatureError('')
+                }}
+                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                {language === 'es'
+                  ? 'Certifico que toda la información proporcionada es verdadera, precisa y completa'
+                  : 'By signing above, I confirm all acknowledgements checked in the previous section and certify that all information provided is true and accurate'}
+              </span>
+            </label>
+          </div>
+
+          {/* Error Message */}
+          {signatureError && (
+            <Alert className="bg-red-50 border-red-200">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                {signatureError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => {
+                e.preventDefault()
+                if (signatureRef.current) {
+                  signatureRef.current.clear()
+                  setSignatureError('')
+                }
+              }}
+              className="flex-1"
+            >
+              {language === 'es' ? 'Borrar' : 'Clear Signature'}
+            </Button>
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                if (signatureRef.current && !signatureRef.current.isEmpty() && hasAgreed) {
+                  const signature = {
+                    signature: signatureRef.current.toDataURL(),
+                    signedAt: new Date().toISOString(),
+                    ipAddress: 'xxx.xxx.xxx.xxx',
+                    userAgent: window.navigator.userAgent
+                  }
+                  handleSignatureComplete(signature)
+                } else {
+                  if (signatureRef.current?.isEmpty()) {
+                    setSignatureError(language === 'es' ? 'Por favor proporcione su firma' : 'Please provide your signature')
+                  } else if (!hasAgreed) {
+                    setSignatureError(language === 'es' ? 'Debe aceptar la declaración de certificación' : 'You must agree to the certification statement')
+                  }
+                }
+              }}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              disabled={isAdvancing}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {isAdvancing ? (language === 'es' ? 'Procesando...' : 'Processing...') : t.submitButton}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

@@ -118,6 +118,13 @@ class HealthInsurancePDFGenerator(BasePDFGenerator):
 
             # Extract personal info from form_data if provided (during normal onboarding)
             personal_info = hi_form_data.get('personalInfo', {})
+            
+            # Debug: Log what personalInfo contains
+            logger.info(f"🔍 personalInfo from hi_form_data: {personal_info}")
+            logger.info(f"🔍 personalInfo keys: {list(personal_info.keys()) if personal_info else 'None'}")
+            if personal_info:
+                logger.info(f"🔍 personalInfo.firstName: {personal_info.get('firstName')}")
+                logger.info(f"🔍 personalInfo.first_name: {personal_info.get('first_name')}")
 
             # Prepare data for PDF generation
             # Prioritize form_data when health insurance data is provided
@@ -125,6 +132,7 @@ class HealthInsurancePDFGenerator(BasePDFGenerator):
                 # Use form_data when health insurance data is provided (normal onboarding flow)
                 logger.info(f"🔍 PDF Generator - Using form_data for health insurance PDF generation")
                 personal_info = form_data.get('personalInfo', {})
+                logger.info(f"🔍 Extracted personalInfo: {personal_info}")
                 employee_data = {
                     # Employee info - using form_data
                     'employee_name': f"{personal_info.get('firstName', '')} {personal_info.get('lastName', '')}".strip(),
@@ -241,13 +249,19 @@ class HealthInsurancePDFGenerator(BasePDFGenerator):
             })
             
             # Process dependents for better formatting
-            if employee_data['dependents']:
+            if employee_data.get('dependents'):
                 for i, dep in enumerate(employee_data['dependents']):
                     if isinstance(dep, dict):
                         dep['formatted_dob'] = self.format_date(dep.get('dateOfBirth'))
                         dep['formatted_ssn'] = self.format_ssn(dep.get('ssn')) if dep.get('ssn') else ''
             
-            logger.info(f"Generating Health Insurance PDF for {employee_data['full_name']} ({employee_id})")
+            # Log critical employee_data fields for debugging
+            logger.info(f"🔍 PDF Generator - employee_data prepared:")
+            logger.info(f"   - full_name: {employee_data.get('full_name', 'MISSING')}")
+            logger.info(f"   - medicalPlan: {employee_data.get('medicalPlan', 'MISSING')}")
+            logger.info(f"   - personalInfo SSN: {bool(employee_data.get('ssn') or (employee_data.get('personalInfo') or {}).get('ssn'))}")
+            
+            logger.info(f"Generating Health Insurance PDF for {employee_data.get('full_name', 'Unknown')} ({employee_id})")
 
             # ✅ FIX: Support both 'signatureData' and 'signature' keys for consistency
             if not signature_data and employee_data.get('signature'):

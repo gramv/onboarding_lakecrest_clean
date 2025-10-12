@@ -22,6 +22,32 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
   const [currentSection, setCurrentSection] = useState(initialProgress?.currentSection || 0);
   const [hasWatchedVideo, setHasWatchedVideo] = useState(initialProgress?.hasWatchedVideo || false);
   const [hasCompletedTraining, setHasCompletedTraining] = useState(initialProgress?.hasCompletedTraining || false);
+  
+  // State for dynamic video IDs from HR settings
+  const [videoIds, setVideoIds] = useState({ video_id_en: 'XhbfGo7voB8', video_id_es: 'XhbfGo7voB8' });
+
+  // Fetch video settings from HR settings API on component mount
+  useEffect(() => {
+    const fetchVideoSettings = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/hr/settings/training-videos/public`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          console.log('🎥 Loaded training video settings from HR:', data.data);
+          setVideoIds(data.data);
+        } else {
+          console.warn('⚠️ Failed to load video settings, using defaults');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching video settings, using defaults:', error);
+        // Keep default video IDs on error
+      }
+    };
+    
+    fetchVideoSettings();
+  }, []);
 
   const content = {
     en: {
@@ -76,7 +102,7 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
       video: {
         title: "Required Training Video",
         description: "Watch this comprehensive training video on human trafficking awareness. You must watch at least 95% of the video to continue.",
-        videoId: "XhbfGo7voB8"
+        videoId: videoIds.video_id_en
       },
       acknowledgment: {
         title: "Training Acknowledgment",
@@ -140,7 +166,7 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
       video: {
         title: "Video de Capacitación Requerido",
         description: "Vea este video completo de capacitación sobre concientización del tráfico humano. Debe ver al menos el 95% del video para continuar.",
-        videoId: "XhbfGo7voB8"
+        videoId: videoIds.video_id_es
       },
       acknowledgment: {
         title: "Reconocimiento de Capacitación",
@@ -283,6 +309,31 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
         onComplete={handleVideoComplete}
         language={language}
       />
+
+      {/* DEV/TESTING ONLY: Skip Video Button */}
+      {!hasWatchedVideo && (
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-yellow-800 uppercase tracking-wide">
+                ⚠️ Testing Mode Only
+              </p>
+              <p className="text-xs text-yellow-700 mt-1">
+                Skip video for testing purposes (not available in production)
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                console.log('🧪 [TEST MODE] Skipping video - marking as complete');
+                handleVideoComplete();
+              }}
+              className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 transition-colors shadow-sm hover:shadow-md"
+            >
+              Skip Video (Test)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Completion Alert - Shows when video is finished */}
       {hasWatchedVideo && (

@@ -24,6 +24,7 @@ export const HealthInsuranceReviewModal: React.FC<HealthInsuranceReviewModalProp
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   
   // Form data
   const [propertyName, setPropertyName] = useState('');
@@ -48,7 +49,24 @@ export const HealthInsuranceReviewModal: React.FC<HealthInsuranceReviewModalProp
       const response = await reviewDataService.getHealthInsuranceDetail(employeeId);
       
       console.log('[HEALTH-INSURANCE-MODAL] Received data:', response);
+      console.log('[HEALTH-INSURANCE-MODAL] Has pdfData:', !!response.pdfData, 'Length:', response.pdfData?.length);
+      
       setData(response);
+
+      // Convert base64 PDF to blob URL for better iframe performance
+      if (response.pdfData) {
+        try {
+          console.log('[HEALTH-INSURANCE-MODAL] Converting base64 to blob...');
+          const bytes = Uint8Array.from(atob(response.pdfData), c => c.charCodeAt(0));
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          console.log('[HEALTH-INSURANCE-MODAL] Created blob URL, size:', blob.size);
+          setPdfBlobUrl(url);
+        } catch (conversionErr) {
+          console.error('[HEALTH-INSURANCE-MODAL] Failed to convert PDF to blob:', conversionErr);
+          setPdfBlobUrl(null);
+        }
+      }
 
       // Auto-fill employer data
       if (response.autoFillData) {
@@ -139,9 +157,9 @@ export const HealthInsuranceReviewModal: React.FC<HealthInsuranceReviewModalProp
               <>
                 {/* Left: PDF Viewer */}
                 <div className="flex-1 border-r border-gray-200 overflow-hidden">
-                  {data?.pdfUrl ? (
+                  {(pdfBlobUrl || data?.pdfUrl) ? (
                     <iframe
-                      src={data.pdfUrl}
+                      src={pdfBlobUrl || data?.pdfUrl}
                       className="w-full h-full"
                       title="Health Insurance Form"
                     />

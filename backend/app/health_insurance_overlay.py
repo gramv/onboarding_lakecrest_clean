@@ -1209,15 +1209,15 @@ class HealthInsuranceFormOverlay:
             elif tier == 'family':
                 return ["Employee  Family_5"]
         elif medical_plan in ['minimum_plus_indemnity', 'mec_plus_indemnity']:
-            # Bundle: map to MEC row by default (UI shows bundle; PDF can only select one row)
+            # Bundle: map to the bundle row (Minimum Essential + Indemnity)
             if tier == 'employee':
-                return ["Employee Only_2"]
+                return ["Employee Only_4"]
             elif tier == 'employee_spouse':
-                return ["Employee  Spouse_3"]
+                return ["Employee  Spouse_5"]
             elif tier == 'employee_children':
-                return ["Employee  Children_4"]
+                return ["Employee  Children_6"]
             elif tier == 'family':
-                return ["Employee  Family_4"]
+                return ["Employee  Family_6"]
         
         # Default fallback
         return [tier_name]
@@ -1225,20 +1225,20 @@ class HealthInsuranceFormOverlay:
     def _get_dental_tier_checkbox_name(self, tier: str) -> str:
         """Get the checkbox field name for dental tier."""
         tier_map = {
+            'employee': 'Employee Only_5',
+            'employee_spouse': 'Employee  Spouse_6',
+            'employee_children': 'Employee  Children_7',
+            'family': 'Employee  Family_7'
+        }
+        return tier_map.get(tier, 'Employee Only_5')
+    
+    def _get_vision_tier_checkbox_name(self, tier: str) -> str:
+        """Get the checkbox field name for vision tier.
+        Based on actual PDF analysis - vision has separate checkboxes from dental."""
+        tier_map = {
             'employee': 'Employee Only_6',
             'employee_spouse': 'Employee  Spouse_7',
             'employee_children': 'Employee  Children_8',
             'family': 'Employee  Family_8'
         }
         return tier_map.get(tier, 'Employee Only_6')
-    
-    def _get_vision_tier_checkbox_name(self, tier: str) -> str:
-        """Get the checkbox field name for vision tier.
-        Based on actual PDF analysis - vision has separate checkboxes from dental."""
-        tier_map = {
-            'employee': 'Employee Only_5',
-            'employee_spouse': 'Employee  Spouse_6',
-            'employee_children': 'Employee  Children_7',  # Vision has its own children checkbox
-            'family': 'Employee  Family_7'
-        }
-        return tier_map.get(tier, 'Employee Only_5')

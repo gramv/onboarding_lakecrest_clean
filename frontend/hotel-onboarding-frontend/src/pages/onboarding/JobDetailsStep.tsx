@@ -109,7 +109,22 @@ export default function JobDetailsStep({
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Not specified'
-    const date = new Date(dateString)
+
+    // Parse date components to avoid timezone issues
+    // Expected format: YYYY-MM-DD
+    const parts = dateString.split('-')
+    if (parts.length !== 3) {
+      console.error('Invalid date format:', dateString)
+      return 'Invalid date'
+    }
+
+    const year = parseInt(parts[0])
+    const month = parseInt(parts[1]) - 1 // Month is 0-indexed in Date constructor
+    const day = parseInt(parts[2])
+
+    // Create date in local timezone (not UTC)
+    const date = new Date(year, month, day)
+
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',

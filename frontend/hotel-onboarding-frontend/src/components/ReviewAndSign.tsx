@@ -40,6 +40,7 @@ export interface SignatureData {
   formData: any
   certificationStatement: string
   federalCompliance?: any
+  pdfBase64?: string  // Raw base64 PDF data (no prefix) for rendering
 }
 
 export default function ReviewAndSign({
@@ -385,7 +386,8 @@ export default function ReviewAndSign({
         formType,
         formData,
         certificationStatement: agreementText || t.agreementLabel,
-        federalCompliance: federalCompliance
+        federalCompliance: federalCompliance,
+        pdfBase64: pdfData || undefined  // Include raw base64 PDF for rendering
       }
       
       setIsSigned(true)

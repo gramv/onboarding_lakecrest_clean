@@ -170,6 +170,11 @@ export const api = {
     getEmployees: () => apiClient.get('/hr/employees'),
     getApplications: () => apiClient.get('/hr/applications'),
     getAnalytics: () => apiClient.get('/hr/analytics'),
+    
+    // Settings
+    getTrainingVideoSettings: () => apiClient.get('/hr/settings/training-videos'),
+    updateTrainingVideoSettings: (data: { video_id_en: string; video_id_es: string }) =>
+      apiClient.put('/hr/settings/training-videos', data),
   },
 
   // Manager Dashboard

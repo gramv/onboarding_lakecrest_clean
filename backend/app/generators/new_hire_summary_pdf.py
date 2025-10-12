@@ -135,9 +135,19 @@ class NewHireSummaryPDFGenerator:
 
         y = self.page_height - self.top_margin - 50
 
-        # Calculate column widths
-        label_width = 2.2 * inch
-        value_width = self.page_width - self.left_margin - self.right_margin - label_width
+        # Calculate column widths - FIX: Ensure tables fit within page margins
+        # Available width after left and right margins
+        available_width = self.page_width - self.left_margin - self.right_margin  # 540 points
+        
+        # For 4-column tables (2 label-value pairs side by side)
+        col1_width = available_width * 0.22  # Label 1: ~119 points
+        col2_width = available_width * 0.28  # Value 1: ~151 points
+        col3_width = available_width * 0.22  # Label 2: ~119 points
+        col4_width = available_width * 0.28  # Value 2: ~151 points
+        
+        # For 2-column tables
+        label_width = available_width * 0.35  # ~189 points
+        value_width = available_width * 0.65  # ~351 points
 
         # Section 1: Employment & Property
         employment_data = [
@@ -159,7 +169,7 @@ class NewHireSummaryPDFGenerator:
             self.left_margin,
             y,
             employment_data,
-            [label_width * 0.9, label_width * 1.1, label_width * 0.9, label_width * 1.1],
+            [col1_width, col2_width, col3_width, col4_width],
             title="Property & Employment",
             header_row=False,
         )
@@ -194,8 +204,8 @@ class NewHireSummaryPDFGenerator:
             [
                 Paragraph("Dependents", self.label_style),
                 Paragraph(summary.get("dependents", "-"), self.value_style),
-                Paragraph("Pay Frequency", self.label_style),
-                Paragraph(summary.get("payFrequency", "-"), self.value_style),
+                Paragraph("", self.label_style),
+                Paragraph("", self.value_style),
             ],
         ]
         y = self._draw_table(
@@ -203,7 +213,7 @@ class NewHireSummaryPDFGenerator:
             self.left_margin,
             y,
             employee_rows,
-            [label_width * 0.8, label_width * 1.2, label_width * 0.8, label_width * 1.2],
+            [col1_width, col2_width, col3_width, col4_width],
             title="Employee Information",
             alternate=True,
         )
@@ -214,6 +224,7 @@ class NewHireSummaryPDFGenerator:
             [Paragraph("Position", self.label_style), Paragraph(summary.get("position", "-"), self.value_style)],
             [Paragraph("Employment Type", self.label_style), Paragraph(summary.get("employmentType", "-"), self.value_style)],
             [Paragraph("Rate of Pay", self.label_style), Paragraph(summary.get("rateOfPay", "-"), self.value_style)],
+            [Paragraph("Pay Frequency", self.label_style), Paragraph(summary.get("payFrequency", "-"), self.value_style)],
         ]
         y = self._draw_table(
             c,
@@ -226,48 +237,55 @@ class NewHireSummaryPDFGenerator:
         )
 
         # Section 4: Benefits Overview
-        selections = summary.get("healthInsuranceSelections", []) or []
-        selection_lookup = set(s.lower() for s in selections)
-        insurance_options = [
-            ("UHC HRA Base Plan", "uhc_hra_base"),
-            ("UHC HRA Buy Up Plan", "uhc_hra_buy_up"),
-            ("CWI Minimum Essential Plan", "cwi_minimum_essential"),
-            ("CWI Minimum Indemnity Plan", "cwi_minimum_indemnity"),
-            ("UHC Dental", "uhc_dental"),
-            ("UHC Vision", "uhc_vision"),
-            ("Insurance Declined", "insurance_declined"),
-        ]
+        health_display = summary.get("healthInsuranceDisplay", {})
 
-        checkbox_rows: List[List[Any]] = []
-        for label, key in insurance_options:
-            checked = key in selection_lookup
-            checkbox_rows.append([
-                Paragraph("☑" if checked else "☐", self.value_style),
-                Paragraph(label, self.value_style),
-            ])
-
-        insurance_section = Table(
-            checkbox_rows,
-            colWidths=[0.3 * inch, value_width - 0.3 * inch],
-            hAlign='LEFT',
-        )
-        insurance_section.setStyle(
-            TableStyle([
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 0),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-                ('TOPPADDING', (0, 0), (-1, -1), 2),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-            ])
-        )
-
-        benefits_data: List[List[Any]] = [
-            [Paragraph("Selected Benefit Plans", self.label_style), insurance_section],
-            [
-                Paragraph("Copay per Pay Period", self.label_style),
-                Paragraph(summary.get("healthInsuranceCopay", "-"), self.value_style),
-            ],
-        ]
+        if health_display.get("is_waived"):
+            benefits_data = [
+                [Paragraph("Health Insurance", self.label_style), 
+                 Paragraph(health_display.get("display_text", "Declined"), self.value_style)]
+            ]
+        else:
+            benefits_data = []
+            
+            # Medical plan
+            if health_display.get("medical_plan"):
+                plan_text = f"{health_display['medical_plan']} - {health_display.get('medical_tier', 'N/A')}"
+                cost_text = f"${health_display.get('medical_cost', 0):.2f}"
+                benefits_data.append([
+                    Paragraph("Medical Plan", self.label_style),
+                    Paragraph(f"{plan_text}<br/>{cost_text}", self.value_style)
+                ])
+            
+            # Dental
+            if health_display.get("dental"):
+                dental = health_display["dental"]
+                benefits_data.append([
+                    Paragraph("Dental Coverage", self.label_style),
+                    Paragraph(f"{dental['tier']} - ${dental['cost']:.2f}", self.value_style)
+                ])
+            
+            # Vision
+            if health_display.get("vision"):
+                vision = health_display["vision"]
+                benefits_data.append([
+                    Paragraph("Vision Coverage", self.label_style),
+                    Paragraph(f"{vision['tier']} - ${vision['cost']:.2f}", self.value_style)
+                ])
+            
+            # Total
+            total_cost = health_display.get("total_biweekly_cost", 0)
+            if total_cost > 0:
+                benefits_data.append([
+                    Paragraph("Total Cost", self.label_style),
+                    Paragraph(f"${total_cost:.2f}", self.value_style)
+                ])
+            
+            # Copay (if provided separately)
+            if summary.get("healthInsuranceCopay"):
+                benefits_data.append([
+                    Paragraph("Copay per Pay Period", self.label_style),
+                    Paragraph(summary.get("healthInsuranceCopay"), self.value_style)
+                ])
 
         y = self._draw_table(
             c,

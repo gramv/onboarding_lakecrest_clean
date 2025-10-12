@@ -32,6 +32,7 @@ interface EmployerProfileRecord {
 
 interface I9ReviewState {
   pdfUrl: string;
+  pdfData?: string; // Decrypted base64 PDF data
   uploadedImages: UploadedImage[];
   employerProfile: EmployerProfileRecord | null;
   employeeStartDate: string | null;
@@ -64,8 +65,12 @@ export const I9ReviewModal: React.FC<I9ReviewModalProps> = ({
     try {
       setLoading(true);
       const response = await reviewDataService.getI9ReviewDetail(employeeId);
+      console.log('[I9ReviewModal] Received data from backend:', response);
+      console.log('[I9ReviewModal] Employee Start Date:', response.employeeStartDate);
+      
       setData({
         pdfUrl: response.pdfUrl,
+        pdfData: response.pdfData, // Decrypted base64 PDF data
         uploadedImages: response.uploadedDocuments || [],
         employerProfile: response.employerProfile || null,
         employeeStartDate: response.employeeStartDate || null,
@@ -120,22 +125,20 @@ export const I9ReviewModal: React.FC<I9ReviewModalProps> = ({
 
   // Download PDF and save as verified when moving to Step 2
   const handleNextToStep2 = async () => {
-    if (!data?.pdfUrl) {
-      console.error('No PDF URL available');
-      setCurrentStep(2);
-      return;
-    }
-
     try {
-      let pdfBytesToSave: string;
+      let pdfBytesToSave: string | null = null;
 
       if (pdfBytesInMemory) {
         // Use the edited PDF uploaded by manager
         console.log('[I9-MODAL] Using edited PDF uploaded by manager');
         pdfBytesToSave = pdfBytesInMemory;
-      } else {
-        // Download the original PDF
-        console.log('[I9-MODAL] No edits - downloading original PDF to save as verified:', data.pdfUrl);
+      } else if (data?.pdfData) {
+        // Use the decrypted PDF data from backend (already decrypted and base64 encoded)
+        console.log('[I9-MODAL] Using decrypted PDF data from backend (already decrypted)');
+        pdfBytesToSave = data.pdfData;
+      } else if (data?.pdfUrl) {
+        // Fallback: Download from URL (for legacy unencrypted PDFs)
+        console.warn('[I9-MODAL] No pdfData available - downloading from URL (may be encrypted!)');
         const response = await fetch(data.pdfUrl);
         if (!response.ok) {
           throw new Error('Failed to download PDF');
@@ -150,15 +153,19 @@ export const I9ReviewModal: React.FC<I9ReviewModalProps> = ({
         pdfBytesToSave = base64.split(',')[1];
       }
 
-      console.log('[I9-MODAL] Saving verified PDF, size:', pdfBytesToSave.length, 'bytes');
+      if (pdfBytesToSave) {
+        console.log('[I9-MODAL] Saving verified PDF, size:', pdfBytesToSave.length, 'bytes');
 
-      // Save as verified PDF to backend
-      try {
-        await reviewDataService.saveVerifiedI9(employeeId, pdfBytesToSave);
-        console.log('[I9-MODAL] Verified PDF saved successfully');
-      } catch (saveErr) {
-        console.error('[I9-MODAL] Failed to save verified PDF:', saveErr);
-        // Continue anyway, backend will use original
+        // Save as verified PDF to backend (will be encrypted in storage)
+        try {
+          await reviewDataService.saveVerifiedI9(employeeId, pdfBytesToSave);
+          console.log('[I9-MODAL] Verified PDF saved successfully');
+        } catch (saveErr) {
+          console.error('[I9-MODAL] Failed to save verified PDF:', saveErr);
+          // Continue anyway, backend will use original
+        }
+      } else {
+        console.warn('[I9-MODAL] No PDF data available to save');
       }
 
       setCurrentStep(2);
@@ -337,19 +344,29 @@ export const I9ReviewModal: React.FC<I9ReviewModalProps> = ({
                     <div className="p-4">
                       <PDFViewer
                         pdfUrl={data.pdfUrl}
+                        pdfData={data.pdfData}
                         title="I-9 Form Section 1"
                         height="500px"
                       />
                     </div>
                     <div className="border-t p-3 bg-gray-50">
                       {!showEditPanel ? (
-                        <button
-                          onClick={() => setShowEditPanel(true)}
-                          className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm flex items-center justify-center gap-2"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                          <span>Need to Edit This PDF?</span>
-                        </button>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => setShowEditPanel(true)}
+                            className="px-4 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-semibold text-sm flex items-center justify-center gap-2"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            <span>Need to Edit PDF?</span>
+                          </button>
+                          <button
+                            onClick={handleNextToStep2}
+                            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm flex items-center justify-center gap-2"
+                          >
+                            <span>Next: Section 2</span>
+                            <span>→</span>
+                          </button>
+                        </div>
                       ) : (
                         <div className="space-y-3">
                           <div className="text-xs text-gray-700 bg-blue-50 border border-blue-200 p-3 rounded">
@@ -415,18 +432,12 @@ export const I9ReviewModal: React.FC<I9ReviewModalProps> = ({
               </div>
 
               {/* Navigation */}
-              <div className="border-t px-6 py-4 flex items-center justify-between bg-gray-50">
+              <div className="border-t px-6 py-4 flex items-center justify-end bg-gray-50">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="px-6 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-semibold"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleNextToStep2}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  Next: Complete Section 2 →
+                  Close
                 </button>
               </div>
             </>

@@ -609,6 +609,11 @@ export default function DocumentUploadEnhanced({
         <Card>
           <CardHeader>
             <CardTitle>{t.option1}</CardTitle>
+            <p className="text-sm text-gray-600 mt-2">
+              {language === 'es'
+                ? 'Suba UNO de los siguientes documentos (no ambos)'
+                : 'Upload ONE of the following documents (not both)'}
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Passport Upload */}
@@ -630,7 +635,19 @@ export default function DocumentUploadEnhanced({
                 </label>
               </div>
             </div>
-            
+
+            {/* OR Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500 font-medium">
+                  {language === 'es' ? 'O' : 'OR'}
+                </span>
+              </div>
+            </div>
+
             {/* Green Card Upload */}
             <div className="p-4 border-2 border-dashed rounded-lg">
               <div className="text-center">

@@ -12,9 +12,11 @@ import { SearchFieldConfig } from '@/components/ui/advanced-search'
 import { FilterFieldConfig } from '@/components/ui/advanced-filter'
 import { ExportColumn } from '@/components/ui/data-export'
 import { useAuth } from '@/contexts/AuthContext'
-import { Search, Filter, Eye, Users, UserCheck, UserX, Clock, RefreshCw } from 'lucide-react'
+import { Search, Filter, Eye, Users, UserCheck, UserX, Clock, RefreshCw, FileText } from 'lucide-react'
 import { api, apiClient } from '@/services/api'
 import { Label } from '@radix-ui/react-label'
+import { DocumentsViewer } from './DocumentsViewer'
+import { EmployeeDetailsView } from './EmployeeDetailsView'
 
 interface Employee {
   id: string
@@ -116,6 +118,7 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
 
   // Modal states
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetails | null>(null)
+  const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<string | null>(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
   const [newEmployeeStatus, setNewEmployeeStatus] = useState('')
@@ -157,13 +160,21 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
         setLoading(true)
       }
 
-      // Fetch all employees without any filters - we'll filter on the client side
+      // ✅ FIX: Backend now filters to active employees by default
+      // This ensures only employees who have completed onboarding AND been approved by manager are shown
+      // HR can optionally see all employees by adding include_pending=true parameter
       const response = await apiClient.get('/employees', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          // HR can see pending employees if needed (future enhancement)
+          // include_pending: userRole === 'hr' ? showAllEmployees : false
+        }
       })
 
-      console.log('Fetched employees:', response.data.employees)
-      setEmployees(response.data.employees || [])
+      // Handle both wrapped and unwrapped response formats
+      const employeesData = response.data.employees || response.data || []
+      console.log('✅ Fetched active employees:', employeesData.length)
+      setEmployees(employeesData)
       setError(null)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch employees')
@@ -203,11 +214,11 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
   const fetchEmployeeDetails = async (employeeId: string) => {
     try {
       setDetailsLoading(true)
-      const response = await apiClient.get(`/employees/${employeeId}`, {
+      const response = await apiClient.get(`/manager/review/employees/${employeeId}/details`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       // Handle wrapped response format
-      const employeeData = response.data.data || response.data
+      const employeeData = response.data.employee || response.data.data || response.data
       setSelectedEmployee(employeeData)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch employee details')
@@ -391,6 +402,21 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
               </DialogContent>
             </Dialog>
 
+            {/* Full Details Button - for active/completed employees */}
+            {(employee.employment_status === 'active' || employee.onboarding_status === 'completed') && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedEmployeeForDetails(employee.id)
+                }}
+              >
+                <FileText className="w-4 h-4 mr-1" />
+                Full Details
+              </Button>
+            )}
+
             {userRole === 'manager' && (
               <Button
                 variant="outline"
@@ -512,13 +538,13 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
       key: 'employment_status',
       label: 'Employment Status',
       type: 'text',
-      format: (value: string) => value.replace('_', ' ').toUpperCase()
+      format: (value: string) => value ? value.replace('_', ' ').toUpperCase() : 'N/A'
     },
     {
       key: 'onboarding_status',
       label: 'Onboarding Status',
       type: 'text',
-      format: (value: string) => value.replace('_', ' ').toUpperCase()
+      format: (value: string) => value ? value.replace('_', ' ').toUpperCase() : 'N/A'
     },
     {
       key: 'hire_date',
@@ -542,13 +568,13 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
       key: 'pay_frequency',
       label: 'Pay Frequency',
       type: 'text',
-      format: (value: string) => value.replace('_', ' ').toUpperCase()
+      format: (value: string) => value ? value.replace('_', ' ').toUpperCase() : 'N/A'
     },
     {
       key: 'employment_type',
       label: 'Employment Type',
       type: 'text',
-      format: (value: string) => value.replace('_', ' ').toUpperCase()
+      format: (value: string) => value ? value.replace('_', ' ').toUpperCase() : 'N/A'
     },
     { key: 'manager_name', label: 'Manager', type: 'text' },
     {
@@ -559,7 +585,11 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
     }
   ], [userRole])
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | undefined) => {
+    if (!status) {
+      return <Badge className="bg-gray-100 text-gray-800">UNKNOWN</Badge>
+    }
+
     const statusConfig = {
       active: { variant: 'default' as const, color: 'bg-green-100 text-green-800' },
       inactive: { variant: 'secondary' as const, color: 'bg-gray-100 text-gray-800' },
@@ -895,6 +925,14 @@ export function EmployeesTab({ userRole: propUserRole, propertyId: propPropertyI
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Employee Details View - Full screen modal */}
+        {selectedEmployeeForDetails && (
+          <EmployeeDetailsView
+            employeeId={selectedEmployeeForDetails}
+            onClose={() => setSelectedEmployeeForDetails(null)}
+          />
+        )}
       </CardContent>
     </Card>
   )
@@ -932,6 +970,19 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
               <label className="text-sm font-medium text-gray-500">Email</label>
               <p className="text-sm">{employee.email}</p>
             </div>
+            {employee.phone && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Phone</label>
+                <p className="text-sm">{employee.phone}</p>
+              </div>
+            )}
+            {employee.ssn && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">SSN</label>
+                <p className="text-sm font-mono">{employee.ssn}</p>
+                <p className="text-xs text-gray-400 mt-1">Last 4 digits only for security</p>
+              </div>
+            )}
             {employee.employee_number && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Employee Number</label>
@@ -965,7 +1016,7 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Employment Type</label>
-              <p className="text-sm">{employee.employment_type.replace('_', ' ').toUpperCase()}</p>
+              <p className="text-sm">{employee.employment_type ? employee.employment_type.replace('_', ' ').toUpperCase() : 'N/A'}</p>
             </div>
           </CardContent>
         </Card>
@@ -987,7 +1038,7 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
                       employee.employment_status === 'on_leave' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-gray-100 text-gray-800'
                 }>
-                  {employee.employment_status.replace('_', ' ').toUpperCase()}
+                  {employee.employment_status ? employee.employment_status.replace('_', ' ').toUpperCase() : 'UNKNOWN'}
                 </Badge>
               </div>
             </div>
@@ -1017,7 +1068,7 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Pay Frequency</label>
-              <p className="text-sm">{employee.pay_frequency.replace('_', ' ').toUpperCase()}</p>
+              <p className="text-sm">{employee.pay_frequency ? employee.pay_frequency.replace('_', ' ').toUpperCase() : 'N/A'}</p>
             </div>
           </CardContent>
         </Card>
@@ -1034,12 +1085,12 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
               <label className="text-sm font-medium text-gray-500">Status</label>
               <div className="mt-1">
                 <Badge className={
-                  employee.onboarding_progress.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    employee.onboarding_progress.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      employee.onboarding_progress.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                  employee.onboarding_progress?.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    employee.onboarding_progress?.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      employee.onboarding_progress?.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                         'bg-gray-100 text-gray-800'
                 }>
-                  {employee.onboarding_progress.status.replace('_', ' ').toUpperCase()}
+                  {employee.onboarding_progress?.status ? employee.onboarding_progress.status.replace('_', ' ').toUpperCase() : 'UNKNOWN'}
                 </Badge>
               </div>
             </div>
@@ -1059,7 +1110,7 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Current Step</label>
-              <p className="text-sm">{employee.onboarding_progress.current_step.replace('_', ' ').toUpperCase()}</p>
+              <p className="text-sm">{employee.onboarding_progress?.current_step ? employee.onboarding_progress.current_step.replace('_', ' ').toUpperCase() : 'N/A'}</p>
             </div>
             {employee.onboarding_progress.employee_completed_at && (
               <div>
@@ -1073,6 +1124,58 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
                 <p className="text-sm">{formatDate(employee.onboarding_progress.manager_review_started_at)}</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Emergency Contacts */}
+      {employee.emergencyContacts && employee.emergencyContacts.length > 0 && (
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle className="text-lg">Emergency Contacts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {employee.emergencyContacts.map((contact: any, index: number) => (
+                <div key={index} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-900">
+                      {index === 0 ? 'Primary Contact' : 'Secondary Contact'}
+                    </h4>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Name</label>
+                    <p className="text-sm">{contact.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Relationship</label>
+                    <p className="text-sm">{contact.relationship || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Phone</label>
+                    <p className="text-sm">{contact.phone || 'N/A'}</p>
+                  </div>
+                  {contact.alternatePhone && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Alternate Phone</label>
+                      <p className="text-sm">{contact.alternatePhone}</p>
+                    </div>
+                  )}
+                  {contact.email && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Email</label>
+                      <p className="text-sm">{contact.email}</p>
+                    </div>
+                  )}
+                  {contact.address && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Address</label>
+                      <p className="text-sm whitespace-pre-line">{contact.address}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -1096,6 +1199,22 @@ function EmployeeDetailsModal({ employee }: { employee: EmployeeDetails }) {
               <label className="text-sm font-medium text-gray-500">Hotel Experience</label>
               <p className="text-sm">{employee.application_data.applicant_data.hotel_experience || 'N/A'}</p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Documents Section - Show for completed/active employees */}
+      {(employee.onboarding_status === 'completed' || employee.employment_status === 'active') && (
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle className="text-lg">Documents</CardTitle>
+            <p className="text-sm text-gray-500">
+              View and download all onboarding documents for this employee.
+              All sensitive documents are encrypted and protected.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <DocumentsViewer employeeId={employee.id} />
           </CardContent>
         </Card>
       )}

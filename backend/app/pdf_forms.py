@@ -365,60 +365,69 @@ W4_FORM_FIELDS = {
 }
 
 # Health Insurance Plan Configuration (from onboarding packet)
+# Organized by category: Medical (UHC) vs Limited ACI Benefits
 HEALTH_INSURANCE_PLANS = {
-    "medical_plans": {
-        "hra_6k": {
-            "name": "UHC HRA $6K Plan",
-            "costs": {
-                "employee": 59.91,
-                "employee_spouse": 319.29,
-                "employee_children": 264.10,
-                "family": 390.25
+    "uhc_medical": {
+        "label": "Medical: United Healthcare",
+        "plans": {
+            "hra_6k": {
+                "name": "UHC HRA $6K Plan",
+                "costs": {
+                    "employee": 59.91,
+                    "employee_spouse": 319.29,
+                    "employee_children": 264.10,
+                    "family": 390.25
+                }
+            },
+            "hra_4k": {
+                "name": "UHC HRA $4K Plan", 
+                "costs": {
+                    "employee": 136.84,
+                    "employee_spouse": 396.21,
+                    "employee_children": 341.02,
+                    "family": 467.17
+                }
+            },
+            "hra_2k": {
+                "name": "UHC HRA $2K Plan",
+                "costs": {
+                    "employee": 213.76,
+                    "employee_spouse": 473.13,
+                    "employee_children": 417.95,
+                    "family": 544.09
+                }
             }
-        },
-        "hra_4k": {
-            "name": "UHC HRA $4K Plan", 
-            "costs": {
-                "employee": 136.84,
-                "employee_spouse": 396.21,
-                "employee_children": 341.02,
-                "family": 467.17
-            }
-        },
-        "hra_2k": {
-            "name": "UHC HRA $2K Plan",
-            "costs": {
-                "employee": 213.76,
-                "employee_spouse": 473.13,
-                "employee_children": 417.95,
-                "family": 544.09
-            }
-        },
-        "minimum_essential": {
-            "name": "ACI Minimum Essential Coverage Plan",
-            "costs": {
-                "employee": 7.77,
-                "employee_spouse": 17.55,
-                "employee_children": 19.03,
-                "family": 27.61
-            }
-        },
-        "indemnity": {
-            "name": "ACI Indemnity Plan",
-            "costs": {
-                "employee": 19.61,
-                "employee_spouse": 37.24,
-                "employee_children": 31.45,
-                "family": 49.12
-            }
-        },
-        "minimum_plus_indemnity": {
-            "name": "Minimum Essential + Indemnity",
-            "costs": {
-                "employee": 27.37,
-                "employee_spouse": 54.79,
-                "employee_children": 50.48,
-                "family": 76.74
+        }
+    },
+    "aci_limited": {
+        "label": "Limited ACI Benefits",
+        "plans": {
+            "minimum_essential": {
+                "name": "ACI Minimum Essential Coverage Plan",
+                "costs": {
+                    "employee": 7.77,
+                    "employee_spouse": 17.55,
+                    "employee_children": 19.03,
+                    "family": 27.61
+                }
+            },
+            "indemnity": {
+                "name": "ACI Indemnity Plan",
+                "costs": {
+                    "employee": 19.61,
+                    "employee_spouse": 37.24,
+                    "employee_children": 31.45,
+                    "family": 49.12
+                }
+            },
+            "minimum_plus_indemnity": {
+                "name": "Minimum Essential + Indemnity",
+                "costs": {
+                    "employee": 27.37,
+                    "employee_spouse": 54.79,
+                    "employee_children": 50.48,
+                    "family": 76.74
+                }
             }
         }
     },
@@ -1465,27 +1474,8 @@ class PDFFormFiller:
                             self._set_widget_value(widget, formatted_date)
                             print(f"✓ Filled first day of employment: {formatted_date}")
 
-            # Add manager signature if provided
-            if signature_data_url:
-                # Extract base64 data
-                if ',' in signature_data_url:
-                    signature_base64 = signature_data_url.split(',')[1]
-                else:
-                    signature_base64 = signature_data_url
-
-                signature_bytes = base64.b64decode(signature_base64)
-
-                # Insert signature on page 1 (employer section)
-                # Position near employer name field (adjust as needed)
-                page = doc[0]
-
-                # Signature position (adjust based on W-4 layout)
-                # This is approximate - may need adjustment
-                rect = fitz.Rect(350, 750, 550, 800)  # x0, y0, x1, y1
-
-                # Insert signature image
-                page.insert_image(rect, stream=signature_bytes, keep_proportion=True)
-                print(f"✓ Added manager signature to W-4")
+            # Note: Manager signature is added separately via add_signature_to_pdf()
+            # to ensure proper transparency handling. Do not add signature here.
 
             # Save and return
             pdf_bytes_output = doc.tobytes()
@@ -1733,10 +1723,21 @@ class PDFFormFiller:
                 # The actual signature line is in Step 5, around y:690 from bottom-left origin
                 # Position signature properly on the "Employee's signature" line
                 rect = fitz.Rect(100, 690, 350, 720)
+            elif signature_type == "employer_w4":
+                # W-4 employer/manager signature position
+                # W-4 has an "Employer's signature (optional)" field in the employer section
+                # Position on the signature line in the employer section (bottom of page 4)
+                # Coordinates similar to employee signature but in employer section
+                rect = fitz.Rect(100, 740, 350, 780)  # Below employee signature, width:250, height:40
             elif signature_type == "employee_health_insurance":
                 # Health insurance employee signature position (Page 2)
                 # Based on the current coordinates in health_insurance_overlay.py
                 rect = fitz.Rect(188.28, 615.6, 486.0, 652.92)
+            elif signature_type == "employer_health_insurance":
+                # Health insurance employer/manager signature position
+                # Position below employee signature or in employer section
+                # Similar to W-4 employer signature placement
+                rect = fitz.Rect(100, 680, 350, 720)  # width:250, height:40
             elif signature_type == "employee_direct_deposit":
                 # Direct Deposit employee signature position
                 # Based on widget coordinates: x=134.28, y=400.66 (expanded for proper signature display)

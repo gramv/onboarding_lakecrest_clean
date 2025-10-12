@@ -2818,22 +2818,15 @@ The {property_name} Team
 
                         <div class="message">
                             <p>Congratulations! You have successfully completed your onboarding process at <strong>{hotel_name}</strong>.
-                            We are thrilled to welcome you to our team!</p>
-
-                            <p>Your manager has reviewed and approved all your documents. Below are your confirmed employment details
-                            for your records.</p>
+                            Your manager has reviewed and approved all your documents, and you are now officially part of our team!</p>
                         </div>
 
                         <div class="section">
-                            <div class="section-title">📋 Employment Information</div>
+                            <div class="section-title">📋 Your Position</div>
                             <table class="info-table">
                                 <tr>
                                     <td>Property:</td>
                                     <td><strong>{hotel_name}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Location:</td>
-                                    <td>{hotel_address}</td>
                                 </tr>
                                 <tr>
                                     <td>Department:</td>
@@ -2847,26 +2840,9 @@ The {property_name} Team
                                     <td>Supervisor:</td>
                                     <td>{supervisor_name}</td>
                                 </tr>
-                            </table>
-                        </div>
-
-                        <div class="highlight-box">
-                            <h3>📅 Your First Day</h3>
-                            <p><strong>Date:</strong> {job_start_date}</p>
-                            <p><strong>Time:</strong> {start_time}</p>
-                            <p>Please arrive 15 minutes early for orientation.</p>
-                        </div>
-
-                        <div class="section">
-                            <div class="section-title">💰 Compensation Details</div>
-                            <table class="info-table">
                                 <tr>
                                     <td>Rate of Pay:</td>
-                                    <td><strong>{pay_rate}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Pay Frequency:</td>
-                                    <td>{pay_freq_display}</td>
+                                    <td><strong>{pay_rate}</strong> ({pay_freq_display})</td>
                                 </tr>
                                 <tr>
                                     <td>Payment Method:</td>
@@ -2875,24 +2851,23 @@ The {property_name} Team
                             </table>
                         </div>
 
+                        <div class="highlight-box">
+                            <h3>📅 Your First Day - {job_start_date}</h3>
+                            <p><strong>Report Time:</strong> {start_time} (Please arrive 15 minutes early)</p>
+                            <p><strong>Location:</strong> {hotel_address}</p>
+                            <p><strong>Report to:</strong> {supervisor_name}</p>
+                        </div>
+
                         <div class="section">
-                            <div class="section-title">📝 What to Bring on Your First Day</div>
+                            <div class="section-title">📝 What to Bring</div>
                             <table class="info-table">
                                 <tr>
                                     <td>✓</td>
-                                    <td>Valid government-issued photo ID</td>
+                                    <td>Valid photo ID (already verified during onboarding)</td>
                                 </tr>
                                 <tr>
                                     <td>✓</td>
-                                    <td>Social Security card or proof of eligibility to work</td>
-                                </tr>
-                                <tr>
-                                    <td>✓</td>
-                                    <td>Voided check or bank account information (if not already provided)</td>
-                                </tr>
-                                <tr>
-                                    <td>✓</td>
-                                    <td>Comfortable, professional attire</td>
+                                    <td>Comfortable, professional work attire</td>
                                 </tr>
                                 <tr>
                                     <td>✓</td>
@@ -2902,8 +2877,8 @@ The {property_name} Team
                         </div>
 
                         <div class="message">
-                            <p style="margin-top: 30px;">If you have any questions before your first day, please don't hesitate to reach out
-                            to your supervisor or our HR department.</p>
+                            <p style="margin-top: 30px;"><strong>All your employment documents have been verified and are on file.</strong>
+                            If you have any questions before your first day, please contact your supervisor.</p>
 
                             <p><strong>We look forward to seeing you on {job_start_date}!</strong></p>
                         </div>

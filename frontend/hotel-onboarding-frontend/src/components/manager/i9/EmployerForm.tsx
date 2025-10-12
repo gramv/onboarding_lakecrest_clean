@@ -39,23 +39,48 @@ export const EmployerForm: React.FC<EmployerFormProps> = ({
 
   // Auto-fill on mount
   useEffect(() => {
-    // Auto-fill employment date
+    console.log('[EmployerForm] Auto-fill triggered:', { employeeStartDate, employerProfile });
+    
+    // Auto-fill employment date - convert to YYYY-MM-DD if needed
     if (employeeStartDate) {
-      setFormData(prev => ({ ...prev, firstDayOfEmployment: employeeStartDate }));
+      try {
+        // Handle various date formats
+        let formattedDate = employeeStartDate;
+        
+        // If it's an ISO string with time, extract just the date part
+        if (employeeStartDate.includes('T')) {
+          formattedDate = employeeStartDate.split('T')[0];
+        }
+        
+        // Validate it's YYYY-MM-DD format
+        if (/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+          console.log('[EmployerForm] Setting firstDayOfEmployment:', formattedDate);
+          setFormData(prev => ({ ...prev, firstDayOfEmployment: formattedDate }));
+        } else {
+          console.warn('[EmployerForm] Invalid date format:', employeeStartDate);
+        }
+      } catch (err) {
+        console.error('[EmployerForm] Error processing date:', err);
+      }
+    } else {
+      console.warn('[EmployerForm] No employeeStartDate provided - field will be empty');
     }
 
     // Auto-fill employer data if profile exists
     if (employerProfile) {
+      console.log('[EmployerForm] Auto-filling employer profile');
       setFormData(prev => ({
         ...prev,
-        employerName: employerProfile.i9_employer_name,
-        employerTitle: employerProfile.i9_employer_title,
-        businessName: employerProfile.i9_business_name,
-        businessAddress: employerProfile.i9_business_address,
-        city: employerProfile.city,
-        state: employerProfile.state,
-        zipCode: employerProfile.zip_code
+        employerName: employerProfile.i9_employer_name || '',
+        employerTitle: employerProfile.i9_employer_title || '',
+        businessName: employerProfile.i9_business_name || '',
+        businessAddress: employerProfile.i9_business_address || '',
+        city: employerProfile.city || '',
+        state: employerProfile.state || '',
+        zipCode: employerProfile.zip_code || ''
       }));
+    } else {
+      console.warn('[EmployerForm] No employer profile provided');
     }
   }, [employerProfile, employeeStartDate]);
 

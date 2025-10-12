@@ -10,7 +10,10 @@ import mimetypes
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
-import aiofiles
+try:
+    import aiofiles
+except ImportError:
+    aiofiles = None  # Optional dependency - only needed for local file storage
 import PyPDF2
 from PIL import Image
 import io

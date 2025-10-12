@@ -38,15 +38,20 @@ export function PendingReviewsTab() {
     try {
       setLoading(true)
       setError(null)
+
+      // ✅ This endpoint fetches employees who have:
+      // - Completed their onboarding (onboarding_status='completed')
+      // - Are awaiting manager review (manager_review_status='pending_review')
+      // - Have NOT been activated yet (employment_status != 'active')
       const response = await managerReviewApi.getPendingReviews()
 
       // The axios interceptor automatically unwraps { data: [...] } responses
       // So response is already the employees array, not { data: [...], count: N }
       const employees = Array.isArray(response) ? response : (response.data || [])
-      console.log('👥 Loaded employees for review:', employees.length)
+      console.log('✅ Loaded employees pending review:', employees.length)
       setEmployees(employees)
     } catch (err: any) {
-      console.error('Failed to load pending reviews:', err)
+      console.error('❌ Failed to load pending reviews:', err)
       setError(err.message || 'Failed to load pending reviews')
       toast({
         title: 'Error',

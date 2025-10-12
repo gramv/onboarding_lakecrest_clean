@@ -3,20 +3,24 @@ import { ZoomIn, ZoomOut, Download, Maximize2 } from 'lucide-react';
 
 interface PDFViewerProps {
   pdfUrl: string;
+  pdfData?: string; // Base64 encoded PDF data
 }
 
-export const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
+export const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, pdfData }) => {
   const [zoom, setZoom] = useState(100);
+
+  // Use decrypted base64 data if available, otherwise fall back to URL
+  const displayUrl = pdfData ? `data:application/pdf;base64,${pdfData}` : pdfUrl;
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    link.href = pdfUrl;
+    link.href = displayUrl;
     link.download = 'i9_form.pdf';
     link.click();
   };
 
   const handleFullScreen = () => {
-    window.open(pdfUrl, '_blank');
+    window.open(displayUrl, '_blank');
   };
 
   return (
@@ -68,7 +72,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
       <div className="flex-1 overflow-auto bg-gray-100 p-4">
         <div className="bg-white shadow-lg mx-auto" style={{ width: `${zoom}%` }}>
           <iframe
-            src={pdfUrl}
+            src={displayUrl}
             className="w-full h-[800px] border-0"
             title="I-9 Form PDF"
           />

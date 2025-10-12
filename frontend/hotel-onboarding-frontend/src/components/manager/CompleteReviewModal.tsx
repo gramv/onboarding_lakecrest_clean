@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Loader2, Calendar, User, Building2, Clock } from 'lucide-react';
 import { reviewDataService } from '@/services/managerReviewService';
+import DocumentVerificationService from '@/services/documentVerificationService';
 import { useNavigate } from 'react-router-dom';
 
 interface CompleteReviewModalProps {
@@ -37,15 +38,53 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      // Set default start date to today
-      const today = new Date().toISOString().split('T')[0];
-      setStartDate(today);
-
       // Auto-generate employee number from employee ID
       const empNumber = `EMP-${employeeId.substring(0, 8).toUpperCase()}`;
       setEmployeeNumber(empNumber);
+
+      // Fetch hire date from New Hire Summary
+      fetchHireDate();
     }
   }, [isOpen, employeeId]);
+
+  const fetchHireDate = async () => {
+    try {
+      // Try to get hire date from New Hire Summary
+      console.log('[COMPLETE-REVIEW] Fetching hire date for employee:', employeeId);
+      const summaryResponse = await DocumentVerificationService.getNewHireSummary(employeeId);
+      console.log('[COMPLETE-REVIEW] Summary response:', summaryResponse);
+      
+      const hireDate = summaryResponse?.data?.summary?.hireDate;
+      console.log('[COMPLETE-REVIEW] Extracted hire date:', hireDate);
+      
+      if (hireDate) {
+        // Convert hire date to YYYY-MM-DD format if needed
+        let formattedDate = hireDate;
+        if (hireDate.includes('T')) {
+          formattedDate = hireDate.split('T')[0];
+        }
+        // Also handle MM/DD/YYYY format
+        if (hireDate.includes('/')) {
+          const parts = hireDate.split('/');
+          if (parts.length === 3) {
+            formattedDate = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+          }
+        }
+        setStartDate(formattedDate);
+        console.log('[COMPLETE-REVIEW] Using hire date from New Hire Summary:', formattedDate);
+      } else {
+        // Fallback to today if no hire date found
+        const today = new Date().toISOString().split('T')[0];
+        setStartDate(today);
+        console.log('[COMPLETE-REVIEW] No hire date found, using today:', today);
+      }
+    } catch (error) {
+      console.error('[COMPLETE-REVIEW] Could not fetch hire date:', error);
+      // Fallback to today if fetch fails
+      const today = new Date().toISOString().split('T')[0];
+      setStartDate(today);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -74,7 +113,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
 
       // Redirect to manager dashboard
       setTimeout(() => {
-        navigate('/manager/dashboard');
+        navigate('/manager');
       }, 500);
     } catch (err: any) {
       console.error('[COMPLETE-REVIEW-MODAL] Failed to complete review:', err);

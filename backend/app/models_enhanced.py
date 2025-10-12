@@ -388,7 +388,14 @@ class Employee(BaseModel):
     employment_status: str = "active"
     onboarding_status: OnboardingStatus = OnboardingStatus.NOT_STARTED
     onboarding_session_id: Optional[str] = None
-    
+
+    # Manager review tracking
+    manager_review_status: str = Field(default="pending_review")  # pending_review, manager_reviewing, completed, changes_requested
+    manager_reviewed_by: Optional[str] = Field(default=None)  # Manager user ID who reviewed
+    manager_review_started_at: Optional[datetime] = Field(default=None)
+    manager_review_completed_at: Optional[datetime] = Field(default=None)
+    manager_review_comments: Optional[str] = Field(default=None)
+
     # Benefits eligibility
     benefits_eligible: bool = True
     health_insurance_eligible: bool = True
@@ -404,6 +411,8 @@ class Employee(BaseModel):
     i9_section2_deadline: Optional[datetime] = None  # Must complete within 3 business days
     i9_section1_completed_at: Optional[datetime] = None
     i9_section2_completed_at: Optional[datetime] = None
+    i9_section2_completed_by: Optional[str] = None  # Manager who completed Section 2
+    i9_section2_status: str = "pending"  # pending, completed, overdue
     i9_assigned_manager_id: Optional[str] = None  # Manager assigned for Section 2
     i9_is_overdue: bool = False
     i9_deadline_notifications: List[Dict[str, Any]] = Field(default_factory=list)
@@ -411,7 +420,12 @@ class Employee(BaseModel):
     # Document management
     uploaded_documents: Dict[DocumentType, Dict[str, Any]] = Field(default_factory=dict)
     signatures: Dict[SignatureType, Dict[str, Any]] = Field(default_factory=dict)
-    
+
+    # Final signature tracking (for onboarding completion)
+    final_signature_timestamp: Optional[datetime] = None
+    final_signature_ip: Optional[str] = None
+    final_signature_user_agent: Optional[str] = None
+
     # Timestamps
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
@@ -422,12 +436,14 @@ class Employee(BaseModel):
     compliance_audit_trail: List[Dict[str, Any]] = Field(default_factory=list)
     form_update_history: List[str] = Field(default_factory=list)  # Form update session IDs
     
+    model_config = {"extra": "allow"}  # Allow extra fields from database
+
     def get_full_name(self) -> str:
         """Get employee's full name"""
         first_name = self.personal_info.get("first_name", "")
         last_name = self.personal_info.get("last_name", "")
         return f"{first_name} {last_name}".strip()
-    
+
     def is_onboarding_complete(self) -> bool:
         """Check if onboarding is fully complete"""
         return (self.onboarding_status == OnboardingStatus.APPROVED and

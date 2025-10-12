@@ -32,13 +32,51 @@ export const DocumentPDFViewer: React.FC<DocumentPDFViewerProps> = ({
   );
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [modalImageUrl, setModalImageUrl] = useState('');
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   const handleImageClick = (url: string) => {
     setModalImageUrl(url);
     setImageModalOpen(true);
   };
 
-  const viewerSrc = pdfDataUrl || pdfUrl;
+  // Convert base64 PDF to blob URL for better iframe performance (especially for large PDFs)
+  React.useEffect(() => {
+    let url: string | null = null;
+
+    if (pdfDataUrl && pdfDataUrl.startsWith('data:application/pdf;base64,')) {
+      try {
+        console.log('[DocumentPDFViewer] Converting base64 to blob for', documentName);
+        const base64Data = pdfDataUrl.split(',')[1];
+        const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        url = URL.createObjectURL(blob);
+        console.log('[DocumentPDFViewer] Created blob URL, size:', blob.size);
+        setBlobUrl(url);
+      } catch (err) {
+        console.error('[DocumentPDFViewer] Error converting to blob:', err);
+        setBlobUrl(null);
+      }
+    } else {
+      setBlobUrl(null);
+    }
+
+    // Cleanup
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [pdfDataUrl, documentName]);
+
+  const viewerSrc = blobUrl || pdfDataUrl || pdfUrl;
+  
+  console.log('[DocumentPDFViewer] Rendering:', {
+    documentName,
+    hasPdfDataUrl: !!pdfDataUrl,
+    hasPdfUrl: !!pdfUrl,
+    hasBlobUrl: !!blobUrl,
+    viewerSrcType: viewerSrc?.startsWith('data:') ? 'base64' : viewerSrc?.startsWith('blob:') ? 'blob' : 'url'
+  });
 
   const handleDownloadPDF = () => {
     const target = pdfUrl || pdfDataUrl;

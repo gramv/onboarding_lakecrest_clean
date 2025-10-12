@@ -15,7 +15,8 @@ import {
   LucideIcon,
   ChevronDown,
   LayoutDashboard,
-  Send
+  Send,
+  Settings
 } from 'lucide-react'
 
 export interface NavigationItem {
@@ -475,6 +476,14 @@ export const HR_NAVIGATION_ITEMS: NavigationItem[] = [
     icon: BarChart3,
     roles: ['hr'],
     ariaLabel: 'View system analytics and reports'
+  },
+  {
+    key: 'settings',
+    label: 'Settings',
+    path: '/hr/settings',
+    icon: Settings,
+    roles: ['hr'],
+    ariaLabel: 'System settings and configuration'
   }
 ]
 

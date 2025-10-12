@@ -3,3 +3,13 @@ backend/.env
 backend/.env*
 venv
 backend/venv
+
+# Log files with sensitive data
+*.log
+backend_uvicorn.log
+
+# Test files with hardcoded credentials
+backend/test_manager_review_filtering.py
+
+# Documentation with sensitive examples
+MANAGER_REVIEW_FIX_REPORT.md

@@ -31,7 +31,8 @@ export default function TraffickingAwarenessStep({
   const [certificateData, setCertificateData] = useState(null)
   const [showReview, setShowReview] = useState(false)
   const [isSigned, setIsSigned] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null)  // Base64 PDF data
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null)  // Raw base64 PDF data (no prefix)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)  // Full data URL for backward compat
   const [remotePdfUrl, setRemotePdfUrl] = useState<string | null>(null)  // Supabase URL
   const [isLoadingPdf, setIsLoadingPdf] = useState(false)
   const [trainingProgress, setTrainingProgress] = useState<any>(null)
@@ -56,6 +57,7 @@ export default function TraffickingAwarenessStep({
     certificateData,
     showReview,
     isSigned,
+    pdfBase64,
     pdfUrl,
     remotePdfUrl
   }
@@ -89,13 +91,15 @@ export default function TraffickingAwarenessStep({
           const parsed = JSON.parse(savedData)
           if (parsed.isSigned) {
             setIsSigned(true)
-            // ✅ FIX #4: Load both pdfUrl and remotePdfUrl
+            // ✅ FIX #4: Load pdfBase64, pdfUrl, and remotePdfUrl
+            setPdfBase64(parsed.pdfBase64)
             setPdfUrl(parsed.pdfUrl)
             setRemotePdfUrl(parsed.remotePdfUrl)
             setTrainingComplete(true)
             setCertificateData(parsed.certificate || parsed.certificateData)
             console.log('✅ Rehydrated from session storage:', {
               isSigned: true,
+              hasPdfBase64: !!parsed.pdfBase64,
               hasPdfUrl: !!parsed.pdfUrl,
               hasRemotePdfUrl: !!parsed.remotePdfUrl
             })
@@ -125,7 +129,9 @@ export default function TraffickingAwarenessStep({
             if (response.data?.success) {
               // ✅ FIX: Prioritize decrypted pdf_data over signed_url (encrypted)
               if (response.data?.data?.pdf_data) {
-                setPdfUrl(`data:application/pdf;base64,${response.data.data.pdf_data}`)
+                const rawBase64 = response.data.data.pdf_data
+                setPdfBase64(rawBase64)
+                setPdfUrl(`data:application/pdf;base64,${rawBase64}`)
                 console.log('✅ Fetched and decrypted PDF from database (base64)')
               } else if (response.data?.data?.document_metadata?.signed_url) {
                 setRemotePdfUrl(response.data.data.document_metadata.signed_url)
@@ -268,11 +274,12 @@ export default function TraffickingAwarenessStep({
 
         if (response.data?.success && response.data?.data) {
           supabaseUrl = response.data.data.pdf_url
-          const pdfBase64 = response.data.data.pdf
-          base64Pdf = `data:application/pdf;base64,${pdfBase64}`
+          const rawPdfBase64 = response.data.data.pdf
+          base64Pdf = `data:application/pdf;base64,${rawPdfBase64}`
 
-          // ✅ FIX #2: Set BOTH URLs
-          setPdfUrl(base64Pdf)
+          // ✅ FIX #2: Set raw base64 AND data URLs
+          setPdfBase64(rawPdfBase64)  // Store raw base64 for PDFViewer
+          setPdfUrl(base64Pdf)        // Store full data URL for backward compat
           setRemotePdfUrl(supabaseUrl)
 
           console.log('✅ Signed Human Trafficking PDF saved to database:', supabaseUrl)
@@ -285,10 +292,11 @@ export default function TraffickingAwarenessStep({
       }
     }
 
-    // ✅ FIX #3: Save BOTH URLs to session storage
+    // ✅ FIX #3: Save raw base64 AND URLs to session storage
     sessionStorage.setItem(`onboarding_${currentStep.id}_data`, JSON.stringify({
       ...stepData,
       isSigned: true,
+      pdfBase64: signatureData.pdfBase64,  // Raw base64 from ReviewAndSign
       pdfUrl: base64Pdf,
       remotePdfUrl: supabaseUrl
     }))
@@ -357,7 +365,7 @@ export default function TraffickingAwarenessStep({
   }
 
   // ✅ FIX #5: State 1: Already signed - show PDF viewer (accept either URL)
-  if (isSigned && (pdfUrl || remotePdfUrl)) {
+  if (isSigned && (pdfBase64 || pdfUrl || remotePdfUrl)) {
     return (
       <StepContainer saveStatus={saveStatus} canProceed={true}>
         <StepContentWrapper>
@@ -371,11 +379,11 @@ export default function TraffickingAwarenessStep({
               <p className="text-sm sm:text-base text-gray-600">{t.completionMessage}</p>
             </div>
 
-            {/* ✅ FIX: Use PDFViewer (like I-9/W-4) to handle both base64 and remote URLs */}
+            {/* ✅ FIX: Use raw base64 for pdfData (no data URL prefix) */}
             <div className="max-w-4xl mx-auto">
               <PDFViewer
-                pdfData={pdfUrl ?? undefined}
-                pdfUrl={!pdfUrl ? remotePdfUrl ?? undefined : undefined}
+                pdfData={pdfBase64 ?? undefined}
+                pdfUrl={!pdfBase64 ? (pdfUrl || remotePdfUrl) ?? undefined : undefined}
                 height="600px"
                 title="Signed Human Trafficking Awareness Certificate"
               />

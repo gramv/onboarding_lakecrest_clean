@@ -62,63 +62,78 @@ interface HealthInsuranceFormProps {
   onValidationChange?: (isValid: boolean) => void
 }
 
-// Medical plan options from the paper packet
-const MEDICAL_PLANS = {
-  'hra_6k': {
-    name: 'UHC HRA $6K Plan',
-    costs: {
-      'employee': 59.91,
-      'employee_spouse': 319.29,
-      'employee_children': 264.10,
-      'family': 390.25
+// Medical plan options from the paper packet - Organized by category
+const MEDICAL_PLAN_CATEGORIES = {
+  'uhc_medical': {
+    label: 'Medical: United Healthcare',
+    plans: {
+      'hra_6k': {
+        name: 'UHC HRA $6K Plan',
+        costs: {
+          'employee': 59.91,
+          'employee_spouse': 319.29,
+          'employee_children': 264.10,
+          'family': 390.25
+        }
+      },
+      'hra_4k': {
+        name: 'UHC HRA $4K Plan',
+        costs: {
+          'employee': 136.84,
+          'employee_spouse': 396.21,
+          'employee_children': 341.02,
+          'family': 467.17
+        }
+      },
+      'hra_2k': {
+        name: 'UHC HRA $2K Plan',
+        costs: {
+          'employee': 213.76,
+          'employee_spouse': 473.13,
+          'employee_children': 417.95,
+          'family': 544.09
+        }
+      }
     }
   },
-  'hra_4k': {
-    name: 'UHC HRA $4K Plan',
-    costs: {
-      'employee': 136.84,
-      'employee_spouse': 396.21,
-      'employee_children': 341.02,
-      'family': 467.17
-    }
-  },
-  'hra_2k': {
-    name: 'UHC HRA $2K Plan',
-    costs: {
-      'employee': 213.76,
-      'employee_spouse': 473.13,
-      'employee_children': 417.95,
-      'family': 544.09
-    }
-  },
-  'minimum_essential': {
-    name: 'ACI Minimum Essential Coverage Plan',
-    costs: {
-      'employee': 7.77,
-      'employee_spouse': 17.55,
-      'employee_children': 19.03,
-      'family': 27.61
-    }
-  },
-  'indemnity': {
-    name: 'ACI Indemnity Plan',
-    costs: {
-      'employee': 19.61,
-      'employee_spouse': 37.24,
-      'employee_children': 31.45,
-      'family': 49.12
-    }
-  },
-  'minimum_plus_indemnity': {
-    name: 'Minimum Essential + Indemnity',
-    costs: {
-      'employee': 27.37,
-      'employee_spouse': 54.79,
-      'employee_children': 50.48,
-      'family': 76.74
+  'aci_limited': {
+    label: 'Limited ACI Benefits',
+    plans: {
+      'minimum_essential': {
+        name: 'ACI Minimum Essential Coverage Plan',
+        costs: {
+          'employee': 7.77,
+          'employee_spouse': 17.55,
+          'employee_children': 19.03,
+          'family': 27.61
+        }
+      },
+      'indemnity': {
+        name: 'ACI Indemnity Plan',
+        costs: {
+          'employee': 19.61,
+          'employee_spouse': 37.24,
+          'employee_children': 31.45,
+          'family': 49.12
+        }
+      },
+      'minimum_plus_indemnity': {
+        name: 'Minimum Essential + Indemnity',
+        costs: {
+          'employee': 27.37,
+          'employee_spouse': 54.79,
+          'employee_children': 50.48,
+          'family': 76.74
+        }
+      }
     }
   }
 }
+
+// Flatten for backward compatibility
+const MEDICAL_PLANS = Object.values(MEDICAL_PLAN_CATEGORIES).reduce((acc, category) => {
+  return { ...acc, ...category.plans }
+}, {} as Record<string, any>)
 
 const DENTAL_COSTS = {
   'employee': 13.45,
@@ -181,10 +196,13 @@ export default function HealthInsuranceForm({
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({})
   const [showErrors, setShowErrors] = useState(false)
   const [isValid, setIsValid] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
 
   // Update form data when initialData changes (for navigation back)
+  // Only apply if form is not dirty (user hasn't made local changes)
   useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
+    if (initialData && Object.keys(initialData).length > 0 && !isDirty) {
       console.log('HealthInsuranceForm - Updating from initialData:', initialData)
       setFormData(prevData => ({
         ...prevData,
@@ -192,6 +210,31 @@ export default function HealthInsuranceForm({
       }))
     }
   }, [initialData])
+
+  // Clear plan selections when declining insurance
+  useEffect(() => {
+    if (formData.isWaived) {
+      console.log('HealthInsuranceForm - Clearing plan data because insurance is waived')
+      setFormData(prev => ({
+        ...prev,
+        medicalPlan: '',
+        medicalTier: 'employee',
+        medicalCost: 0,
+        dentalCoverage: false,
+        dentalTier: 'employee',
+        dentalCost: 0,
+        visionCoverage: false,
+        visionTier: 'employee',
+        visionCost: 0,
+        totalBiweeklyCost: 0,
+        dependents: [],
+        hasStepchildren: false,
+        stepchildrenNames: '',
+        dependentsSupported: false,
+        irsDependentConfirmation: false,
+      }))
+    }
+  }, [formData.isWaived])
 
   const t = (key: string) => {
     const translations: Record<string, Record<string, string>> = {
@@ -360,26 +403,54 @@ export default function HealthInsuranceForm({
   }
 
   const validateForm = (): boolean => {
-    // For health insurance, basic form is valid if either:
-    // 1. Coverage is waived OR
-    // 2. At least medical plan is selected
-    const basicValid = formData.isWaived || formData.medicalPlan !== '';
+    const errors: string[] = []
     
-    // If dependents are required, ensure they are filled
-    let dependentsValid = true;
-    if (requiresDependents() && !formData.isWaived) {
-      dependentsValid = formData.dependents.length > 0 && formData.irsDependentConfirmation;
+    // If insurance is waived, only validate waive reason
+    if (formData.isWaived) {
+      if (!formData.waiveReason || formData.waiveReason.trim() === '') {
+        errors.push('Please provide a reason for declining health insurance coverage')
+      }
+      const formIsValid = errors.length === 0
+      setIsValid(formIsValid)
+      setValidationErrors(errors)
+      
+      if (onValidationChange) {
+        onValidationChange(formIsValid)
+      }
+      
+      return formIsValid
     }
     
-    const formIsValid = basicValid && dependentsValid;
-    setIsValid(formIsValid);
+    // Basic validation for plan selection
+    const basicValid = formData.medicalPlan !== ''
+    if (!basicValid) {
+      errors.push('Please select a medical plan or decline coverage')
+    }
+    
+    // Dependent validation
+    let dependentsValid = true
+    if (requiresDependents()) {
+      if (formData.dependents.length === 0) {
+        errors.push('Please add at least one dependent for your selected coverage tier')
+        dependentsValid = false
+      }
+      
+      if (!formData.irsDependentConfirmation) {
+        errors.push('Please confirm that all dependents meet the IRS Section 152 definition')
+        dependentsValid = false
+      }
+    }
+    
+    const formIsValid = basicValid && dependentsValid
+    setIsValid(formIsValid)
+    setValidationErrors(errors)
     
     // Notify parent component
     if (onValidationChange) {
-      onValidationChange(formIsValid);
+      onValidationChange(formIsValid)
     }
     
-    return formIsValid;
+    return formIsValid
   };
 
   const handleSubmit = () => {
@@ -391,10 +462,19 @@ export default function HealthInsuranceForm({
     if (isFormValid) {
       console.log('Calling onSave with formData:', formData)
       onSave(formData)
+      setIsDirty(false) // Reset dirty flag after successful save
       if (onNext) onNext()
     } else {
       console.log('Form validation failed')
+      // Scroll to top to show error message
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
+  }
+
+  // Handler for plan changes that marks form as dirty
+  const handlePlanChange = (value: string) => {
+    setFormData(prev => ({ ...prev, medicalPlan: value }))
+    setIsDirty(true)
   }
 
   if (formData.isWaived) {
@@ -478,7 +558,17 @@ export default function HealthInsuranceForm({
 
             <Button
               variant="outline"
-              onClick={() => setFormData(prev => ({ ...prev, isWaived: false }))}
+              onClick={() => {
+                console.log('HealthInsuranceForm - Switching back to plan selection, clearing waive data')
+                setFormData(prev => ({ 
+                  ...prev, 
+                  isWaived: false,
+                  waiveReason: '',
+                  otherCoverageType: '',
+                  otherCoverageDetails: ''
+                }))
+                setIsDirty(true)
+              }}
               className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
             >
               Change Mind - Select Coverage
@@ -508,17 +598,24 @@ export default function HealthInsuranceForm({
 
   return (
     <div className="space-y-6">
-      {/* Header Section - Enhanced */}
-      <div className="text-center space-y-3 pb-4 border-b border-gray-200">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
-          <Shield className="h-7 w-7 text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('health_insurance')}</h2>
-          <p className="text-gray-600 text-sm mt-2 leading-relaxed">{t('health_insurance_desc')}</p>
-          <Badge variant="outline" className="mt-2 text-xs font-medium">{t('plan_year')}</Badge>
-        </div>
-      </div>
+      {/* Validation Errors Alert */}
+      {showErrors && validationErrors.length > 0 && (
+        <Alert className="bg-red-50 border-red-300 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-900 mb-2">Please complete the following:</h3>
+              <ul className="list-disc list-inside space-y-1">
+                {validationErrors.map((error, index) => (
+                  <li key={index} className="text-sm text-red-800">{error}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Alert>
+      )}
 
       {/* Medical Coverage - Enhanced */}
       <Card className="border-l-4 border-l-blue-500 shadow-md">
@@ -531,30 +628,83 @@ export default function HealthInsuranceForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-sm">{t('select_plan')}</Label>
-              <Select 
-                value={formData.medicalPlan} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, medicalPlan: value }))}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="Select medical plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(MEDICAL_PLANS).map(([key, plan]) => (
-                    <SelectItem key={key} value={key}>
-                      <div className="flex justify-between items-center w-full">
-                        <span className="text-sm">{plan.name}</span>
-                        <span className="ml-2 text-xs text-gray-500">
-                          ${plan.costs.employee}
-                        </span>
+          {/* Two-column grid for UHC and ACI sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            {/* UHC Medical Section */}
+            <Card className={`border-2 transition-all ${
+              formData.medicalPlan && Object.keys(MEDICAL_PLAN_CATEGORIES.uhc_medical.plans).includes(formData.medicalPlan)
+                ? 'border-blue-500 shadow-md' 
+                : 'border-gray-200 hover:border-blue-300'
+            }`}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg text-blue-700">
+                  {MEDICAL_PLAN_CATEGORIES.uhc_medical.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={formData.medicalPlan} onValueChange={handlePlanChange}>
+                  <div className="space-y-3">
+                    {Object.entries(MEDICAL_PLAN_CATEGORIES.uhc_medical.plans).map(([key, plan]) => (
+                      <div key={key} className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
+                        formData.medicalPlan === key 
+                          ? 'bg-blue-50 border-blue-300' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}>
+                        <RadioGroupItem value={key} id={key} className="mt-1" />
+                        <Label htmlFor={key} className="flex-1 cursor-pointer">
+                          <div className="flex justify-between items-start">
+                            <span className="text-sm font-medium">{plan.name}</span>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            ${plan.costs.employee} bi-weekly
+                          </div>
+                        </Label>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
+            {/* ACI Limited Benefits Section */}
+            <Card className={`border-2 transition-all ${
+              formData.medicalPlan && Object.keys(MEDICAL_PLAN_CATEGORIES.aci_limited.plans).includes(formData.medicalPlan)
+                ? 'border-purple-500 shadow-md' 
+                : 'border-gray-200 hover:border-purple-300'
+            }`}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg text-purple-700">
+                  {MEDICAL_PLAN_CATEGORIES.aci_limited.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={formData.medicalPlan} onValueChange={handlePlanChange}>
+                  <div className="space-y-3">
+                    {Object.entries(MEDICAL_PLAN_CATEGORIES.aci_limited.plans).map(([key, plan]) => (
+                      <div key={key} className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
+                        formData.medicalPlan === key 
+                          ? 'bg-purple-50 border-purple-300' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}>
+                        <RadioGroupItem value={key} id={key} className="mt-1" />
+                        <Label htmlFor={key} className="flex-1 cursor-pointer">
+                          <div className="flex justify-between items-start">
+                            <span className="text-sm font-medium">{plan.name}</span>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            ${plan.costs.employee} bi-weekly
+                          </div>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Coverage Tier Selection */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-sm">{t('select_tier')}</Label>
               <Select 
@@ -565,16 +715,20 @@ export default function HealthInsuranceForm({
                   <SelectValue placeholder="Select coverage tier" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIER_OPTIONS.map(tier => (
-                    <SelectItem key={tier.value} value={tier.value}>
-                      <div className="flex justify-between items-center w-full">
-                        <span className="text-sm">{language === 'es' ? tier.labelEs : tier.label}</span>
-                        <span className="ml-2 text-xs text-gray-500">
-                          ${formData.medicalPlan ? MEDICAL_PLANS[formData.medicalPlan as keyof typeof MEDICAL_PLANS]?.costs[tier.value as keyof typeof MEDICAL_PLANS['hra_6k']['costs']] || 0 : 0}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {TIER_OPTIONS.map(tier => {
+                    const selectedPlan = MEDICAL_PLANS[formData.medicalPlan as keyof typeof MEDICAL_PLANS];
+                    const cost = selectedPlan?.costs[tier.value as keyof typeof selectedPlan.costs] || 0;
+                    return (
+                      <SelectItem key={tier.value} value={tier.value}>
+                        <div className="flex justify-between items-center w-full">
+                          <span className="text-sm">{language === 'es' ? tier.labelEs : tier.label}</span>
+                          <span className="ml-2 text-xs text-gray-500">
+                            ${cost}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -664,12 +818,18 @@ export default function HealthInsuranceForm({
       {requiresDependents() && (
         <Card className="border-l-4 border-l-green-500 shadow-md">
           <CardHeader className="pb-4 bg-gradient-to-r from-green-50/50 to-transparent">
-            <CardTitle className="flex items-center space-x-2 text-lg">
-              <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                <Users className="h-4 w-4 text-green-600" />
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-green-600" />
+                </div>
+                <span>{t('dependents_info')}</span>
               </div>
-              <span>{t('dependents_info')}</span>
+              <Badge variant="destructive" className="text-xs">Required</Badge>
             </CardTitle>
+            <p className="text-sm text-gray-600 mt-2">
+              Your selected coverage tier requires dependent information. Please add at least one dependent below.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {formData.dependents.map((dependent, index) => (
@@ -687,7 +847,9 @@ export default function HealthInsuranceForm({
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                   <div>
-                    <Label className="text-xs">{t('first_name')}</Label>
+                    <Label className="text-sm">
+                      {t('first_name')} <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       value={dependent.firstName}
                       onChange={(e) => updateDependent(index, 'firstName', e.target.value)}
@@ -697,7 +859,9 @@ export default function HealthInsuranceForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">{t('last_name')}</Label>
+                    <Label className="text-sm">
+                      {t('last_name')} <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       value={dependent.lastName}
                       onChange={(e) => updateDependent(index, 'lastName', e.target.value)}
@@ -707,7 +871,9 @@ export default function HealthInsuranceForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">{t('relationship')}</Label>
+                    <Label className="text-sm">
+                      {t('relationship')} <span className="text-red-500">*</span>
+                    </Label>
                     <Select 
                       value={dependent.relationship} 
                       onValueChange={(value) => updateDependent(index, 'relationship', value)}
@@ -723,7 +889,9 @@ export default function HealthInsuranceForm({
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">{t('date_of_birth')}</Label>
+                    <Label className="text-sm">
+                      {t('date_of_birth')} <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="date"
                       value={dependent.dateOfBirth}
@@ -736,7 +904,7 @@ export default function HealthInsuranceForm({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs">{t('ssn')}</Label>
+                    <Label className="text-sm">{t('ssn')}</Label>
                     <Input
                       value={dependent.ssn}
                       onChange={(e) => updateDependent(index, 'ssn', e.target.value)}
@@ -746,7 +914,7 @@ export default function HealthInsuranceForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">{t('gender')}</Label>
+                    <Label className="text-sm">{t('gender')}</Label>
                     <Select 
                       value={dependent.gender} 
                       onValueChange={(value) => updateDependent(index, 'gender', value as 'M' | 'F')}
@@ -764,15 +932,29 @@ export default function HealthInsuranceForm({
               </div>
             ))}
 
-            <Button variant="outline" onClick={addDependent} size="sm" className="w-full">
-              <Plus className="h-3 w-3 mr-1" />
+            {formData.dependents.length === 0 && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-900">
+                  Click "Add Dependent" below to add spouse, children, or other eligible dependents to your coverage.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Button 
+              variant="outline" 
+              onClick={addDependent} 
+              size="default"
+              className="w-full border-green-500 text-green-700 hover:bg-green-50 hover:border-green-600"
+            >
+              <Plus className="h-4 w-4 mr-2" />
               {t('add_dependent')}
             </Button>
 
             {/* Compact Questions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
               <div>
-                <Label className="text-xs">{t('stepchildren_question')}</Label>
+                <Label className="text-sm font-medium">{t('stepchildren_question')}</Label>
                 <div className="flex space-x-3 mt-1">
                   <label className="flex items-center space-x-1">
                     <input 
@@ -782,7 +964,7 @@ export default function HealthInsuranceForm({
                       onChange={() => setFormData(prev => ({ ...prev, hasStepchildren: true }))}
                       className="w-3 h-3"
                     />
-                    <span className="text-xs">{t('yes')}</span>
+                    <span className="text-sm">{t('yes')}</span>
                   </label>
                   <label className="flex items-center space-x-1">
                     <input 
@@ -792,13 +974,13 @@ export default function HealthInsuranceForm({
                       onChange={() => setFormData(prev => ({ ...prev, hasStepchildren: false }))}
                       className="w-3 h-3"
                     />
-                    <span className="text-xs">{t('no')}</span>
+                    <span className="text-sm">{t('no')}</span>
                   </label>
                 </div>
               </div>
               
               <div>
-                <Label className="text-xs">{t('support_question')}</Label>
+                <Label className="text-sm font-medium">{t('support_question')}</Label>
                 <div className="flex space-x-3 mt-1">
                   <label className="flex items-center space-x-1">
                     <input 
@@ -808,7 +990,7 @@ export default function HealthInsuranceForm({
                       onChange={() => setFormData(prev => ({ ...prev, dependentsSupported: true }))}
                       className="w-3 h-3"
                     />
-                    <span className="text-xs">{t('yes')}</span>
+                    <span className="text-sm">{t('yes')}</span>
                   </label>
                   <label className="flex items-center space-x-1">
                     <input 
@@ -818,7 +1000,7 @@ export default function HealthInsuranceForm({
                       onChange={() => setFormData(prev => ({ ...prev, dependentsSupported: false }))}
                       className="w-3 h-3"
                     />
-                    <span className="text-xs">{t('no')}</span>
+                    <span className="text-sm">{t('no')}</span>
                   </label>
                 </div>
               </div>
@@ -826,7 +1008,7 @@ export default function HealthInsuranceForm({
 
             {formData.hasStepchildren && (
               <div>
-                <Label className="text-xs">{t('stepchildren_names')}</Label>
+                <Label className="text-sm">{t('stepchildren_names')}</Label>
                 <Input
                   value={formData.stepchildrenNames}
                   onChange={(e) => setFormData(prev => ({ ...prev, stepchildrenNames: e.target.value }))}
@@ -837,14 +1019,15 @@ export default function HealthInsuranceForm({
               </div>
             )}
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-start space-x-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
               <Checkbox
                 id="irs_confirmation"
                 checked={formData.irsDependentConfirmation}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, irsDependentConfirmation: !!checked }))}
-                className="w-3 h-3"
+                className="w-5 h-5 mt-0.5"
               />
-              <Label htmlFor="irs_confirmation" className="text-xs">
+              <Label htmlFor="irs_confirmation" className="text-sm leading-relaxed cursor-pointer">
+                <span className="font-semibold text-yellow-900">Required:</span>{' '}
                 {t('irs_confirmation')}
               </Label>
             </div>
@@ -909,7 +1092,10 @@ export default function HealthInsuranceForm({
               <Checkbox
                 id="decline_coverage"
                 checked={formData.isWaived}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isWaived: !!checked }))}
+                onCheckedChange={(checked) => {
+                  setFormData(prev => ({ ...prev, isWaived: !!checked }))
+                  setIsDirty(true)
+                }}
               />
               <Label htmlFor="decline_coverage" className="text-red-600 font-medium text-sm">
                 {t('decline_coverage')}

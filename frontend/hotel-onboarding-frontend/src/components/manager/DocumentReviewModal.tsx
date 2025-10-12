@@ -54,8 +54,19 @@ export const DocumentReviewModal: React.FC<DocumentReviewModalProps> = ({
         documentType
       );
 
+      console.log(`[DocumentReviewModal] Loaded ${documentType}:`, {
+        hasPdfUrl: !!data.pdfUrl,
+        hasPdfData: !!data.pdfData,
+        hasPdfDataUrl: !!data.pdfDataUrl,
+        pdfDataLength: data.pdfData?.length
+      });
+
       setPdfUrl(data.pdfUrl);
-      setPdfDataUrl(data.pdfDataUrl ?? (data.pdfData ? `data:application/pdf;base64,${data.pdfData}` : undefined));
+      const constructedPdfDataUrl = data.pdfDataUrl ?? (data.pdfData ? `data:application/pdf;base64,${data.pdfData}` : undefined);
+      setPdfDataUrl(constructedPdfDataUrl);
+      
+      console.log(`[DocumentReviewModal] Using ${constructedPdfDataUrl ? 'decrypted pdfDataUrl' : 'signed pdfUrl'} for ${documentType}`);
+      
       setUploadedDocs(data.uploadedDocsUrls || []);
     } catch (err: any) {
       console.error('Error loading document:', err);

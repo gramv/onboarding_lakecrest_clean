@@ -30,6 +30,7 @@ const ApplicationsTab = lazy(() => import('@/components/dashboard/ApplicationsTa
 const SystemApplicationsTab = lazy(() => import('@/components/dashboard/SystemApplicationsTab').then(m => ({ default: m.SystemApplicationsTab })))
 const AnalyticsTab = lazy(() => import('@/components/dashboard/AnalyticsTab').then(m => ({ default: m.AnalyticsTab })))
 const StepInvitationsTab = lazy(() => import('@/components/dashboard/StepInvitationsTab'))
+const HRSettingsTab = lazy(() => import('@/pages/HRSettingsTab'))
 const NotificationCenter = lazy(() => import('@/components/notifications/NotificationCenter'))
 
 // Lazy load pages
@@ -90,6 +91,7 @@ function App() {
                 <Route path="invitations" element={<StepInvitationsTab />} />
                 <Route path="system-applications" element={<SystemApplicationsTab onStatsUpdate={() => {}} />} />
                 <Route path="analytics" element={<AnalyticsTab userRole="hr" />} />
+                <Route path="settings" element={<HRSettingsTab />} />
                 <Route path="notifications" element={<NotificationCenter />} />
               </Route>
               

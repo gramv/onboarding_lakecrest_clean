@@ -934,6 +934,14 @@ try:
 except ImportError as e:
     logger.warning(f"Audit trail router not available: {e}")
 
+# Include HR settings router
+try:
+    from .routers.hr_settings_router import router as hr_settings_router
+    app.include_router(hr_settings_router)
+    logger.info("✅ HR settings router loaded successfully")
+except ImportError as e:
+    logger.warning(f"HR settings router not available: {e}")
+
 # Initialize enhanced services
 onboarding_orchestrator = None
 form_update_service = None
@@ -3574,23 +3582,42 @@ async def get_employees(
     department: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    include_pending: bool = Query(False, description="Include pending/invited employees (HR only)"),
     current_user: User = Depends(get_current_user)
 ):
-    """Get employees with filtering and search capabilities using Supabase"""
+    """
+    Get employees with filtering and search capabilities using Supabase
+
+    By default, only returns ACTIVE employees (employment_status='active')
+    Use include_pending=true to see all employees (HR only)
+
+    This ensures the Employees tab only shows employees who have completed
+    onboarding AND been approved by a manager.
+    """
     try:
         # Get employees based on user role
         if current_user.role == "manager":
             # Manager can only see employees from their properties - use access controller
             access_controller = get_property_access_controller()
             property_ids = access_controller.get_manager_accessible_properties(current_user)
-            
+
             if not property_ids:
                 return success_response(
                     data=[],
                     message="No employees found - manager not assigned to any property"
                 )
-            
+
             employees = await supabase_service.get_employees_by_properties(property_ids)
+            logger.info(f"📊 Fetched {len(employees)} employees from database for manager")
+            # Log first employee details if any
+            if employees:
+                first_emp = employees[0]
+                logger.info(f"  First employee: {first_emp.id}")
+                logger.info(f"    hasattr manager_review_status: {hasattr(first_emp, 'manager_review_status')}")
+                logger.info(f"    hasattr manager_review_completed_at: {hasattr(first_emp, 'manager_review_completed_at')}")
+                logger.info(f"    manager_review_status value: {getattr(first_emp, 'manager_review_status', 'ATTR_NOT_FOUND')}")
+                logger.info(f"    manager_review_completed_at value: {getattr(first_emp, 'manager_review_completed_at', 'ATTR_NOT_FOUND')}")
+                logger.info(f"    Employee model fields: {list(first_emp.model_fields.keys())[:10]}...")
         elif current_user.role == "hr":
             # HR can see all employees, optionally filtered by property
             if property_id:
@@ -3599,42 +3626,212 @@ async def get_employees(
                 employees = await supabase_service.get_all_employees()
         else:
             raise HTTPException(status_code=403, detail="Access denied")
-        
-        # Apply filters
+
+        # ✅ CRITICAL FIX: Filter by employment status AND manager review status
+        # Employees should ONLY appear in Employee Dashboard when:
+        # 1. employment_status = 'active'
+        # 2. manager_review_status = 'completed' (manager has approved)
+        # 3. onboarding_status = 'completed' (employee finished onboarding)
+        # 4. manager_review_completed_at is set (emails were sent)
+        #
+        # This ensures employees only appear AFTER:
+        # - Employee completes onboarding
+        # - Manager reviews all documents
+        # - Manager clicks "Complete Onboarding"
+        # - System sends hire packet to manager
+        # - System sends welcome email to employee
+        if not include_pending or current_user.role != "hr":
+            # Filter for truly completed employees only
+            filtered_employees = []
+            logger.info(f"🔍 Starting to filter {len(employees)} employees...")
+
+            for emp in employees:
+                # Get onboarding status as string (handle both enum and string)
+                onboarding_status_str = emp.onboarding_status.value if hasattr(emp.onboarding_status, 'value') else str(emp.onboarding_status)
+
+                # Get manager review status (with default for backward compatibility)
+                manager_review_status = getattr(emp, 'manager_review_status', 'pending_review')
+                manager_review_completed_at = getattr(emp, 'manager_review_completed_at', None)
+
+                # Debug logging for first few employees
+                if len(filtered_employees) < 3:
+                    logger.info(f"  Employee {emp.id}: employment_status={emp.employment_status}, "
+                              f"manager_review_status={manager_review_status}, "
+                              f"onboarding_status={onboarding_status_str}, "
+                              f"manager_review_completed_at={manager_review_completed_at}")
+
+                # Check all conditions
+                if (emp.employment_status == 'active'
+                    and manager_review_status == 'completed'
+                    and onboarding_status_str == 'completed'
+                    and manager_review_completed_at is not None):
+                    filtered_employees.append(emp)
+                    logger.info(f"  ✅ Employee {emp.id} meets all criteria!")
+
+            employees = filtered_employees
+            logger.info(f"Filtered to {len(employees)} fully completed employees (active + manager review completed + onboarding completed)")
+        else:
+            logger.info(f"HR requested all employees: {len(employees)} total")
+
+        # Apply additional filters
         if department:
             employees = [emp for emp in employees if emp.department.lower() == department.lower()]
-        
+
         if status:
             employees = [emp for emp in employees if emp.employment_status.lower() == status.lower()]
-        
+
         # Apply search (basic implementation)
         if search:
             search_lower = search.lower()
-            employees = [emp for emp in employees if 
+            employees = [emp for emp in employees if
                         search_lower in emp.department.lower() or
                         search_lower in emp.position.lower()]
         
         # Convert to dict format for frontend compatibility
         result = []
         for emp in employees:
+            # Extract personal info from JSONB
+            personal_info = emp.personal_info or {}
+            
+            # Get property name
+            try:
+                property_obj = supabase_service.get_property_by_id_sync(emp.property_id)
+                property_name = property_obj.name if property_obj else "Unknown"
+            except:
+                property_name = "Unknown"
+            
             result.append({
                 "id": emp.id,
+                "user_id": emp.user_id,
                 "property_id": emp.property_id,
+                "property_name": property_name,
+                "first_name": personal_info.get('first_name', ''),
+                "last_name": personal_info.get('last_name', ''),
+                "email": personal_info.get('email', ''),
+                "phone": personal_info.get('phone', ''),
                 "department": emp.department,
                 "position": emp.position,
                 "hire_date": emp.hire_date.isoformat() if emp.hire_date else None,
+                "start_date": emp.start_date.isoformat() if emp.start_date else None,
                 "pay_rate": emp.pay_rate,
+                "pay_frequency": emp.pay_frequency,
                 "employment_type": emp.employment_type,
                 "employment_status": emp.employment_status,
-                "onboarding_status": emp.onboarding_status.value if emp.onboarding_status else "not_started"
+                "onboarding_status": emp.onboarding_status.value if emp.onboarding_status else "not_started",
+                "onboarding_completed_at": emp.onboarding_completed_at.isoformat() if emp.onboarding_completed_at else None,
+                "created_at": emp.created_at.isoformat() if emp.created_at else None
             })
         
         return result
-        
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve employees: {str(e)}")
+
+
+@app.get("/api/employees/pending-review")
+async def get_pending_review_employees(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get employees pending manager review
+
+    Returns employees who have:
+    - Completed their onboarding (onboarding_status='completed')
+    - Are awaiting manager review (manager_review_status='pending_review')
+    - Have NOT been activated yet (employment_status != 'active')
+
+    Only accessible by managers and HR
+    """
+    try:
+        # Verify user has permission
+        if current_user.role not in ["manager", "hr"]:
+            raise HTTPException(status_code=403, detail="Only managers and HR can view pending reviews")
+
+        logger.info(f"Fetching pending review employees for {current_user.role}: {current_user.id}")
+
+        # Get employees based on user role
+        if current_user.role == "manager":
+            # Manager can only see employees from their properties
+            access_controller = get_property_access_controller()
+            property_ids = access_controller.get_manager_accessible_properties(current_user)
+
+            if not property_ids:
+                return success_response(
+                    data=[],
+                    message="No pending reviews - manager not assigned to any property"
+                )
+
+            employees = await supabase_service.get_employees_by_properties(property_ids)
+        else:
+            # HR can see all employees
+            employees = await supabase_service.get_all_employees()
+
+        # Filter for pending review
+        # Employee must have completed onboarding but not yet been activated by manager
+        pending_employees = [
+            emp for emp in employees
+            if (emp.onboarding_status and emp.onboarding_status.value == 'completed')
+            and emp.manager_review_status == 'pending_review'
+            and emp.employment_status != 'active'
+        ]
+
+        logger.info(f"Found {len(pending_employees)} employees pending review")
+
+        # Format response with relevant information
+        result = []
+        for emp in pending_employees:
+            personal_info = emp.personal_info or {}
+
+            # Get property name
+            try:
+                property_obj = supabase_service.get_property_by_id_sync(emp.property_id)
+                property_name = property_obj.name if property_obj else "Unknown"
+            except:
+                property_name = "Unknown"
+
+            # Calculate days since onboarding completion
+            days_pending = None
+            if emp.onboarding_completed_at:
+                try:
+                    completed_date = emp.onboarding_completed_at
+                    if isinstance(completed_date, str):
+                        completed_date = datetime.fromisoformat(completed_date.replace('Z', '+00:00'))
+                    days_pending = (datetime.now(timezone.utc) - completed_date).days
+                except:
+                    pass
+
+            result.append({
+                "id": emp.id,
+                "property_id": emp.property_id,
+                "property_name": property_name,
+                "first_name": personal_info.get('first_name', ''),
+                "last_name": personal_info.get('last_name', ''),
+                "email": personal_info.get('email', ''),
+                "phone": personal_info.get('phone', ''),
+                "position": emp.position,
+                "department": emp.department,
+                "hire_date": emp.hire_date.isoformat() if emp.hire_date else None,
+                "onboarding_completed_at": emp.onboarding_completed_at.isoformat() if emp.onboarding_completed_at else None,
+                "i9_section2_deadline": emp.i9_section2_deadline.isoformat() if emp.i9_section2_deadline else None,
+                "i9_section2_status": emp.i9_section2_status,
+                "manager_review_status": emp.manager_review_status,
+                "days_pending": days_pending,
+                "created_at": emp.created_at.isoformat() if emp.created_at else None
+            })
+
+        return success_response(
+            data=result,
+            message=f"Found {len(result)} employees pending review"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get pending review employees: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve pending reviews: {str(e)}")
+
 
 # Create Pydantic model for employee search request
 class EmployeeSearchRequest(BaseModel):
@@ -9000,7 +9197,7 @@ async def complete_onboarding(
                 <p>Property: {property_obj.name if property_obj else 'N/A'}</p>
                 <p>Position: {employee.position}</p>
                 <p>Please review and complete I-9 Section 2 verification within 3 business days.</p>
-                <p><a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/onboarding/{session_id}/review" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Review Onboarding</a></p>
+                <p><a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/review-new/{session.employee_id}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Review Onboarding</a></p>
                 """,
                 f"{employee.first_name} {employee.last_name} has completed onboarding. Please review and complete I-9 verification."
             )
@@ -18510,7 +18707,7 @@ async def complete_employee_onboarding(
                             </ul>
 
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/review/{employee_id}"
+                                <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/review-new/{employee_id}"
                                    style="display: inline-block; padding: 15px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
                                     Review Employee & Complete I-9 Section 2
                                 </a>
@@ -18554,7 +18751,7 @@ async def complete_employee_onboarding(
                 ✅ Weapons Policy
                 ✅ Final Review & Signature
 
-                View employee details: {os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/employees/{employee_id}
+                Review employee onboarding: {os.getenv('FRONTEND_URL', 'http://localhost:3000')}/manager/review-new/{employee_id}
 
                 If you have any questions, please contact HR.
                 This is an automated notification from the Hotel Onboarding System.

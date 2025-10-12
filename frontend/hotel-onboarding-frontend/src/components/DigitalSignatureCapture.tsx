@@ -15,12 +15,13 @@ export default function DigitalSignatureCapture({
   documentName,
   signerName,
   signerTitle,
-  acknowledgments,
+  acknowledgments = [],
   requireIdentityVerification = false,
   language,
   onSignatureComplete,
   onCancel,
-  submitButtonText  // ✅ NEW: Custom button text prop
+  submitButtonText,  // ✅ Custom button text prop
+  disableAcknowledgments = false  // ✅ NEW: Option to hide acknowledgements section
 }) {
   const canvasRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -31,7 +32,7 @@ export default function DigitalSignatureCapture({
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [identityVerified, setIdentityVerified] = useState(false)
   const [acknowledgementsChecked, setAcknowledgementsChecked] = useState(
-    new Array(acknowledgments.length).fill(false)
+    acknowledgments?.length > 0 ? new Array(acknowledgments.length).fill(false) : []
   )
   const [ipAddress, setIpAddress] = useState('')
   const [canSign, setCanSign] = useState(false)
@@ -128,12 +129,13 @@ export default function DigitalSignatureCapture({
 
   useEffect(() => {
     // Check if all requirements are met
-    const allAcknowledgmentsChecked = acknowledgementsChecked.every(checked => checked)
+    const allAcknowledgmentsChecked = disableAcknowledgments || acknowledgments.length === 0 || acknowledgementsChecked.every(checked => checked)
     const hasSignature = signatureData.length > 0
     const identityOk = requireIdentityVerification ? identityVerified : true
     const canSignNow = allAcknowledgmentsChecked && hasSignature && termsAccepted && identityOk
 
     console.log('🔍 DigitalSignatureCapture - Can Sign Check:', {
+      disableAcknowledgments,
       allAcknowledgmentsChecked,
       hasSignature,
       termsAccepted,
@@ -144,7 +146,7 @@ export default function DigitalSignatureCapture({
     })
 
     setCanSign(canSignNow)
-  }, [acknowledgementsChecked, signatureData, typedName, termsAccepted, identityVerified, requireIdentityVerification, signatureMethod])
+  }, [acknowledgementsChecked, signatureData, typedName, termsAccepted, identityVerified, requireIdentityVerification, signatureMethod, disableAcknowledgments, acknowledgments.length])
 
   const startDrawing = (e) => {
     if (!canvasRef.current) return
@@ -345,8 +347,8 @@ export default function DigitalSignatureCapture({
         </CardContent>
       </Card>
 
-      {/* Acknowledgments */}
-      {acknowledgments.length > 0 && (
+      {/* Acknowledgments - Only show if not disabled and acknowledgments exist */}
+      {!disableAcknowledgments && acknowledgments.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t('acknowledgments')}</CardTitle>

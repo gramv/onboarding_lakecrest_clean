@@ -155,6 +155,7 @@ def _build_address_block(address1: Optional[str], address2: Optional[str], city:
 
 
 def _format_ssn(ssn: Optional[str]) -> str:
+    """Format SSN with dashes (XXX-XX-XXXX)"""
     if not ssn:
         return ""
     digits = ''.join(filter(str.isdigit, ssn))
@@ -163,58 +164,100 @@ def _format_ssn(ssn: Optional[str]) -> str:
     return ssn
 
 
-def _infer_health_selections(health_data: Dict[str, Any]) -> List[str]:
-    selections: List[str] = []
+def _mask_ssn(ssn: Optional[str]) -> str:
+    """Mask SSN showing only last 4 digits (***-**-1234)"""
+    if not ssn:
+        return "***-**-****"
+    digits = ''.join(filter(str.isdigit, ssn))
+    if len(digits) == 9:
+        return f"***-**-{digits[5:]}"
+    return "***-**-****"
+
+
+def _format_health_insurance_display(health_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Format health insurance data for display in summary"""
+    logger.info(f"[HEALTH-INS-DISPLAY] Processing health data: isWaived={health_data.get('isWaived')}, medicalPlan={health_data.get('medicalPlan')}")
+    
     if not health_data:
-        return selections
-
-    # Check if insurance was waived/declined
-    is_waived = health_data.get("isWaived") or health_data.get("is_waived") or health_data.get("waived")
-    if is_waived:
-        # Return special "declined" option
-        return ["insurance_declined"]
-
-    possible_values: List[str] = []
-
-    for key in ("selectedPlan", "selected_plan", "medicalPlan", "medical_plan", "planChoice", "plan_choice"):
-        value = health_data.get(key)
-        if isinstance(value, str):
-            possible_values.append(value)
-
-    list_fields = [
-        "selectedPlans",
-        "planSelections",
-        "plan_selections",
-        "plans",
-    ]
-    for key in list_fields:
-        value = health_data.get(key)
-        if isinstance(value, list):
-            possible_values.extend(str(item) for item in value)
-
-    joined_text = " ".join(possible_values).lower()
-    if "hra" in joined_text and "base" in joined_text:
-        selections.append("uhc_hra_base")
-    if "hra" in joined_text and ("buy" in joined_text or "buy-up" in joined_text or "buyup" in joined_text):
-        selections.append("uhc_hra_buy_up")
-    if "minimum" in joined_text and "essential" in joined_text:
-        selections.append("cwi_minimum_essential")
-    if "minimum" in joined_text and "indemnity" in joined_text:
-        selections.append("cwi_minimum_indemnity")
-
+        logger.info("[HEALTH-INS-DISPLAY] No health data provided")
+        return {"display_text": "No insurance information", "selections": []}
+    
+    if health_data.get("isWaived") or health_data.get("is_waived") or health_data.get("waived"):
+        logger.info("[HEALTH-INS-DISPLAY] Insurance is waived")
+        waive_reason = health_data.get('waiveReason') or health_data.get('waiver_reason', '')
+        if waive_reason and waive_reason.strip():
+            display_text = f"Insurance Declined - {waive_reason}"
+        else:
+            display_text = "Health Insurance Declined - Employee has waived coverage"
+        
+        return {
+            "display_text": display_text,
+            "selections": ["declined"],
+            "is_waived": True
+        }
+    
+    # Get medical plan details
+    medical_plan = health_data.get("medicalPlan") or health_data.get("medical_plan")
+    medical_tier = health_data.get("medicalTier") or health_data.get("medical_tier", "employee")
+    medical_cost = health_data.get("medicalCost") or health_data.get("medical_cost", 0)
+    
+    # Map plan keys to display names
+    plan_names = {
+        "hra_6k": "UHC HRA $6K Plan",
+        "hra_4k": "UHC HRA $4K Plan",
+        "hra_2k": "UHC HRA $2K Plan",
+        "minimum_essential": "ACI Minimum Essential Coverage Plan",
+        "indemnity": "ACI Indemnity Plan",
+        "minimum_plus_indemnity": "ACI Minimum Essential + Indemnity"
+    }
+    
+    tier_names = {
+        "employee": "Employee Only",
+        "employee_spouse": "Employee + Spouse",
+        "employee_children": "Employee + Children",
+        "family": "Family"
+    }
+    
+    result = {
+        "medical_plan": plan_names.get(medical_plan, medical_plan),
+        "medical_tier": tier_names.get(medical_tier, medical_tier),
+        "medical_cost": medical_cost,
+        "selections": []
+    }
+    
+    if medical_plan:
+        result["selections"].append(medical_plan)
+    
+    # Add dental if selected
     if health_data.get("dentalCoverage") or health_data.get("dental_coverage"):
-        selections.append("uhc_dental")
+        dental_tier = health_data.get("dentalTier") or health_data.get("dental_tier", "employee")
+        dental_cost = health_data.get("dentalCost") or health_data.get("dental_cost", 0)
+        result["dental"] = {
+            "tier": tier_names.get(dental_tier, dental_tier),
+            "cost": dental_cost
+        }
+        result["selections"].append("dental")
+    
+    # Add vision if selected
     if health_data.get("visionCoverage") or health_data.get("vision_coverage"):
-        selections.append("uhc_vision")
+        vision_tier = health_data.get("visionTier") or health_data.get("vision_tier", "employee")
+        vision_cost = health_data.get("visionCost") or health_data.get("vision_cost", 0)
+        result["vision"] = {
+            "tier": tier_names.get(vision_tier, vision_tier),
+            "cost": vision_cost
+        }
+        result["selections"].append("vision")
+    
+    # Total cost
+    result["total_biweekly_cost"] = health_data.get("totalBiweeklyCost") or health_data.get("total_biweekly_cost", 0)
 
-    # Ensure uniqueness while preserving order
-    seen = set()
-    ordered: List[str] = []
-    for item in selections:
-        if item not in seen:
-            seen.add(item)
-            ordered.append(item)
-    return ordered
+    return result
+
+
+def _infer_health_selections(health_data: Dict[str, Any]) -> List[str]:
+    """Legacy function for backward compatibility - now uses the new display formatter"""
+    display_data = _format_health_insurance_display(health_data)
+    return display_data.get("selections", [])
 
 class ApproveDocumentRequest(BaseModel):
     form_data: Optional[Dict[str, Any]] = None
@@ -513,7 +556,9 @@ async def get_new_hire_summary(
             "hireDate": _format_date(hire_date),
             "department": employee.get('department'),
             "position": employee.get('position'),
+            "payFrequency": employee.get('pay_frequency', 'Bi-Weekly').replace('_', '-').title(),
             "healthInsuranceSelections": _infer_health_selections(health_data),
+            "healthInsuranceDisplay": _format_health_insurance_display(health_data),
             "healthInsuranceCopay": _format_currency(
                 health_data.get('paycheckContribution')
                 or health_data.get('employeeContribution')
@@ -588,17 +633,46 @@ async def get_new_hire_summary(
                             file_name = _entry_name(file)
                             if not file_name:
                                 continue
-                            signed = storage_accessor.storage.from_(bucket_name).create_signed_url(
-                                f"{folder_path}/{file_name}",
-                                3600
-                            )
-                            file_url = signed.get('signedURL') if isinstance(signed, dict) else signed
+                            
+                            file_path_full = f"{folder_path}/{file_name}"
+                            
+                            # Download and decrypt the uploaded document
+                            file_base64 = None
+                            file_url = None
+                            try:
+                                logger.info(f"[SUMMARY] Downloading and decrypting: {file_path_full}")
+                                raw_bytes = storage_accessor.storage.from_(bucket_name).download(file_path_full)
+
+                                # Decrypt the document
+                                decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                                    raw_bytes,
+                                    document_type=f"i9_upload_{folder_name}",
+                                    employee_id=employee_id
+                                )
+
+                                if was_encrypted:
+                                    logger.info(f"[SUMMARY] Decrypted {file_name}: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+
+                                # Convert to base64 for frontend
+                                file_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+
+                            except Exception as decrypt_err:
+                                logger.warning(f"[SUMMARY] Failed to decrypt {file_name}: {decrypt_err}")
+                                # Fallback to signed URL
+                                try:
+                                    signed = storage_accessor.storage.from_(bucket_name).create_signed_url(file_path_full, 3600)
+                                    file_url = signed.get('signedURL') if isinstance(signed, dict) else signed
+                                except Exception as url_err:
+                                    logger.error(f"[SUMMARY] Failed to generate signed URL for {file_name}: {url_err}")
+
                             uploaded_documents.append({
                                 "id": _entry_value(file, 'id') or str(uuid4()),
                                 "document_type": folder_name,
                                 "file_name": file_name,
-                                "url": file_url
+                                "url": file_url,  # Fallback signed URL
+                                "data": file_base64  # Decrypted base64 data
                             })
+                            logger.info(f"[SUMMARY] Added document: {folder_name}/{file_name} (decrypted: {file_base64 is not None})")
                     except Exception as upload_err:
                         logger.warning(
                             "[SUMMARY] Failed to list uploaded docs in %s: %s",
@@ -654,6 +728,23 @@ async def approve_new_hire_summary(
 
         summary_data = payload.dict()
 
+        # Fetch health insurance data to get proper display structure
+        health_data = {}
+        try:
+            health_response = supabase_service.admin_client.table('onboarding_form_data') \
+                .select('form_data') \
+                .eq('employee_id', employee_id) \
+                .eq('step_id', 'health-insurance') \
+                .order('created_at', desc=True) \
+                .limit(1) \
+                .execute()
+            
+            if health_response.data:
+                health_data = health_response.data[0].get('form_data', {})
+                logger.info(f"[APPROVAL] Fetched health insurance data for employee {employee_id}")
+        except Exception as e:
+            logger.warning(f"[APPROVAL] Could not fetch health insurance data for employee {employee_id}: {e}")
+
         # Derive blocks for PDF rendering
         hotel_address_block = "\n".join(filter(None, [
             summary_data.get('hotelName'),
@@ -675,6 +766,7 @@ async def approve_new_hire_summary(
         )
 
         pdf_context = {
+            "hotelName": summary_data.get('hotelName', ''),
             "hotelAddressBlock": hotel_address_block,
             "stateOfEmployment": summary_data.get('stateOfEmployment'),
             "employeeFirstName": summary_data.get('employeeFirstName'),
@@ -692,16 +784,43 @@ async def approve_new_hire_summary(
             "hireDate": summary_data.get('hireDate'),
             "department": summary_data.get('department'),
             "position": summary_data.get('position'),
+            "payFrequency": summary_data.get('payFrequency', 'Bi-Weekly'),
             "healthInsuranceSelections": summary_data.get('healthInsuranceSelections') or [],
+            "healthInsuranceDisplay": _format_health_insurance_display(health_data) if health_data else summary_data.get('healthInsuranceDisplay'),
             "healthInsuranceCopay": summary_data.get('healthInsuranceCopay'),
         }
 
         # Generate the new hire summary PDF (page 1 only)
         generator = NewHireSummaryPDFGenerator()
-        summary_pdf_bytes = generator.generate(pdf_context)
+        base_pdf_bytes = generator.generate(pdf_context)
+        
+        # Retrieve and merge uploaded ID documents
+        try:
+            from app.services.id_document_retriever import IDDocumentRetriever
+            from app.services.document_merger_service import DocumentMergerService
+            
+            logger.info("[APPROVAL] Retrieving uploaded ID documents...")
+            retriever = IDDocumentRetriever()
+            uploaded_docs = await retriever.get_employee_id_documents(
+                employee_id=employee_id,
+                supabase_service=supabase_service
+            )
+            
+            if uploaded_docs:
+                logger.info(f"[APPROVAL] Merging {len(uploaded_docs)} ID documents into PDF...")
+                merger = DocumentMergerService(supabase_service)
+                summary_pdf_bytes = await merger.append_id_documents_to_summary(base_pdf_bytes, uploaded_docs)
+                logger.info(f"[APPROVAL] ✅ Merged PDF: {len(base_pdf_bytes)} → {len(summary_pdf_bytes)} bytes")
+            else:
+                logger.info("[APPROVAL] No ID documents to merge, using base PDF")
+                summary_pdf_bytes = base_pdf_bytes
+                
+        except Exception as merge_err:
+            logger.error(f"[APPROVAL] ❌ Failed to merge ID documents: {merge_err}")
+            logger.warning("[APPROVAL] Using base PDF without ID documents")
+            summary_pdf_bytes = base_pdf_bytes
 
-        # Save ONLY the new hire summary (not merged yet)
-        # Merging happens in Step 7 (Complete Onboarding)
+        # Save the complete PDF (summary + ID documents)
         save_result = await supabase_service.save_signed_document(
             employee_id=employee_id,
             property_id=property_id,
@@ -1193,6 +1312,29 @@ async def get_health_insurance_detail(
                 if isinstance(health_insurance_pdf_url, dict):
                     health_insurance_pdf_url = health_insurance_pdf_url.get('signedURL')
                 logger.info(f"[HEALTH-INSURANCE-DETAIL] Found Health Insurance PDF: {full_path}")
+                
+                # Download and decrypt PDF for inline viewing
+                health_insurance_pdf_base64 = None
+                try:
+                    logger.info(f"[HEALTH-INSURANCE-DETAIL] Downloading and decrypting PDF: {full_path}")
+                    raw_bytes = supabase_service.admin_client.storage.from_(bucket_name).download(full_path)
+                    
+                    # Decrypt the PDF
+                    decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                        raw_bytes,
+                        document_type='health_insurance',
+                        employee_id=employee_id
+                    )
+                    
+                    if was_encrypted:
+                        logger.info(f"[HEALTH-INSURANCE-DETAIL] Decrypted PDF: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+                    
+                    # Convert to base64 for frontend
+                    health_insurance_pdf_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+                    
+                except Exception as decrypt_err:
+                    logger.warning(f"[HEALTH-INSURANCE-DETAIL] Failed to decrypt PDF: {decrypt_err}")
+                    # Continue without decrypted data - frontend will try signed URL
             else:
                 logger.warning(f"[HEALTH-INSURANCE-DETAIL] No signed Health Insurance PDF found in {health_insurance_path}")
         except Exception as e:
@@ -1225,12 +1367,20 @@ async def get_health_insurance_detail(
         else:
             date_of_hire = datetime.utcnow().strftime('%m/%d/%Y')
 
+        # Get start_date with fallback logic (same as I-9/W-4)
+        employee_start_date = (
+            employee.get('start_date') or 
+            employee.get('hire_date') or 
+            (employee.get('onboarding_completed_at', '').split('T')[0] if employee.get('onboarding_completed_at') else None)
+        )
+
         # Build response
         response_data = {
             "pdfUrl": health_insurance_pdf_url,
+            "pdfData": health_insurance_pdf_base64,  # Decrypted PDF as base64
             "employeeData": {
                 "name": f"{employee.get('first_name', '')} {employee.get('last_name', '')}",
-                "startDate": employee.get('start_date')
+                "startDate": employee_start_date
             },
             "employerProfile": employer_profile,
             "autoFillData": {
@@ -1458,6 +1608,12 @@ async def get_i9_review_detail(
 
         employee_data = employee.data
         property_id = employee_data.get('property_id')
+        
+        # Log employee data to debug start_date
+        logger.info(f"[I9-DETAIL] Employee data keys: {list(employee_data.keys())}")
+        logger.info(f"[I9-DETAIL] start_date: {employee_data.get('start_date')}")
+        logger.info(f"[I9-DETAIL] hire_date: {employee_data.get('hire_date')}")
+        logger.info(f"[I9-DETAIL] onboarding_completed_at: {employee_data.get('onboarding_completed_at')}")
 
         if current_user.property_id != property_id:
             raise HTTPException(status_code=403, detail="You don't have access to this employee")
@@ -1540,9 +1696,36 @@ async def get_i9_review_detail(
                 raise HTTPException(status_code=404, detail="I-9 PDF file missing")
 
             pdf_name = _entry_name(pdf_file)
+            pdf_path_full = f"{doc_path}/{pdf_name}"
+            
+            # Create signed URL for backward compatibility
             signed = storage_accessor.storage.from_(bucket_name) \
-                .create_signed_url(f"{doc_path}/{pdf_name}", 3600)
+                .create_signed_url(pdf_path_full, 3600)
             pdf_url = signed.get('signedURL') if isinstance(signed, dict) else signed
+            
+            # Download and decrypt PDF for inline viewing
+            pdf_base64 = None
+            try:
+                logger.info(f"[I9-DETAIL] Downloading and decrypting PDF: {pdf_path_full}")
+                raw_bytes = storage_accessor.storage.from_(bucket_name).download(pdf_path_full)
+                
+                # Decrypt the PDF
+                decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                    raw_bytes,
+                    document_type='i9',
+                    employee_id=employee_id
+                )
+                
+                if was_encrypted:
+                    logger.info(f"[I9-DETAIL] Decrypted I-9 PDF: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+                
+                # Convert to base64 for frontend
+                pdf_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+                
+            except Exception as decrypt_err:
+                logger.warning(f"[I9-DETAIL] Failed to decrypt PDF: {decrypt_err}")
+                # Continue without decrypted data - frontend will try signed URL
+            
         except HTTPException:
             raise
         except Exception as storage_error:
@@ -1661,13 +1844,23 @@ async def get_i9_review_detail(
             logger.warning(f"No I-9 section2 form found for employee {employee_id}: {section2_err}")
             section2_form = None
 
+        # Get start_date with fallback logic
+        employee_start_date = (
+            employee_data.get('start_date') or 
+            employee_data.get('hire_date') or 
+            (employee_data.get('onboarding_completed_at', '').split('T')[0] if employee_data.get('onboarding_completed_at') else None)
+        )
+        
+        logger.info(f"[I9-DETAIL] Final employeeStartDate: {employee_start_date}")
+        
         return {
             "success": True,
             "employeeId": employee_id,
             "employeeName": f"{employee_data.get('first_name', '')} {employee_data.get('last_name', '')}".strip(),
-            "employeeStartDate": employee_data.get('start_date'),
+            "employeeStartDate": employee_start_date,
             "i9Deadline": employee_data.get('i9_section2_deadline'),
             "pdfUrl": pdf_url,
+            "pdfData": pdf_base64,  # Decrypted PDF as base64
             "uploadedDocuments": uploaded_docs,
             "documentsMetadata": section2_documents,
             "section1Form": section1_form,
@@ -2011,9 +2204,23 @@ async def complete_i9_document(
                 raise HTTPException(status_code=404, detail="No I-9 PDF found (neither verified nor original)")
 
             # Download the existing PDF bytes
-            existing_pdf_bytes = storage_accessor.storage.from_(bucket_name).download(existing_i9_full_path)
+            encrypted_pdf_bytes = storage_accessor.storage.from_(bucket_name).download(existing_i9_full_path)
 
-            logger.info(f"[I9-COMPLETE] Downloaded PDF, size: {len(existing_pdf_bytes)} bytes")
+            logger.info(f"[I9-COMPLETE] Downloaded PDF, size: {len(encrypted_pdf_bytes)} bytes")
+
+            # Decrypt the PDF before processing
+            decrypted_pdf_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                encrypted_pdf_bytes,
+                document_type='i9',
+                employee_id=employee_id
+            )
+
+            if was_encrypted:
+                logger.info(f"[I9-COMPLETE] Decrypted PDF: {len(encrypted_pdf_bytes)} → {len(decrypted_pdf_bytes)} bytes")
+            else:
+                logger.info(f"[I9-COMPLETE] PDF was not encrypted (legacy)")
+
+            existing_pdf_bytes = decrypted_pdf_bytes
 
         except HTTPException:
             raise
@@ -2152,6 +2359,29 @@ async def get_w4_review_detail(
                 if isinstance(w4_pdf_url, dict):
                     w4_pdf_url = w4_pdf_url.get('signedURL')
                 logger.info(f"[W4-DETAIL] Found W-4 PDF: {full_path}")
+                
+                # Download and decrypt PDF for inline viewing
+                w4_pdf_base64 = None
+                try:
+                    logger.info(f"[W4-DETAIL] Downloading and decrypting PDF: {full_path}")
+                    raw_bytes = supabase_service.admin_client.storage.from_(bucket_name).download(full_path)
+                    
+                    # Decrypt the PDF
+                    decrypted_bytes, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+                        raw_bytes,
+                        document_type='w4',
+                        employee_id=employee_id
+                    )
+                    
+                    if was_encrypted:
+                        logger.info(f"[W4-DETAIL] Decrypted W-4 PDF: {len(raw_bytes)} → {len(decrypted_bytes)} bytes")
+                    
+                    # Convert to base64 for frontend
+                    w4_pdf_base64 = base64.b64encode(decrypted_bytes).decode('utf-8')
+                    
+                except Exception as decrypt_err:
+                    logger.warning(f"[W4-DETAIL] Failed to decrypt W-4 PDF: {decrypt_err}")
+                    # Continue without decrypted data - frontend will try signed URL
             else:
                 logger.warning(f"[W4-DETAIL] No signed W-4 PDF found in {w4_path}")
         except Exception as e:
@@ -2227,16 +2457,62 @@ async def get_w4_review_detail(
         except Exception as upload_err:
             logger.warning(f"[W4-DETAIL] Could not fetch uploaded documents from {upload_path}: {upload_err}")
 
+        # Get personal_info from onboarding_form_data for accurate employee data
+        personal_info = {}
+        try:
+            personal_response = supabase_service.admin_client.table('onboarding_form_data') \
+                .select('form_data') \
+                .eq('employee_id', employee_id) \
+                .eq('step_id', 'personal-info') \
+                .order('created_at', desc=True) \
+                .limit(1) \
+                .execute()
+            
+            if personal_response.data:
+                form_data = personal_response.data[0].get('form_data', {})
+                # Personal info is nested under personalInfo key
+                personal_info = form_data.get('personalInfo', form_data)
+                logger.info(f"[W4-DETAIL] Fetched personal info for employee {employee_id}")
+        except Exception as e:
+            logger.warning(f"[W4-DETAIL] Could not fetch personal info for employee {employee_id}: {e}")
+
+        # Extract employee data with fallbacks
+        first_name = personal_info.get('firstName') or personal_info.get('first_name') or employee.get('first_name', '')
+        last_name = personal_info.get('lastName') or personal_info.get('last_name') or employee.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip() or 'Not provided'
+        
+        # Get SSN (last 4 digits only)
+        ssn = personal_info.get('ssn') or employee.get('ssn', '')
+        ssn_last4 = ssn[-4:] if ssn else '****'
+        
+        # Build address from personal_info or employee fields
+        address_line1 = personal_info.get('address') or employee.get('address', '')
+        city = personal_info.get('city') or employee.get('city', '')
+        state = personal_info.get('state') or employee.get('state', '')
+        zip_code = personal_info.get('zipCode') or personal_info.get('zip_code') or employee.get('zip_code', '')
+        
+        # Format address with proper fallback
+        address_parts = [p for p in [address_line1, city, f"{state} {zip_code}".strip()] if p]
+        full_address = ', '.join(address_parts) if address_parts else 'Not provided'
+
+        # Get start_date with fallback logic (same as I-9)
+        employee_start_date = (
+            employee.get('start_date') or 
+            employee.get('hire_date') or 
+            (employee.get('onboarding_completed_at', '').split('T')[0] if employee.get('onboarding_completed_at') else None)
+        )
+
         # Build response
         response_data = {
             "pdfUrl": w4_pdf_url,
+            "pdfData": w4_pdf_base64,  # Decrypted PDF as base64
             "uploadedDocuments": uploaded_docs,  # All I-9 verification docs (SSN card, DL, etc.)
             "employeeData": {
-                "name": f"{employee.get('first_name', '')} {employee.get('last_name', '')}",
-                "ssn": employee.get('ssn', '')[-4:] if employee.get('ssn') else '****',  # Last 4 digits only
-                "address": f"{employee.get('address', '')}, {employee.get('city', '')}, {employee.get('state', '')} {employee.get('zip_code', '')}"
+                "name": full_name,
+                "ssn": ssn_last4,  # Last 4 digits only
+                "address": full_address
             },
-            "employeeStartDate": employee.get('start_date'),
+            "employeeStartDate": employee_start_date,
             "employerProfile": employer_profile
         }
 
@@ -2300,7 +2576,23 @@ async def complete_w4_document(
 
         # Download the existing W-4 PDF
         logger.info(f"[W4-COMPLETE] Downloading W-4 PDF from: {existing_w4_full_path}")
-        pdf_data = supabase_service.admin_client.storage.from_(bucket_name).download(existing_w4_full_path)
+        encrypted_pdf_data = supabase_service.admin_client.storage.from_(bucket_name).download(existing_w4_full_path)
+        
+        logger.info(f"[W4-COMPLETE] Downloaded PDF, size: {len(encrypted_pdf_data)} bytes")
+        
+        # Decrypt the PDF before processing (same as I-9)
+        decrypted_pdf_data, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+            encrypted_pdf_data,
+            document_type='w4',
+            employee_id=employee_id
+        )
+        
+        if was_encrypted:
+            logger.info(f"[W4-COMPLETE] Decrypted PDF: {len(encrypted_pdf_data)} → {len(decrypted_pdf_data)} bytes")
+        else:
+            logger.info(f"[W4-COMPLETE] PDF was not encrypted (legacy)")
+        
+        pdf_data = decrypted_pdf_data
 
         # Add employer information to the PDF
         logger.info(f"[W4-COMPLETE] Adding employer information to W-4")
@@ -2317,22 +2609,26 @@ async def complete_w4_document(
 
         logger.info(f"[W4-COMPLETE] Employer data: name={request.employerName}, EIN={request.employerEIN}, date={employer_data['first_date_employment']}")
 
+        # Validate signature is present (mandatory)
+        if not request.signature or not request.signature.dataUrl:
+            raise HTTPException(status_code=400, detail="Manager signature is required for W-4 completion")
+
         # Use pdf_forms to fill employer section
         from app.pdf_forms import PDFFormFiller
         pdf_filler = PDFFormFiller()
 
-        # Fill employer fields in the W-4 (signature is optional)
-        signature_data_url = request.signature.dataUrl if request.signature else None
+        # Fill employer fields in the W-4
+        signature_data_url = request.signature.dataUrl
         completed_pdf_bytes = pdf_filler.fill_w4_employer_section(pdf_data, employer_data, signature_data_url)
 
-        # Add manager signature if provided
-        if request.signature and signature_data_url:
-            completed_pdf_bytes = pdf_filler.add_signature_to_pdf(
-                completed_pdf_bytes,
-                signature_data_url,
-                signature_type='employer_w4',
-                signature_date=request.signature.timestamp
-            )
+        # Add manager signature (mandatory)
+        logger.info(f"[W4-COMPLETE] Adding manager signature to W-4")
+        completed_pdf_bytes = pdf_filler.add_signature_to_pdf(
+            completed_pdf_bytes,
+            signature_data_url,
+            signature_type='employer_w4',
+            signature_date=request.signature.timestamp
+        )
 
         # Save completed W-4 using save_signed_document (same as I-9)
         logger.info(f"[W4-COMPLETE] Saving completed W-4")
@@ -2437,10 +2733,23 @@ async def complete_health_insurance_document(
         full_path = f"{health_insurance_path}/{pdf_name}"
 
         # Download the PDF
-        pdf_response = supabase_service.admin_client.storage.from_(bucket_name).download(full_path)
-        pdf_data = pdf_response
+        encrypted_pdf_data = supabase_service.admin_client.storage.from_(bucket_name).download(full_path)
 
-        logger.info(f"[HEALTH-INSURANCE-COMPLETE] Downloaded PDF: {full_path}")
+        logger.info(f"[HEALTH-INSURANCE-COMPLETE] Downloaded PDF, size: {len(encrypted_pdf_data)} bytes")
+        
+        # Decrypt the PDF before processing (same as I-9/W-4)
+        decrypted_pdf_data, was_encrypted = supabase_service.doc_encryption.decrypt_document(
+            encrypted_pdf_data,
+            document_type='health_insurance',
+            employee_id=employee_id
+        )
+        
+        if was_encrypted:
+            logger.info(f"[HEALTH-INSURANCE-COMPLETE] Decrypted PDF: {len(encrypted_pdf_data)} → {len(decrypted_pdf_data)} bytes")
+        else:
+            logger.info(f"[HEALTH-INSURANCE-COMPLETE] PDF was not encrypted (legacy)")
+        
+        pdf_data = decrypted_pdf_data
 
         # Prepare employer data for PDF filling
         employer_data = {
@@ -2629,15 +2938,51 @@ async def complete_employee_review(
         manager_email = manager.get('email', '')
         manager_phone = manager.get('phone')  # May be None
 
-        # Employee info
-        employee_name = f"{employee.get('first_name', '')} {employee.get('last_name', '')}".strip()
-        employee_email = employee.get('email', '')
+        # Employee info - extract from personal_info JSONB
+        personal_info_for_name = employee.get('personal_info', {})
+        employee_first_name = personal_info_for_name.get('first_name', '')
+        employee_last_name = personal_info_for_name.get('last_name', '')
+        employee_name = f"{employee_first_name} {employee_last_name}".strip()
+        employee_email = personal_info_for_name.get('email', '')
         position = employee.get('position', 'Team Member')
         department = employee.get('department', 'General')
 
         logger.info(f"[COMPLETE-REVIEW] Prepared email data for {employee_email}")
 
-        # Step 4: Update employee record
+        # Step 4: Extract emergency contacts from personal_info JSONB
+        personal_info = employee.get('personal_info', {})
+        emergency_contacts = personal_info.get('emergency_contacts', [])
+        
+        # Extract primary emergency contact (first one in the list)
+        emergency_contact_name = None
+        emergency_contact_relationship = None
+        emergency_contact_phone = None
+        emergency_contact_address = None
+        
+        if emergency_contacts and len(emergency_contacts) > 0:
+            primary_contact = emergency_contacts[0]
+            emergency_contact_name = primary_contact.get('name') or primary_contact.get('full_name')
+            emergency_contact_relationship = primary_contact.get('relationship')
+            emergency_contact_phone = primary_contact.get('phone') or primary_contact.get('phone_number')
+            
+            # Build address from individual fields
+            address_parts = []
+            if primary_contact.get('address'):
+                address_parts.append(primary_contact.get('address'))
+            if primary_contact.get('city'):
+                address_parts.append(primary_contact.get('city'))
+            if primary_contact.get('state'):
+                address_parts.append(primary_contact.get('state'))
+            if primary_contact.get('zip_code') or primary_contact.get('zipCode'):
+                address_parts.append(primary_contact.get('zip_code') or primary_contact.get('zipCode'))
+            
+            emergency_contact_address = ', '.join(address_parts) if address_parts else None
+            
+            logger.info(f"[COMPLETE-REVIEW] Extracted emergency contact: {emergency_contact_name} ({emergency_contact_relationship})")
+        else:
+            logger.warning(f"[COMPLETE-REVIEW] No emergency contacts found in personal_info for employee {employee_id}")
+
+        # Step 5: Update employee record
         update_data = {
             'manager_review_status': 'completed',
             'manager_review_completed_at': datetime.utcnow().isoformat(),
@@ -2645,6 +2990,16 @@ async def complete_employee_review(
             'onboarding_status': 'completed',
             'manager_reviewed_by': current_user.id,
         }
+        
+        # Add emergency contact fields
+        if emergency_contact_name:
+            update_data['emergency_contact_name'] = emergency_contact_name
+        if emergency_contact_relationship:
+            update_data['emergency_contact_relationship'] = emergency_contact_relationship
+        if emergency_contact_phone:
+            update_data['emergency_contact_phone'] = emergency_contact_phone
+        if emergency_contact_address:
+            update_data['emergency_contact_address'] = emergency_contact_address
 
         # Update start_date if provided and different
         if payload.startDate and payload.startDate != employee.get('start_date'):
@@ -2720,33 +3075,19 @@ async def complete_employee_review(
 
         packet_base64 = base64.b64encode(packet_bytes).decode('utf-8')
 
-        # Step 5: Send completion email
+        # Step 6: Send email notifications
+        # Two emails are sent:
+        # 1. Combined onboarding completion + new hire notification to employee (CC manager)
+        # 2. Manager packet email - Complete packet to manager + HR for records
         from app.email_service import email_service
+        
+        emails_sent = {
+            'employee_notification': False,
+            'manager_packet': False
+        }
 
-        email_sent = await email_service.send_onboarding_completion_email(
-            employee_email=employee_email,
-            employee_name=employee_name,
-            employee_number=display_employee_number,
-            position=position,
-            department=department,
-            start_date=formatted_start_date,
-            start_time=payload.startTime,
-            property_name=property_name,
-            property_address=property_address,
-            manager_name=manager_name,
-            manager_email=manager_email,
-            manager_phone=manager_phone,
-            dress_code=payload.dressCode,
-            parking_details=payload.parkingDetails,
-            cc_manager=True
-        )
-
-        if email_sent:
-            logger.info(f"[COMPLETE-REVIEW] ✅ Completion email sent to {employee_email}")
-        else:
-            logger.warning(f"[COMPLETE-REVIEW] ⚠️ Failed to send completion email to {employee_email}")
-
-        # Send New Hire Notification email to employee
+        # Email 1: Combined Employee Notification (Onboarding Complete + New Hire Details)
+        logger.info(f"[COMPLETE-REVIEW] [EMAIL-1] Sending combined notification email to {employee_email}")
         try:
             # Get payment method from direct deposit approval
             payment_method = "Direct Deposit"  # Default
@@ -2774,17 +3115,20 @@ async def complete_employee_review(
             pay_rate = summary_form_data.get('rateOfPay', employee.get('pay_rate', ''))
             pay_frequency = summary_form_data.get('payFrequency', employee.get('pay_frequency', 'bi-weekly'))
 
-            # Get supervisor name from personal info
+            # Get personal info for email
             personal_info = employee.get('personal_info', {})
             supervisor_name = personal_info.get('supervisor', manager_name)
-
-            # Get start time
             start_time = personal_info.get('start_time', payload.startTime)
 
-            new_hire_email_sent = await email_service.send_new_hire_notification_email(
+            # Extract name from personal_info (not from employee record)
+            employee_first_name = personal_info.get('first_name', '')
+            employee_last_name = personal_info.get('last_name', '')
+
+            # Send combined email with all details
+            employee_email_sent = await email_service.send_new_hire_notification_email(
                 to_email=employee_email,
-                employee_first_name=employee.get('first_name', ''),
-                employee_last_name=employee.get('last_name', ''),
+                employee_first_name=employee_first_name,
+                employee_last_name=employee_last_name,
                 hotel_name=property_name,
                 hotel_address=property_address,
                 department=department,
@@ -2797,14 +3141,16 @@ async def complete_employee_review(
                 payment_method=payment_method,
             )
 
-            if new_hire_email_sent:
-                logger.info(f"[COMPLETE-REVIEW] ✅ New hire notification sent to {employee_email}")
+            if employee_email_sent:
+                logger.info(f"[COMPLETE-REVIEW] [EMAIL-1] ✅ Employee notification email sent to {employee_email}")
+                emails_sent['employee_notification'] = True
             else:
-                logger.warning(f"[COMPLETE-REVIEW] ⚠️ Failed to send new hire notification")
-        except Exception as new_hire_email_exc:
-            logger.error(f"[COMPLETE-REVIEW] Error sending new hire notification: {new_hire_email_exc}")
+                logger.warning(f"[COMPLETE-REVIEW] [EMAIL-1] ⚠️ Failed to send employee notification")
+        except Exception as employee_email_exc:
+            logger.error(f"[COMPLETE-REVIEW] [EMAIL-1] ❌ Exception sending employee notification: {employee_email_exc}", exc_info=True)
 
-        # Step 6: Send packet to manager + HR recipients
+        # Email 2: Packet to Manager + HR (Record Keeping)
+        logger.info(f"[COMPLETE-REVIEW] [EMAIL-2] Preparing to send onboarding packet to manager + HR")
         manager_primary_email = manager_email or current_user.email
         # Create filename with employee name
         safe_employee_name = employee_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
@@ -2823,20 +3169,31 @@ async def complete_employee_review(
         cc_emails = [email for email in hr_recipients if email != manager_primary_email]
         packet_email_sent = False
         if manager_primary_email:
-            packet_email_sent = await email_service.send_manager_review_packet_email(
-                to_email=manager_primary_email,
-                cc_emails=cc_emails,
-                employee_name=employee_name,
-                property_name=property_name,
-                packet_filename=packet_filename,
-                packet_base64=packet_base64,
-            )
-            if packet_email_sent:
-                logger.info("[COMPLETE-REVIEW] ✅ Sent onboarding packet to manager %s", manager_primary_email)
-            else:
-                logger.warning("[COMPLETE-REVIEW] ⚠️ Failed to send onboarding packet email")
+            try:
+                logger.info(f"[COMPLETE-REVIEW] [EMAIL-2] Attempting to send packet to {manager_primary_email} with CC: {cc_emails}")
+                packet_email_sent = await email_service.send_manager_review_packet_email(
+                    to_email=manager_primary_email,
+                    cc_emails=cc_emails,
+                    employee_name=employee_name,
+                    property_name=property_name,
+                    packet_filename=packet_filename,
+                    packet_base64=packet_base64,
+                )
+                if packet_email_sent:
+                    logger.info(f"[COMPLETE-REVIEW] [EMAIL-2] ✅ Onboarding packet sent to manager {manager_primary_email} with {len(cc_emails)} HR CC recipients")
+                    emails_sent['manager_packet'] = True
+                else:
+                    logger.warning("[COMPLETE-REVIEW] [EMAIL-2] ⚠️ Failed to send onboarding packet email")
+            except Exception as email2_error:
+                logger.error(f"[COMPLETE-REVIEW] [EMAIL-2] ❌ Exception sending packet email: {email2_error}", exc_info=True)
 
-        # Step 6: Return success
+        # Email Summary
+        total_sent = sum(emails_sent.values())
+        logger.info(f"[COMPLETE-REVIEW] 📧 Email Summary: {total_sent}/2 emails sent successfully")
+        logger.info(f"[COMPLETE-REVIEW]    - Employee Notification: {'✅' if emails_sent['employee_notification'] else '❌'}")
+        logger.info(f"[COMPLETE-REVIEW]    - Manager Packet: {'✅' if emails_sent['manager_packet'] else '❌'}")
+
+        # Step 7: Return success
         return {
             "success": True,
             "message": "Employee activated successfully",
@@ -2845,7 +3202,7 @@ async def complete_employee_review(
                 "employeeNumber": display_employee_number,
                 "status": "active",
                 "startDate": payload.startDate,
-                "emailSent": email_sent,
+                "emailSent": employee_email_sent,
                 "packetUrl": packet_save.get('signed_url'),
                 "packetEmailSent": packet_email_sent,
             }
@@ -2855,4 +3212,270 @@ async def complete_employee_review(
         raise
     except Exception as e:
         logger.exception(f"[COMPLETE-REVIEW] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{employee_id}/completed-documents")
+async def get_completed_employee_documents(
+    employee_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all documents for a completed/active employee
+    Returns: hire packet + individual documents with decryption for preview
+    
+    This endpoint is used by the Employees tab to show documents for active employees
+    """
+    try:
+        logger.info(f"[COMPLETED-DOCS] Fetching documents for employee {employee_id}")
+        
+        # Verify user is a manager or HR
+        if current_user.role not in ['manager', 'hr', 'admin']:
+            raise HTTPException(status_code=403, detail="Only managers can view employee documents")
+        
+        # Get employee data
+        employee_response = supabase_service.admin_client.table('employees').select('*').eq('id', employee_id).single().execute()
+        if not employee_response.data:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        
+        employee = employee_response.data
+        property_id = employee.get('property_id')
+        
+        # Verify manager has access to this property
+        if current_user.role == 'manager' and current_user.property_id != property_id:
+            raise HTTPException(status_code=403, detail="Access denied to this employee")
+
+        # Check if employee onboarding is completed
+        onboarding_status = employee.get('onboarding_status')
+        employment_status = employee.get('employment_status')
+        manager_review_status = employee.get('manager_review_status')
+
+        logger.info(f"[COMPLETED-DOCS] Employee status: onboarding={onboarding_status}, employment={employment_status}, manager_review={manager_review_status}")
+
+        # ✅ CRITICAL FIX: Only show documents when manager review is COMPLETED
+        # Documents should NOT be visible when:
+        # - Manager review is pending (pending_review)
+        # - Manager review is in progress (manager_reviewing)
+        # - Manager review is not completed
+        if manager_review_status != 'completed':
+            logger.warning(f"[COMPLETED-DOCS] Access denied: manager review not completed (status={manager_review_status})")
+            raise HTTPException(
+                status_code=403,
+                detail=f"Documents not available: Manager review must be completed before documents can be viewed (current status: {manager_review_status})"
+            )
+
+        # Build document list
+        documents = []
+        
+        # Document types to fetch
+        document_types = [
+            {'type': 'final_onboarding_packet', 'name': 'Complete Onboarding Packet', 'priority': 1},
+            {'type': 'new_hire_summary', 'name': 'New Hire Summary', 'priority': 2},
+            {'type': 'company_policies', 'name': 'Company Policies', 'priority': 3},
+            {'type': 'i9_form_completed', 'name': 'I-9 Form (Completed)', 'priority': 4},
+            {'type': 'w4_form_completed', 'name': 'W-4 Form', 'priority': 5},
+            {'type': 'direct_deposit', 'name': 'Direct Deposit Authorization', 'priority': 6},
+            {'type': 'health_insurance_completed', 'name': 'Health Insurance', 'priority': 7},
+            {'type': 'human_trafficking', 'name': 'Human Trafficking Awareness Certificate', 'priority': 8},
+            {'type': 'weapons_policy', 'name': 'Weapons Policy', 'priority': 9},
+        ]
+        
+        for doc_info in document_types:
+            doc_type = doc_info['type']
+            doc_name = doc_info['name']
+            
+            # Get latest signed document record
+            record = await supabase_service.get_latest_signed_document_record(employee_id, doc_type)
+            
+            if not record:
+                logger.debug(f"[COMPLETED-DOCS] Document not found: {doc_type}")
+                continue
+            
+            # Download and decrypt document
+            pdf_bytes = await supabase_service.get_signed_document_bytes(record)
+            
+            if not pdf_bytes:
+                logger.warning(f"[COMPLETED-DOCS] Failed to get document bytes: {doc_type}")
+                continue
+            
+            # Convert to base64 for frontend
+            pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+            
+            # Get metadata
+            metadata = record.get('metadata', {})
+            
+            documents.append({
+                'id': record.get('id'),
+                'type': doc_type,
+                'name': doc_name,
+                'priority': doc_info['priority'],
+                'signed_at': record.get('signed_at'),
+                'pdf_base64': pdf_base64,
+                'size_bytes': len(pdf_bytes),
+                'encrypted': metadata.get('encrypted', False),
+                'metadata': metadata
+            })
+            
+            logger.info(f"[COMPLETED-DOCS] ✅ Added document: {doc_name} ({len(pdf_bytes)} bytes)")
+        
+        # Sort by priority
+        documents.sort(key=lambda x: x['priority'])
+        
+        logger.info(f"[COMPLETED-DOCS] Returning {len(documents)} documents for employee {employee_id}")
+        
+        return {
+            "success": True,
+            "employee": {
+                "id": employee_id,
+                "name": f"{employee.get('first_name', '')} {employee.get('last_name', '')}".strip(),
+                "onboarding_status": onboarding_status,
+                "employment_status": employment_status
+            },
+            "documents": documents,
+            "count": len(documents)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"[COMPLETED-DOCS] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch completed documents: {str(e)}")
+
+
+@router.get("/{employee_id}/details")
+async def get_employee_details(
+    employee_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get comprehensive employee details including:
+    - Basic info (name, email, position, department)
+    - Employment info (hire date, pay rate, employment status)
+    - Emergency contacts (decrypted from personal_info JSONB)
+    - Personal details (address, phone, DOB - decrypted)
+    """
+    try:
+        logger.info(f"[EMPLOYEE-DETAILS] Fetching details for employee {employee_id}")
+        
+        # Verify user is manager/HR
+        if current_user.role not in ['manager', 'hr', 'admin']:
+            raise HTTPException(status_code=403, detail="Only managers can view employee details")
+        
+        # Get employee record
+        employee_response = supabase_service.admin_client.table('employees').select('*').eq('id', employee_id).single().execute()
+        if not employee_response.data:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        
+        employee = employee_response.data
+        property_id = employee.get('property_id')
+        
+        # Verify access
+        if current_user.role == 'manager' and current_user.property_id != property_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        logger.info(f"[EMPLOYEE-DETAILS] Employee: {employee.get('first_name')} {employee.get('last_name')}")
+        
+        # Get personal info from onboarding_form_data
+        personal_info = {}
+        emergency_contacts_data = []
+
+        try:
+            personal_response = supabase_service.admin_client.table('onboarding_form_data') \
+                .select('form_data') \
+                .eq('employee_id', employee_id) \
+                .eq('step_id', 'personal-info') \
+                .order('created_at', desc=True) \
+                .limit(1) \
+                .execute()
+            
+            if personal_response.data:
+                form_data = personal_response.data[0].get('form_data', {})
+                personal_info = form_data.get('personalInfo', form_data)
+                logger.info(f"[EMPLOYEE-DETAILS] Found personal info with {len(personal_info)} fields")
+
+                # Extract emergency contacts from the same form_data
+                emergency_contacts_obj = form_data.get('emergencyContacts', {})
+                logger.info(f"[EMPLOYEE-DETAILS] Emergency contacts object keys: {list(emergency_contacts_obj.keys()) if emergency_contacts_obj else 'None'}")
+
+                # Emergency contacts are stored as primaryContact/secondaryContact
+                primary_contact = emergency_contacts_obj.get('primaryContact', {})
+                secondary_contact = emergency_contacts_obj.get('secondaryContact', {})
+
+                if primary_contact and primary_contact.get('name'):
+                    emergency_contacts_data.append(primary_contact)
+                if secondary_contact and secondary_contact.get('name'):
+                    emergency_contacts_data.append(secondary_contact)
+
+                logger.info(f"[EMPLOYEE-DETAILS] Found {len(emergency_contacts_data)} emergency contacts")
+        except Exception as e:
+            logger.warning(f"[EMPLOYEE-DETAILS] Could not fetch personal info: {e}")
+        
+        # Format emergency contacts
+        formatted_contacts = []
+        for contact in emergency_contacts_data:
+            # Handle both formats: phoneNumber and phone
+            phone = contact.get('phoneNumber') or contact.get('phone') or contact.get('phone_number', '')
+            alternate_phone = contact.get('alternatePhone') or contact.get('alternate_phone', '')
+
+            formatted_contacts.append({
+                'name': contact.get('name') or contact.get('full_name', ''),
+                'relationship': contact.get('relationship', ''),
+                'phone': phone,
+                'alternatePhone': alternate_phone,
+                'email': contact.get('email', ''),
+                'address': _build_address_block(
+                    contact.get('address', ''),
+                    None,
+                    contact.get('city', ''),
+                    contact.get('state', ''),
+                    contact.get('zipCode') or contact.get('zip_code', '')
+                )
+            })
+        
+        # Get property name
+        property_name = await document_path_manager.get_property_name(property_id)
+        
+        # Get name from personal_info or employee record
+        first_name = personal_info.get('firstName') or personal_info.get('first_name') or employee.get('first_name', '')
+        last_name = personal_info.get('lastName') or personal_info.get('last_name') or employee.get('last_name', '')
+        email = personal_info.get('email') or employee.get('email', '')
+
+        # Build comprehensive employee details
+        return {
+            'success': True,
+            'employee': {
+                'id': employee_id,
+                'firstName': first_name,
+                'lastName': last_name,
+                'email': email,
+                'phone': personal_info.get('phone', ''),
+                'dateOfBirth': personal_info.get('dateOfBirth', ''),
+                'ssn': _mask_ssn(personal_info.get('ssn', '')),  # Masked SSN (***-**-1234)
+                'address': _build_address_block(
+                    personal_info.get('address', {}).get('street', '') if isinstance(personal_info.get('address'), dict) else '',
+                    personal_info.get('address', {}).get('apt', '') if isinstance(personal_info.get('address'), dict) else '',
+                    personal_info.get('address', {}).get('city', '') if isinstance(personal_info.get('address'), dict) else '',
+                    personal_info.get('address', {}).get('state', '') if isinstance(personal_info.get('address'), dict) else '',
+                    personal_info.get('address', {}).get('zip', '') if isinstance(personal_info.get('address'), dict) else ''
+                ),
+                'employeeNumber': f"EMP-{employee_id[:8].upper()}",
+                'position': employee.get('position', ''),
+                'department': employee.get('department', ''),
+                'hireDate': employee.get('hire_date') or employee.get('start_date'),
+                'startDate': employee.get('start_date'),
+                'employmentStatus': employee.get('employment_status', ''),
+                'onboardingStatus': employee.get('onboarding_status', ''),
+                'payRate': employee.get('pay_rate'),
+                'payFrequency': employee.get('pay_frequency', ''),
+                'employmentType': employee.get('employment_type', ''),
+                'emergencyContacts': formatted_contacts,
+                'propertyId': property_id,
+                'propertyName': property_name
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"[EMPLOYEE-DETAILS] Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

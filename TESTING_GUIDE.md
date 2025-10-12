@@ -1,343 +1,450 @@
-# 🧪 Testing Guide - Sequential Document Approval
+# Testing Guide: PDF Fix & HR Video Settings
 
-**Quick guide to test the new document approval system**
+## 📋 Overview
 
----
-
-## ✅ **What's Ready to Test**
-
-### **Backend:**
-- ✅ Database migration applied
-- ✅ Router loaded successfully
-- ✅ Endpoints available
-
-### **Endpoints:**
-```
-GET  /api/manager/review/employees/{id}/documents-status
-GET  /api/manager/review/employees/{id}/document/{type}
-POST /api/manager/review/employees/{id}/document/{type}/approve
-POST /api/manager/review/employees/{id}/document/{type}/reject
-```
+This guide covers testing for two major implementations:
+1. **PDF Layout Fix** - New hire form no longer cuts off on the right side
+2. **HR Video Settings** - HR can configure training videos through dashboard
 
 ---
 
-## 🧪 **Test 1: Get Documents Status**
+## 🗄️ Step 1: Run Database Migration
 
-### **Using Browser/Postman:**
+### Instructions:
+
+1. **Open Supabase Dashboard**
+   - Go to https://app.supabase.com
+   - Select your project
+   - Navigate to **SQL Editor** (left sidebar)
+
+2. **Run Migration SQL**
+   - Click **"New Query"**
+   - Open file: `RUN_THIS_MIGRATION_HR_SETTINGS.sql` (in project root)
+   - Copy ALL contents and paste into SQL Editor
+   - Click **"Run"** button
+
+3. **Verify Migration Success**
+   - You should see: "Success. No rows returned"
+   - Go to **Table Editor** → Check for `hr_settings` table
+   - Should have 1 row with default video settings
+
+---
+
+## 📄 Step 2: Test PDF Layout Fix
+
+### Test Scenario 1: Generate New Hire PDF
+
+1. **Login as Manager**
+   - Go to manager dashboard
+   - Navigate to employee review
+
+2. **Generate New Hire Summary**
+   - Select an employee with completed onboarding
+   - Click "Generate New Hire Summary" or similar button
+   - Download the PDF
+
+3. **Verify PDF Layout**
+   - ✅ All text should be within page margins
+   - ✅ No content cut off on right side
+   - ✅ 4-column tables (Employment & Employee Info) fit properly
+   - ✅ 2-column tables (Role & Benefits) display correctly
+   - ✅ Long addresses don't overflow
+
+### Test Scenario 2: Test with Long Data
+
+Create/use employee with:
+- Long hotel name (50+ characters)
+- Long address (multi-line)
+- Long position title
+- Multiple health insurance selections
+
+Generate PDF and verify no content is cut off.
+
+### Expected Results:
+- ✅ PDF width: 612 points (8.5 inches)
+- ✅ Content width: 540 points (0.5" margins on each side)
+- ✅ All tables fit within 540 points
+- ✅ Text wraps properly within cells
+
+---
+
+## ⚙️ Step 3: Test HR Settings Dashboard
+
+### Prerequisites:
+- Migration completed successfully
+- Backend server running
+- Frontend running
+- Logged in as HR user
+
+### Test Scenario 1: Access Settings
+
+1. **Navigate to Settings**
+   - Login as HR user
+   - Look for **"Settings"** tab in HR navigation
+   - Click Settings tab
+
+2. **Verify Settings Load**
+   - ✅ Page loads without errors
+   - ✅ Current video IDs displayed
+   - ✅ Default videos: `XhbfGo7voB8` (both English and Spanish)
+   - ✅ Preview iframes show videos
+
+### Test Scenario 2: Update Video IDs
+
+#### Test with Video ID Format:
+
+1. **Update English Video**
+   - Enter: `dQw4w9WgXcQ` (Rick Astley - Never Gonna Give You Up)
+   - ✅ Preview updates automatically
+   - ✅ Green "Valid" indicator shows
+
+2. **Update Spanish Video**
+   - Enter: `ZZ5LpwO-An4` (Different video)
+   - ✅ Preview updates automatically
+   - ✅ Green "Valid" indicator shows
+
+3. **Save Changes**
+   - Click "Save Settings" button
+   - ✅ Success message appears
+   - ✅ Settings persist after page refresh
+
+#### Test with Full URL Format:
+
+1. **Update English Video**
+   - Enter: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`
+   - ✅ System extracts ID: `dQw4w9WgXcQ`
+   - ✅ Preview shows correct video
+
+2. **Update Spanish Video**
+   - Enter: `https://youtu.be/ZZ5LpwO-An4`
+   - ✅ System extracts ID: `ZZ5LpwO-An4`
+   - ✅ Preview shows correct video
+
+3. **Save and Verify**
+   - Click "Save Settings"
+   - ✅ Success message
+   - Refresh page
+   - ✅ IDs still correct (not full URLs)
+
+#### Test Validation:
+
+1. **Invalid Video ID (too short)**
+   - Enter: `abc123` (only 6 characters)
+   - ✅ Red "Invalid" indicator
+   - ✅ Save button disabled
+
+2. **Invalid Video ID (too long)**
+   - Enter: `abc123defgh12` (13 characters)
+   - ✅ Red "Invalid" indicator
+   - ✅ Save button disabled
+
+3. **Empty Fields**
+   - Clear English video ID
+   - ✅ Save button disabled
+   - ✅ Appropriate validation message
+
+### Test Scenario 3: Security & Permissions
+
+1. **Test as Manager User**
+   - Logout from HR account
+   - Login as Manager
+   - ✅ Settings tab should NOT appear in navigation
+   - Try accessing: `/hr/settings` directly
+   - ✅ Should be redirected or show access denied
+
+2. **Test API Endpoints**
+   - Open browser DevTools → Network tab
+   - Try updating settings as manager
+   - ✅ Should receive 403 Forbidden or similar
+
+---
+
+## 🎥 Step 4: Test Video Integration
+
+### Prerequisites:
+- Settings saved with new video IDs
+- Backend running
+- Frontend running
+
+### Test Scenario 1: English Onboarding
+
+1. **Start New Onboarding Session**
+   - Use onboarding link (as employee)
+   - Select **English** language
+   - Progress to Human Trafficking Training step
+
+2. **Verify Correct Video Loads**
+   - ✅ Video matches English ID from settings
+   - ✅ Video player loads correctly
+   - ✅ Progress bar shows 0%
+
+3. **Test Video Requirements**
+   - Play video
+   - ✅ Progress increases as video plays
+   - ✅ Cannot skip forward
+   - ✅ Warning message if trying to skip
+   - ✅ Must reach 95% to enable "Continue" button
+
+4. **Test Skip Button (Testing Mode)**
+   - ✅ Yellow "Skip Video (Test)" button visible
+   - Click skip button
+   - ✅ Video marks as complete
+   - ✅ Continue button enables
+
+### Test Scenario 2: Spanish Onboarding
+
+1. **Start New Onboarding Session**
+   - Use onboarding link
+   - Select **Spanish** (Español) language
+   - Progress to "Capacitación sobre Tráfico Humano"
+
+2. **Verify Correct Video Loads**
+   - ✅ Video matches Spanish ID from settings
+   - ✅ Different from English video
+   - ✅ Spanish UI text displays
+
+3. **Test Video Requirements**
+   - Same as English test
+   - ✅ 95% requirement enforced
+   - ✅ Skip prevention works
+   - ✅ Progress tracking works
+
+### Test Scenario 3: Video Change Propagation
+
+1. **Change Videos in HR Settings**
+   - Login as HR
+   - Update both video IDs to new values
+   - Save settings
+
+2. **Test New Onboarding Session**
+   - Start fresh onboarding session
+   - Navigate to training step
+   - ✅ New videos load (not old ones)
+   - ✅ No caching issues
+
+3. **Test In-Progress Session**
+   - Session that was already on training step
+   - Refresh page
+   - ✅ Should load new video ID
+   - ⚠️ Progress may reset (expected behavior)
+
+---
+
+## 🔍 Step 5: API Testing (Optional)
+
+### Test Public Endpoint (No Auth Required):
 
 ```bash
-GET http://localhost:8000/api/manager/review/employees/7bda8a8e-b2f6-4052-ad46-6f322836c3e8/documents-status
-
-Headers:
-Authorization: Bearer {your_manager_token}
+curl http://localhost:8000/api/hr/settings/training-videos/public
 ```
 
-### **Expected Response:**
-
-```json
-{
-  "employeeId": "7bda8a8e-b2f6-4052-ad46-6f322836c3e8",
-  "employeeName": "John Doe",
-  "propertyName": "m6",
-  "documents": [
-    {
-      "documentType": "company_policies",
-      "documentName": "Company Policies Acknowledgment",
-      "status": "pending",
-      "order": 1,
-      "canReview": true
-    },
-    {
-      "documentType": "i9",
-      "documentName": "I-9 Employment Eligibility Verification",
-      "status": "pending",
-      "order": 2,
-      "canReview": false  // Locked until company_policies approved
-    },
-    {
-      "documentType": "w4",
-      "documentName": "W-4 Federal Tax Withholding",
-      "status": "pending",
-      "order": 3,
-      "canReview": false
-    },
-    {
-      "documentType": "direct_deposit",
-      "documentName": "Direct Deposit Authorization",
-      "status": "pending",
-      "order": 4,
-      "canReview": false
-    },
-    {
-      "documentType": "health_insurance",
-      "documentName": "Health Insurance Enrollment",
-      "status": "pending",
-      "order": 5,
-      "canReview": false
-    }
-  ],
-  "currentStep": 1,
-  "overallStatus": "not_started",
-  "completionPercentage": 0
-}
-```
-
----
-
-## 🧪 **Test 2: Get Specific Document**
-
-### **Request:**
-
-```bash
-GET http://localhost:8000/api/manager/review/employees/7bda8a8e-b2f6-4052-ad46-6f322836c3e8/document/company_policies
-
-Headers:
-Authorization: Bearer {your_manager_token}
-```
-
-### **Expected Response:**
-
-```json
-{
-  "pdfUrl": "https://kzommszdhapvqpekpvnt.supabase.co/storage/v1/object/sign/...",
-  "documentType": "company_policies",
-  "documentName": "Company Policies Acknowledgment"
-}
-```
-
----
-
-## 🧪 **Test 3: Approve Document**
-
-### **Request:**
-
-```bash
-POST http://localhost:8000/api/manager/review/employees/7bda8a8e-b2f6-4052-ad46-6f322836c3e8/document/company_policies/approve
-
-Headers:
-Authorization: Bearer {your_manager_token}
-Content-Type: application/json
-
-Body:
-{
-  "notes": "Signature verified, all pages signed"
-}
-```
-
-### **Expected Response:**
-
+**Expected Response:**
 ```json
 {
   "success": true,
-  "message": "Company Policies Acknowledgment approved successfully",
-  "finalPdfUrl": "TODO: Return final PDF URL after regeneration"
+  "data": {
+    "video_id_en": "dQw4w9WgXcQ",
+    "video_id_es": "ZZ5LpwO-An4"
+  }
 }
 ```
 
-### **Then Check Status Again:**
+### Test HR Endpoint (Auth Required):
 
 ```bash
-GET /api/manager/review/employees/{id}/documents-status
-```
+# Get JWT token from browser localStorage or login response
+TOKEN="your_jwt_token_here"
 
-**Should show:**
-- ✅ company_policies: status = "approved"
-- ✅ i9: canReview = true (unlocked!)
-- 🔒 w4: canReview = false (still locked)
+# GET settings
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/hr/settings/training-videos
 
----
-
-## 🧪 **Test 4: Try to Skip Steps (Should Fail)**
-
-### **Request:**
-
-```bash
-POST http://localhost:8000/api/manager/review/employees/7bda8a8e-b2f6-4052-ad46-6f322836c3e8/document/w4/approve
-
-Headers:
-Authorization: Bearer {your_manager_token}
-Content-Type: application/json
-
-Body:
-{
-  "notes": "Trying to skip I-9"
-}
-```
-
-### **Expected Response (400 Error):**
-
-```json
-{
-  "detail": "Previous document (I-9 Employment Eligibility Verification) must be approved first"
-}
+# PUT settings
+curl -X PUT \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"video_id_en":"abc123defgh","video_id_es":"xyz789uvwxy"}' \
+  http://localhost:8000/api/hr/settings/training-videos
 ```
 
 ---
 
-## 🧪 **Test 5: Reject Document**
+## ✅ Acceptance Criteria Checklist
 
-### **Request:**
+### PDF Layout Fix:
+- [ ] Generated PDFs fit within page margins (no right-side cutoff)
+- [ ] 4-column tables display correctly
+- [ ] 2-column tables display correctly
+- [ ] Long addresses wrap properly
+- [ ] All content readable and professional
 
-```bash
-POST http://localhost:8000/api/manager/review/employees/7bda8a8e-b2f6-4052-ad46-6f322836c3e8/document/company_policies/reject
+### HR Settings Dashboard:
+- [ ] HR users can access Settings tab
+- [ ] Non-HR users cannot access Settings
+- [ ] Current videos load on page open
+- [ ] Can update English video ID
+- [ ] Can update Spanish video ID
+- [ ] Video previews work
+- [ ] URL parsing extracts correct IDs
+- [ ] Validation prevents invalid IDs
+- [ ] Save button works
+- [ ] Success/error messages display
+- [ ] Settings persist after save
 
-Headers:
-Authorization: Bearer {your_manager_token}
-Content-Type: application/json
-
-Body:
-{
-  "reason": "Signature missing on page 3"
-}
-```
-
-### **Expected Response:**
-
-```json
-{
-  "success": true,
-  "message": "Company Policies Acknowledgment rejected. Employee will be notified to resubmit."
-}
-```
-
----
-
-## 🧪 **Test 6: Get I-9 with Uploaded Documents**
-
-### **Request:**
-
-```bash
-GET http://localhost:8000/api/manager/review/employees/7bda8a8e-b2f6-4052-ad46-6f322836c3e8/document/i9
-
-Headers:
-Authorization: Bearer {your_manager_token}
-```
-
-### **Expected Response:**
-
-```json
-{
-  "pdfUrl": "https://..../i9_signed_xxx.pdf",
-  "documentType": "i9",
-  "documentName": "I-9 Employment Eligibility Verification",
-  "uploadedDocsUrls": [
-    {
-      "type": "drivers_license",
-      "url": "https://..../dl_front.jpg",
-      "filename": "dl_front.jpg"
-    },
-    {
-      "type": "passport",
-      "url": "https://..../passport.jpg",
-      "filename": "passport.jpg"
-    },
-    {
-      "type": "ssn_card",
-      "url": "https://..../ssn.jpg",
-      "filename": "ssn.jpg"
-    }
-  ]
-}
-```
+### Video Integration:
+- [ ] English onboarding loads correct video
+- [ ] Spanish onboarding loads correct video
+- [ ] 95% watch requirement enforced
+- [ ] Skip prevention works
+- [ ] Testing skip button works
+- [ ] Progress tracking accurate
+- [ ] Video changes reflect in new sessions
+- [ ] API returns correct videos
+- [ ] Graceful fallback on API error
 
 ---
 
-## 🧪 **Test 7: Complete Workflow**
+## 🐛 Known Issues / Expected Behavior
 
-### **Step-by-Step:**
+1. **Skip Button Visibility**
+   - Currently visible for ALL users (for testing)
+   - Before production: Should be removed or env-gated
 
-```
-1. Approve company_policies
-   ✅ POST /document/company_policies/approve
-   
-2. Check status
-   ✅ GET /documents-status
-   ✅ i9 should be unlocked (canReview: true)
-   
-3. Approve I-9
-   ✅ POST /document/i9/approve
-   {
-     "form_data": {
-       "document_title": "U.S. Passport",
-       "document_number": "123456789"
-     },
-     "signature": "data:image/png;base64,..."
-   }
-   
-4. Check status
-   ✅ w4 should be unlocked
-   
-5. Approve W-4
-   ✅ POST /document/w4/approve
-   
-6. Approve Direct Deposit
-   ✅ POST /document/direct_deposit/approve
-   
-7. Approve Health Insurance
-   ✅ POST /document/health_insurance/approve
-   
-8. Check final status
-   ✅ GET /documents-status
-   ✅ overallStatus: "complete"
-   ✅ completionPercentage: 100
-```
+2. **In-Progress Sessions**
+   - Video changes may not affect already-loaded sessions
+   - User must refresh page to see new video
+   - Progress may reset (expected)
+
+3. **Video Preview in Settings**
+   - iframes load immediately
+   - May be blocked by ad blockers
+   - Not critical for functionality
 
 ---
 
-## 📊 **Check Database**
+## 🔧 Troubleshooting
 
-### **In Supabase SQL Editor:**
+### PDF Still Cutting Off:
+1. Clear browser cache
+2. Regenerate PDF (don't use cached version)
+3. Check backend logs for PDF generation errors
+4. Verify ReportLab library installed correctly
 
-```sql
--- Check approval records
-SELECT * FROM document_approvals 
-WHERE employee_id = '7bda8a8e-b2f6-4052-ad46-6f322836c3e8'
-ORDER BY created_at;
+### Settings Not Saving:
+1. Check browser console for errors
+2. Verify JWT token is valid (not expired)
+3. Check backend logs
+4. Verify migration ran successfully
+5. Check RLS policies in Supabase
 
--- Should show:
--- document_type | status   | approved_by | approved_at
--- --------------|----------|-------------|------------
--- company_policies | approved | manager-id | timestamp
--- i9            | approved | manager-id | timestamp
--- w4            | approved | manager-id | timestamp
--- ...
-```
+### Videos Not Updating:
+1. Hard refresh browser (Cmd+Shift+R / Ctrl+Shift+R)
+2. Check `/api/hr/settings/training-videos/public` endpoint
+3. Verify video IDs are valid (11 characters)
+4. Check YouTube video is public (not private/deleted)
+5. Clear sessionStorage: `sessionStorage.clear()`
 
----
-
-## 🎯 **Success Criteria**
-
-### **✅ All Tests Pass If:**
-
-1. ✅ Can get documents status
-2. ✅ Can get specific document PDF
-3. ✅ Can approve documents in order
-4. ✅ Cannot skip steps (sequential enforcement)
-5. ✅ Can reject documents
-6. ✅ I-9 returns uploaded verification docs
-7. ✅ Completion percentage updates correctly
-8. ✅ Database records created correctly
+### Migration Fails:
+1. Check SUPABASE_SERVICE_KEY is set correctly
+2. Verify database connection
+3. Run SQL directly in Supabase Dashboard
+4. Check for existing table conflicts
 
 ---
 
-## 🚀 **Next Steps After Testing**
+## 📸 Screenshots to Capture
 
-1. **Build UI Components:**
-   - Document workflow stepper
-   - PDF viewer
-   - Approve/Reject buttons
-   - Progress indicator
+For QA documentation, capture:
 
-2. **Implement PDF Regeneration:**
-   - Combine Section 1 + Section 2 for I-9
-   - Add manager approval stamps
-   - Replace original PDFs in storage
+1. **PDF Comparison**
+   - Before: Content cut off
+   - After: All content visible
 
-3. **Add Notifications:**
-   - Email employee when document rejected
-   - Notify when all documents approved
+2. **HR Settings Page**
+   - Settings tab in navigation
+   - Settings page with videos loaded
+   - Video preview working
+
+3. **Video Player**
+   - English onboarding with new video
+   - Spanish onboarding with new video
+   - Progress tracking at various percentages
+
+4. **Validation**
+   - Valid video ID (green indicator)
+   - Invalid video ID (red indicator)
 
 ---
 
-**Ready to test! Use Postman or browser console to test these endpoints!** 🧪✅
+## 🎯 Success Metrics
 
+### PDF Quality:
+- ✅ 100% of content visible within margins
+- ✅ Professional appearance maintained
+- ✅ No user complaints about readability
+
+### Settings Functionality:
+- ✅ HR can update videos in < 2 minutes
+- ✅ Changes reflect immediately in new sessions
+- ✅ Zero downtime during video changes
+- ✅ No manual code deployments needed
+
+### Security:
+- ✅ Only HR users can modify settings
+- ✅ Public endpoint doesn't expose sensitive data
+- ✅ Video validation prevents malicious inputs
+
+---
+
+## 📝 Testing Notes
+
+Use this section to record your findings:
+
+**Date:** _____________
+**Tester:** _____________
+**Environment:** _____________
+
+**PDF Tests:**
+- [ ] Test 1: _______________
+- [ ] Test 2: _______________
+
+**Settings Tests:**
+- [ ] Test 1: _______________
+- [ ] Test 2: _______________
+
+**Integration Tests:**
+- [ ] Test 1: _______________
+- [ ] Test 2: _______________
+
+**Issues Found:**
+1. _____________________
+2. _____________________
+
+---
+
+## ✨ Next Steps After Testing
+
+Once all tests pass:
+
+1. ✅ Mark todos as complete
+2. 📸 Archive screenshots
+3. 📋 Document any issues found
+4. 🚀 Prepare for staging deployment
+5. 👥 Train HR users on new Settings feature
+6. 📧 Send update notification to stakeholders
+
+---
+
+## 📞 Support
+
+If you encounter issues during testing:
+1. Check browser console (F12)
+2. Check backend logs
+3. Review troubleshooting section above
+4. Document the issue with screenshots
+5. Check implementation documentation
+
+**Files to Reference:**
+- `PDF_FIX_AND_VIDEO_SETTINGS_IMPLEMENTATION.md` - Complete implementation details
+- `RUN_THIS_MIGRATION_HR_SETTINGS.sql` - Migration SQL
+- `backend/run_hr_settings_migration.py` - Migration helper script
