@@ -1345,7 +1345,7 @@ class EnhancedSupabaseService:
         """Get user by email address"""
         try:
             result = self.client.table("users").select("*").eq("email", email.lower()).execute()
-            
+
             if result.data:
                 user_data = result.data[0]
                 return User(
@@ -1357,10 +1357,10 @@ class EnhancedSupabaseService:
                     property_id=user_data.get("property_id"),
                     password_hash=user_data.get("password_hash"),  # Include password hash for authentication
                     is_active=user_data.get("is_active", True),
-                    created_at=datetime.fromisoformat(user_data["created_at"].replace('Z', '+00:00'))
+                    created_at=safe_parse_timestamp(user_data["created_at"])
                 )
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to get user by email {email}: {e}")
             return None
@@ -1369,7 +1369,7 @@ class EnhancedSupabaseService:
         """Get user by ID"""
         try:
             result = self.client.table("users").select("*").eq("id", user_id).execute()
-            
+
             if result.data:
                 user_data = result.data[0]
                 return User(
@@ -1381,10 +1381,10 @@ class EnhancedSupabaseService:
                     property_id=user_data.get("property_id"),
                     password_hash=user_data.get("password_hash"),  # Include password hash for authentication
                     is_active=user_data.get("is_active", True),
-                    created_at=datetime.fromisoformat(user_data["created_at"].replace('Z', '+00:00'))
+                    created_at=safe_parse_timestamp(user_data["created_at"])
                 )
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to get user by ID {user_id}: {e}")
             return None
