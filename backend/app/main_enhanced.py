@@ -2548,64 +2548,71 @@ async def delete_property(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete property: {str(e)}")
 
-@app.post("/api/hr/properties/{id}/qr-code")
-async def generate_property_qr_code(
+@app.get("/api/hr/properties/{id}/qr-code")
+async def get_property_qr_code(
     id: str,
     current_user: User = Depends(require_hr_or_manager_role)
 ):
-    """Generate or regenerate QR code for property job applications"""
+    """Get existing QR code for property (does NOT regenerate)"""
     try:
         # For managers, validate they have access to this property
         if current_user.role == "manager":
             access_controller = get_property_access_controller()
             if not access_controller.validate_manager_property_access(current_user, id):
                 raise HTTPException(
-                    status_code=403, 
+                    status_code=403,
                     detail="Access denied: You don't have permission for this property"
                 )
-        
+
         # Get property details
         property_obj = await supabase_service.get_property_by_id(id)
         if not property_obj:
             raise HTTPException(status_code=404, detail="Property not found")
-        
-        # Generate QR code URL
-        import qrcode
-        import io
-        import base64
-        
+
         # Create the application URL
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
         application_url = f"{frontend_url}/apply/{id}"
-        
-        # Generate QR code
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(application_url)
-        qr.make(fit=True)
-        
-        # Create image
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Convert to base64
-        buffer = io.BytesIO()
-        img.save(buffer, format='PNG')
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        qr_code_data_url = f"data:image/png;base64,{img_str}"
-        
-        # Update property with QR code (admin client to bypass RLS)
-        update_result = supabase_service.admin_client.table('properties').update({
-            'qr_code_url': qr_code_data_url,
-            'updated_at': datetime.now(timezone.utc).isoformat()
-        }).eq('id', id).execute()
-        
-        if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update property QR code")
-        
+
+        # If QR code doesn't exist, generate it ONCE
+        if not property_obj.qr_code_url:
+            import qrcode
+            import io
+            import base64
+
+            # Generate QR code
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(application_url)
+            qr.make(fit=True)
+
+            # Create image
+            img = qr.make_image(fill_color="black", back_color="white")
+
+            # Convert to base64
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            img_str = base64.b64encode(buffer.getvalue()).decode()
+            qr_code_data_url = f"data:image/png;base64,{img_str}"
+
+            # Update property with QR code (admin client to bypass RLS)
+            update_result = supabase_service.admin_client.table('properties').update({
+                'qr_code_url': qr_code_data_url,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }).eq('id', id).execute()
+
+            if not update_result.data:
+                raise HTTPException(status_code=500, detail="Failed to save QR code")
+
+            logger.info(f"QR code generated for property {id}")
+        else:
+            # Return existing QR code
+            qr_code_data_url = property_obj.qr_code_url
+            logger.info(f"Returning existing QR code for property {id}")
+
         return {
             "success": True,
             "data": {
@@ -2616,12 +2623,89 @@ async def generate_property_qr_code(
                 "printable_qr_url": qr_code_data_url
             }
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate QR code: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
+        logger.error(f"Failed to get QR code: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get QR code: {str(e)}")
+
+@app.post("/api/hr/properties/{id}/qr-code/regenerate")
+async def regenerate_property_qr_code(
+    id: str,
+    current_user: User = Depends(require_hr_or_manager_role)
+):
+    """Regenerate QR code for property (creates a new QR code - use sparingly!)"""
+    try:
+        # For managers, validate they have access to this property
+        if current_user.role == "manager":
+            access_controller = get_property_access_controller()
+            if not access_controller.validate_manager_property_access(current_user, id):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Access denied: You don't have permission for this property"
+                )
+
+        # Get property details
+        property_obj = await supabase_service.get_property_by_id(id)
+        if not property_obj:
+            raise HTTPException(status_code=404, detail="Property not found")
+
+        # Generate QR code URL
+        import qrcode
+        import io
+        import base64
+
+        # Create the application URL
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+        application_url = f"{frontend_url}/apply/{id}"
+
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(application_url)
+        qr.make(fit=True)
+
+        # Create image
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Convert to base64
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        qr_code_data_url = f"data:image/png;base64,{img_str}"
+
+        # Update property with QR code (admin client to bypass RLS)
+        update_result = supabase_service.admin_client.table('properties').update({
+            'qr_code_url': qr_code_data_url,
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }).eq('id', id).execute()
+
+        if not update_result.data:
+            raise HTTPException(status_code=500, detail="Failed to update property QR code")
+
+        logger.warning(f"⚠️ QR code REGENERATED for property {id} by {current_user.email} - old QR codes are now invalid!")
+
+        return {
+            "success": True,
+            "data": {
+                "property_id": id,
+                "property_name": property_obj.name,
+                "application_url": application_url,
+                "qr_code_url": qr_code_data_url,
+                "printable_qr_url": qr_code_data_url
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to regenerate QR code: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate QR code: {str(e)}")
 
 @app.get("/api/hr/properties/{property_id}/stats")
 async def get_property_stats(
@@ -3003,14 +3087,23 @@ async def list_manager_properties(current_user: User = Depends(require_manager_w
             detail="An error occurred while fetching properties"
         )
 
-@app.post("/api/manager/properties/{property_id}/qr-code")
-async def manager_generate_property_qr_code(
+@app.get("/api/manager/properties/{property_id}/qr-code")
+async def manager_get_property_qr_code(
     property_id: str,
     current_user: User = Depends(require_manager_with_property_access)
 ):
-    """Generate or regenerate the QR code for a manager's property"""
-    # Reuse the existing QR generation logic, which already validates access
-    return await generate_property_qr_code(property_id, current_user=current_user)
+    """Get the QR code for a manager's property (does NOT regenerate)"""
+    # Reuse the existing QR get logic, which already validates access
+    return await get_property_qr_code(property_id, current_user=current_user)
+
+@app.post("/api/manager/properties/{property_id}/qr-code/regenerate")
+async def manager_regenerate_property_qr_code(
+    property_id: str,
+    current_user: User = Depends(require_manager_with_property_access)
+):
+    """Regenerate the QR code for a manager's property (creates new QR code - use sparingly!)"""
+    # Reuse the existing QR regeneration logic, which already validates access
+    return await regenerate_property_qr_code(property_id, current_user=current_user)
 
 @app.get("/api/manager/dashboard-stats")
 async def get_manager_dashboard_stats(current_user: User = Depends(require_manager_with_property_access)):

@@ -45,18 +45,21 @@ export function QRCodeDisplay({
   const handleRegenerateQR = async () => {
     setLoading(true)
     try {
-      const path = requestPath || `/hr/properties/${property.id}/qr-code`
-      const response = await apiClient.post(path, {})
+      // Use the regenerate endpoint (POST) instead of the get endpoint
+      const basePath = requestPath || `/hr/properties/${property.id}/qr-code`
+      const regeneratePath = `${basePath}/regenerate`
+      const response = await apiClient.post(regeneratePath, {})
 
-      setQrData(response.data)
+      setQrData(response.data.data)
 
       if (onRegenerate) {
-        onRegenerate(property.id, response.data)
+        onRegenerate(property.id, response.data.data)
       }
-      
+
       toast({
         title: "Success",
-        description: "QR code regenerated successfully"
+        description: "QR code regenerated successfully. Previous QR codes are now invalid.",
+        variant: "default"
       })
     } catch (error: any) {
       console.error('Error regenerating QR code:', error)
@@ -256,25 +259,43 @@ export function QRCodeDisplay({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3">
-              {showRegenerateButton && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-3">
                 <Button
                   variant="outline"
-                  onClick={handleRegenerateQR}
-                  disabled={loading}
+                  onClick={handlePrint}
                   className="flex-1 min-w-0"
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Regenerate QR Code
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print QR Code
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleDownload}
+                  className="flex-1 min-w-0"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download QR Code
+                </Button>
+              </div>
+
+              {showRegenerateButton && (
+                <div className="space-y-2">
+                  <Button
+                    variant="destructive"
+                    onClick={handleRegenerateQR}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Regenerate QR Code
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    ⚠️ Warning: Regenerating will invalidate all existing printed QR codes
+                  </p>
+                </div>
               )}
-              <Button
-                variant="outline"
-                onClick={handlePrint}
-                className="flex-1 min-w-0"
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                Print QR Code
+            </div>
               </Button>
               <Button
                 variant="outline"
