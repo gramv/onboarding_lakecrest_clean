@@ -606,6 +606,7 @@ allowed_origins = [
     "http://localhost:5173",  # Vite default
     "https://hotel-onboarding-frontend.vercel.app",  # Backup Vercel URL
     "https://hotel-onboarding-frontend-*.vercel.app",  # Preview deployments
+    "https://hotel-onboarding-frontend-p2t3abx6l-gramvs-projects.vercel.app",  # Current production deployment
 ]
 
 app.add_middleware(
@@ -18435,42 +18436,46 @@ async def validate_i9_documents(
 # HEALTH INSURANCE ENDPOINTS
 # ==========================================
 
-@app.post("/api/onboarding/{employee_id}/health-insurance")
-async def save_health_insurance(
-    employee_id: str,
-    request: dict
-):
-    """Save health insurance enrollment data"""
-    try:
-        # Save health insurance data
-        insurance_data = {
-            "employee_id": employee_id,
-            "insurance_selections": request.get("insuranceSelections", {}),
-            "dependents": request.get("dependents", []),
-            "personal_info": request.get("personalInfo", {}),
-            "section125_acknowledged": request.get("section125Acknowledged", False),
-            "effective_date": request.get("effectiveDate"),
-            "signature_data": request.get("signatureData"),
-            "completed_at": request.get("completedAt") or datetime.utcnow().isoformat()
-        }
-        
-        # TODO: Save to database when save_document method is available
-        # result = await supabase_service.save_document("health_insurance_enrollments", insurance_data)
-        result = {"saved": True}  # Mock response for now
-        
-        return success_response(
-            data=result,
-            message="Health insurance enrollment saved successfully"
-        )
-        
-    except Exception as e:
-        logger.error(f"Error saving health insurance: {str(e)}")
-        return error_response(
-            message="Failed to save health insurance enrollment",
-            error_code=ErrorCode.DATABASE_ERROR,
-            status_code=500,
-            detail=str(e)
-        )
+# DUPLICATE ENDPOINT REMOVED - Use endpoint at line 11393 instead
+# This was a mock endpoint that didn't actually save data
+# The working endpoint is at line 11393 which properly saves to onboarding_form_data table
+
+# @app.post("/api/onboarding/{employee_id}/health-insurance")
+# async def save_health_insurance(
+#     employee_id: str,
+#     request: dict
+# ):
+#     """Save health insurance enrollment data"""
+#     try:
+#         # Save health insurance data
+#         insurance_data = {
+#             "employee_id": employee_id,
+#             "insurance_selections": request.get("insuranceSelections", {}),
+#             "dependents": request.get("dependents", []),
+#             "personal_info": request.get("personalInfo", {}),
+#             "section125_acknowledged": request.get("section125Acknowledged", False),
+#             "effective_date": request.get("effectiveDate"),
+#             "signature_data": request.get("signatureData"),
+#             "completed_at": request.get("completedAt") or datetime.utcnow().isoformat()
+#         }
+#
+#         # TODO: Save to database when save_document method is available
+#         # result = await supabase_service.save_document("health_insurance_enrollments", insurance_data)
+#         result = {"saved": True}  # Mock response for now
+#
+#         return success_response(
+#             data=result,
+#             message="Health insurance enrollment saved successfully"
+#         )
+#
+#     except Exception as e:
+#         logger.error(f"Error saving health insurance: {str(e)}")
+#         return error_response(
+#             message="Failed to save health insurance enrollment",
+#             error_code=ErrorCode.DATABASE_ERROR,
+#             status_code=500,
+#             detail=str(e)
+#         )
 
 @app.post("/api/onboarding/{employee_id}/health-insurance/preview")
 async def preview_health_insurance_pdf(
