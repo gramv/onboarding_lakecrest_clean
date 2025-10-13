@@ -1,0 +1,104 @@
+# Heroku Slug Ignore - Exclude unnecessary files from deployment
+# This reduces slug size and speeds up deployment
+
+# Test files and directories
+tests/
+test_*.py
+*_test.py
+test_*.pdf
+test_output/
+test_outputs/
+test_health_insurance_pdfs/
+*.json
+*_report.json
+*_results.json
+
+# Documentation
+*.md
+docs/
+
+# Development files
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Scripts and utilities (not needed in production)
+scripts/
+*.sh
+debug_*.py
+check_*.py
+create_*.py
+fix_*.py
+setup_*.py
+verify_*.py
+apply_*.py
+execute_*.py
+inspect_*.py
+reset_*.py
+update_*.py
+run_*.py
+trigger_*.py
+analyze_*.py
+extract_*.py
+generate_*.py
+simulate_*.py
+backfill_*.py
+cleanup_*.py
+ensure_*.py
+find_*.py
+get_*.py
+retrieve_*.py
+assign_*.py
+complete_*.py
+nuclear_*.py
+selective_*.py
+set_*.py
+
+# SQL migration files (already applied)
+migrations/
+*.sql
+
+# Saved/generated documents (not needed in production)
+saved_documents/
+document_storage/
+*.pdf
+*.log
+*.txt
+*.out
+
+# Poetry files (using requirements.txt instead)
+poetry.lock
+pyproject.toml
+
+# Supabase local files
+supabase/
+
+# Large test data
+baseline_*.json
+checkpoint_*.json
+phase*.json
+prd_*.json
+integration_*.json
+performance_*.json
+
