@@ -415,6 +415,26 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
           ...session,
           employee: employeeData
         })
+
+        // ✅ FIX: Save SSN to secureStorage so DirectDepositStep can retrieve it
+        // DirectDepositStep looks for SSN in 'personal-info_data', so we save it there
+        try {
+          const { secureStorage } = await import('@/services/SecureStorageService')
+          const singleStepPersonalInfo = {
+            personalInfo: {
+              firstName: personalInfoData.firstName,
+              lastName: personalInfoData.lastName,
+              email: personalInfoData.email,
+              phone: personalInfoData.phone,
+              ssn: personalInfoData.ssn // Keep the SSN for DirectDepositStep
+            }
+          }
+          secureStorage.setItem('personal-info_data', singleStepPersonalInfo)
+          console.log('✅ Saved personal info (including SSN) to secureStorage for DirectDepositStep')
+        } catch (storageError) {
+          console.error('⚠️ Failed to save to secureStorage:', storageError)
+          // Don't fail the whole operation if storage fails
+        }
       }
 
       // Close modal and mark as collected
