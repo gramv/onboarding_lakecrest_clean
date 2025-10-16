@@ -22,6 +22,7 @@ from app.pdf_forms import PDFFormFiller
 from app.generators.new_hire_summary_pdf import NewHireSummaryPDFGenerator
 from app.services.employee_data_service import get_employee_data_service
 from app.services.document_merger_service import DocumentMergerService
+from app.services.pdf_password_service import protect_pdf_for_download
 
 logger = logging.getLogger(__name__)
 
@@ -176,11 +177,14 @@ def _mask_ssn(ssn: Optional[str]) -> str:
 
 def _format_health_insurance_display(health_data: Dict[str, Any]) -> Dict[str, Any]:
     """Format health insurance data for display in summary"""
-    logger.info(f"[HEALTH-INS-DISPLAY] Processing health data: isWaived={health_data.get('isWaived')}, medicalPlan={health_data.get('medicalPlan')}")
-    
+    logger.info(f"[HEALTH-INS-DISPLAY] Called with data: {bool(health_data)}")
+
     if not health_data:
-        logger.info("[HEALTH-INS-DISPLAY] No health data provided")
+        logger.warning("[HEALTH-INS-DISPLAY] No health data provided - returning empty")
         return {"display_text": "No insurance information", "selections": []}
+
+    logger.info(f"[HEALTH-INS-DISPLAY] Keys: {list(health_data.keys())}")
+    logger.info(f"[HEALTH-INS-DISPLAY] isWaived={health_data.get('isWaived')}, medicalPlan={health_data.get('medicalPlan')}")
     
     if health_data.get("isWaived") or health_data.get("is_waived") or health_data.get("waived"):
         logger.info("[HEALTH-INS-DISPLAY] Insurance is waived")
@@ -453,6 +457,39 @@ async def get_new_hire_summary(
 
         health_raw = form_data.get('health-insurance')
         health_data = health_raw if isinstance(health_raw, dict) else {}
+
+        # DEBUG LOGGING - Track health insurance data flow
+        logger.info(f"[HEALTH-DEBUG] Employee: {employee_id}")
+        logger.info(f"[HEALTH-DEBUG] form_data keys: {list(form_data.keys())}")
+        logger.info(f"[HEALTH-DEBUG] health_raw type: {type(health_raw)}, is_dict: {isinstance(health_raw, dict)}")
+        if health_data:
+            logger.info(f"[HEALTH-DEBUG] health_data keys: {list(health_data.keys())}")
+            logger.info(f"[HEALTH-DEBUG] medicalPlan: {health_data.get('medicalPlan')}")
+            logger.info(f"[HEALTH-DEBUG] isWaived: {health_data.get('isWaived')}")
+        else:
+            logger.warning(f"[HEALTH-DEBUG] health_data is EMPTY")
+
+        # FALLBACK: If health_data is empty, try direct query
+        if not health_data:
+            logger.warning(f"[HEALTH-FALLBACK] No health data in form_data, trying direct query for {employee_id}")
+            try:
+                direct_result = supabase_service.admin_client.table('onboarding_form_data') \
+                    .select('form_data') \
+                    .eq('employee_id', employee_id) \
+                    .eq('step_id', 'health-insurance') \
+                    .order('created_at', desc=True) \
+                    .limit(1) \
+                    .execute()
+
+                if direct_result.data and len(direct_result.data) > 0:
+                    health_data = direct_result.data[0].get('form_data', {})
+                    logger.info(f"[HEALTH-FALLBACK] Retrieved via fallback, has data: {bool(health_data)}")
+                    if health_data:
+                        logger.info(f"[HEALTH-FALLBACK] Keys: {list(health_data.keys())}")
+                else:
+                    logger.warning(f"[HEALTH-FALLBACK] No data found in direct query")
+            except Exception as e:
+                logger.error(f"[HEALTH-FALLBACK] Fallback query failed: {e}")
         w4_raw = form_data.get('w4-form')
         w4_data = w4_raw if isinstance(w4_raw, dict) else {}
 
@@ -681,6 +718,12 @@ async def get_new_hire_summary(
                         )
             except Exception as uploads_err:
                 logger.warning("[SUMMARY] Unable to enumerate uploaded documents for %s: %s", employee_id, uploads_err)
+
+        # DEBUG: Log what we're sending to frontend
+        logger.info(f"[SUMMARY-RESPONSE] Sending to frontend for employee {employee_id}")
+        logger.info(f"[SUMMARY-RESPONSE] healthInsuranceSelections: {summary_defaults.get('healthInsuranceSelections')}")
+        logger.info(f"[SUMMARY-RESPONSE] healthInsuranceDisplay keys: {list(summary_defaults.get('healthInsuranceDisplay', {}).keys())}")
+        logger.info(f"[SUMMARY-RESPONSE] healthInsuranceDisplay: {summary_defaults.get('healthInsuranceDisplay')}")
 
         return {
             "success": True,
@@ -3063,6 +3106,7 @@ async def complete_employee_review(
         packet_writer.write(packet_buffer)
         packet_bytes = packet_buffer.getvalue()
 
+        # Save unprotected version to storage (already encrypted by save_signed_document)
         packet_save = await supabase_service.save_signed_document(
             employee_id=employee_id,
             property_id=property_id,
@@ -3073,7 +3117,9 @@ async def complete_employee_review(
             request=http_request,
         )
 
-        packet_base64 = base64.b64encode(packet_bytes).decode('utf-8')
+        # Add password protection before emailing (password: 7935)
+        protected_packet_bytes = protect_pdf_for_download(packet_bytes)
+        packet_base64 = base64.b64encode(protected_packet_bytes).decode('utf-8')
 
         # Step 6: Send email notifications
         # Two emails are sent:
@@ -3293,13 +3339,16 @@ async def get_completed_employee_documents(
             
             # Download and decrypt document
             pdf_bytes = await supabase_service.get_signed_document_bytes(record)
-            
+
             if not pdf_bytes:
                 logger.warning(f"[COMPLETED-DOCS] Failed to get document bytes: {doc_type}")
                 continue
-            
+
+            # Add password protection before sending to frontend
+            protected_pdf_bytes = protect_pdf_for_download(pdf_bytes)
+
             # Convert to base64 for frontend
-            pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+            pdf_base64 = base64.b64encode(protected_pdf_bytes).decode('utf-8')
             
             # Get metadata
             metadata = record.get('metadata', {})

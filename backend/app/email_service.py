@@ -2300,6 +2300,14 @@ class EmailService:
                                         </p>
                                     </div>
 
+                                    <div style=\"margin: 28px 0; padding: 20px; background-color: #fef3c7; border-radius: 12px; border: 2px solid #f59e0b;\">
+                                        <p style=\"margin: 0; font-weight: 600; color: #92400e; font-size: 14px;\">🔒 Password Protected Document</p>
+                                        <p style=\"margin: 12px 0 0 0; color: #78350f; font-size: 14px;\">
+                                            The attached PDF is password protected for security.<br/>
+                                            <strong>Password: 7935</strong>
+                                        </p>
+                                    </div>
+
                                     <p style=\"font-size: 14px; line-height: 1.7; color: #475569; margin: 0;\">
                                         Please review and archive this packet according to your onboarding retention guidelines.
                                         If any corrections are required, reach out to the onboarding team.
@@ -2322,6 +2330,7 @@ class EmailService:
 
         text_content = (
             f"The onboarding packet for {employee_name} at {property_name} is attached. "
+            "\n\n🔒 PASSWORD PROTECTED: The attached PDF requires password: 7935\n\n"
             "Please store it according to your onboarding policy."
         )
 
