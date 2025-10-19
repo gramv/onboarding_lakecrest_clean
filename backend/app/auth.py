@@ -486,3 +486,38 @@ def require_hr_or_manager_role(current_user: User = Depends(get_current_user)) -
 
 # Alias for manager review API
 get_current_manager = require_manager_role
+
+
+def require_onboarding_or_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> Dict[str, Any]:
+    """
+    Permit access for onboarding/step invitation tokens or authenticated HR/manager users.
+    """
+    if not credentials or not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Authorization token required")
+
+    token = credentials.credentials
+
+    verification = OnboardingTokenManager.verify_onboarding_token(token)
+    if verification.get("valid"):
+        return {
+            "token_type": verification.get("token_type"),
+            "employee_id": verification.get("employee_id"),
+            "token_id": verification.get("token_id"),
+            "raw": verification
+        }
+
+    try:
+        user = get_current_user(credentials)
+        return {
+            "token_type": "auth_user",
+            "user": user
+        }
+    except HTTPException:
+        error_message = verification.get("error") or "Invalid or expired token"
+        error_code = verification.get("error_code", "UNAUTHORIZED")
+        raise HTTPException(
+            status_code=401,
+            detail=f"{error_message} ({error_code})"
+        )

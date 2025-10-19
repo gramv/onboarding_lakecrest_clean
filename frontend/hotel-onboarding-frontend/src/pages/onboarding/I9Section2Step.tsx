@@ -536,33 +536,51 @@ export default function I9Section2Step({
             // Other documents - need document number, expiration, issuing authority
             <>
               <div>
-                <Label htmlFor={`${list}-docNumber`}>Document Number *</Label>
+                <Label htmlFor={`${list}-docNumber`}>
+                  Document Number *
+                  {doc.ocrData?.document_number && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">✓ Auto-filled from OCR</span>
+                  )}
+                </Label>
                 <Input
                   id={`${list}-docNumber`}
-                  value={doc.manualData?.documentNumber || ''}
+                  value={doc.manualData?.documentNumber || doc.ocrData?.document_number || ''}
                   onChange={(e) => handleManualDataChange(list, 'documentNumber', e.target.value)}
                   placeholder="Enter document number as shown on document"
+                  className={doc.ocrData?.document_number ? 'bg-green-50 border-green-300' : ''}
                 />
               </div>
 
               <div>
-                <Label htmlFor={`${list}-expiration`}>Expiration Date</Label>
+                <Label htmlFor={`${list}-expiration`}>
+                  Expiration Date
+                  {doc.ocrData?.expiration_date && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">✓ Auto-filled from OCR</span>
+                  )}
+                </Label>
                 <Input
                   id={`${list}-expiration`}
                   type="date"
-                  value={doc.manualData?.expirationDate || ''}
+                  value={doc.manualData?.expirationDate || doc.ocrData?.expiration_date || ''}
                   onChange={(e) => handleManualDataChange(list, 'expirationDate', e.target.value)}
+                  className={doc.ocrData?.expiration_date ? 'bg-green-50 border-green-300' : ''}
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave blank if document does not expire</p>
               </div>
 
               <div>
-                <Label htmlFor={`${list}-authority`}>Issuing Authority *</Label>
+                <Label htmlFor={`${list}-authority`}>
+                  Issuing Authority *
+                  {doc.ocrData?.issuing_authority && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">✓ Auto-filled from OCR</span>
+                  )}
+                </Label>
                 <Input
                   id={`${list}-authority`}
-                  value={doc.manualData?.issuingAuthority || ''}
+                  value={doc.manualData?.issuingAuthority || doc.ocrData?.issuing_authority || ''}
                   onChange={(e) => handleManualDataChange(list, 'issuingAuthority', e.target.value)}
                   placeholder="e.g., California DMV, USCIS, Social Security Administration"
+                  className={doc.ocrData?.issuing_authority ? 'bg-green-50 border-green-300' : ''}
                 />
                 <p className="text-xs text-gray-500 mt-1">State, country, or agency that issued the document</p>
               </div>

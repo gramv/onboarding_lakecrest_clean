@@ -44,7 +44,15 @@ import io
 import time
 import asyncio
 from collections import defaultdict
-from openai import OpenAI  # OpenAI GPT-5 for voided check OCR validation
+
+# Optional OpenAI import for voided check OCR validation
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    OpenAI = None
+
 from app.services.encryption_service import get_encryption_service
 from app.services.document_encryption_service import get_document_encryption_service
 
@@ -608,6 +616,13 @@ allowed_origins = [
     "https://hotel-onboarding-frontend-*.vercel.app",  # Preview deployments
     "https://hotel-onboarding-frontend-p2t3abx6l-gramvs-projects.vercel.app",  # Current production deployment
 ]
+
+# Include dynamically configured frontend URL if present (useful for local Docker ports)
+_frontend_env_url = os.getenv("FRONTEND_URL")
+if _frontend_env_url:
+    sanitized_url = _frontend_env_url.rstrip("/")
+    if sanitized_url not in allowed_origins:
+        allowed_origins.append(sanitized_url)
 
 app.add_middleware(
     CORSMiddleware,
@@ -2549,37 +2564,84 @@ async def delete_property(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete property: {str(e)}")
 
-@app.post("/api/hr/properties/{id}/qr-code")
-async def generate_property_qr_code(
+@app.get("/api/hr/properties/{id}/qr-code")
+async def get_property_qr_code(
     id: str,
     current_user: User = Depends(require_hr_or_manager_role)
 ):
-    """Generate or regenerate QR code for property job applications"""
+    """Get QR code for property job applications (retrieves from database, generates once if doesn't exist)"""
     try:
         # For managers, validate they have access to this property
         if current_user.role == "manager":
             access_controller = get_property_access_controller()
             if not access_controller.validate_manager_property_access(current_user, id):
                 raise HTTPException(
-                    status_code=403, 
+                    status_code=403,
                     detail="Access denied: You don't have permission for this property"
                 )
-        
+
         # Get property details
         property_obj = await supabase_service.get_property_by_id(id)
         if not property_obj:
             raise HTTPException(status_code=404, detail="Property not found")
-        
-        # Generate QR code URL
+
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+        application_url = f"{frontend_url}/apply/{id}"
+
+        # Check qr_codes table first (new method)
+        try:
+            qr_result = supabase_service.admin_client.table('qr_codes').select('*').eq('property_id', id).execute()
+
+            if qr_result.data and len(qr_result.data) > 0:
+                # QR code exists in database - return it
+                qr_record = qr_result.data[0]
+                logger.info(f"✅ Retrieved existing QR code for property {id} from qr_codes table")
+
+                # Increment access count
+                try:
+                    supabase_service.admin_client.table('qr_codes').update({
+                        'access_count': qr_record.get('access_count', 0) + 1,
+                        'last_accessed_at': datetime.now(timezone.utc).isoformat()
+                    }).eq('id', qr_record['id']).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to increment access count: {e}")
+
+                return {
+                    "success": True,
+                    "data": {
+                        "property_id": id,
+                        "property_name": property_obj.name,
+                        "application_url": qr_record.get('application_url', application_url),
+                        "qr_code_url": qr_record.get('qr_code_url'),
+                        "printable_qr_url": qr_record.get('qr_code_url'),
+                        "from_database": True,
+                        "access_count": qr_record.get('access_count', 0) + 1
+                    }
+                }
+        except Exception as e:
+            logger.warning(f"Error checking qr_codes table: {e}")
+
+        # Fallback: Check properties.qr_code_url (legacy)
+        if property_obj.qr_code_url and property_obj.qr_code_url.startswith('data:image/png;base64,'):
+            logger.info(f"Found QR code in properties.qr_code_url for property {id} (legacy)")
+            return {
+                "success": True,
+                "data": {
+                    "property_id": id,
+                    "property_name": property_obj.name,
+                    "application_url": application_url,
+                    "qr_code_url": property_obj.qr_code_url,
+                    "printable_qr_url": property_obj.qr_code_url,
+                    "from_database": False
+                }
+            }
+
+        # Generate QR code for the first time
+        logger.info(f"🆕 Generating new QR code for property {id}")
         import qrcode
         import io
         import base64
-        
-        # Create the application URL
-        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
-        application_url = f"{frontend_url}/apply/{id}"
-        
-        # Generate QR code
+
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -2588,25 +2650,56 @@ async def generate_property_qr_code(
         )
         qr.add_data(application_url)
         qr.make(fit=True)
-        
+
         # Create image
         img = qr.make_image(fill_color="black", back_color="white")
-        
+
         # Convert to base64
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
         img_str = base64.b64encode(buffer.getvalue()).decode()
         qr_code_data_url = f"data:image/png;base64,{img_str}"
-        
-        # Update property with QR code (admin client to bypass RLS)
-        update_result = supabase_service.admin_client.table('properties').update({
-            'qr_code_url': qr_code_data_url,
-            'updated_at': datetime.now(timezone.utc).isoformat()
-        }).eq('id', id).execute()
-        
-        if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update property QR code")
-        
+
+        # Save to qr_codes table (new method)
+        try:
+            qr_data = {
+                'property_id': id,
+                'qr_code_data': img_str,
+                'qr_code_url': qr_code_data_url,
+                'application_url': application_url,
+                'format': 'PNG',
+                'size_width': img.size[0],
+                'size_height': img.size[1],
+                'version': 1,
+                'error_correction': 'L',
+                'access_count': 0
+            }
+
+            # Only add generated_by if user exists and has valid ID
+            # Skip it entirely to avoid foreign key constraint issues
+            # if hasattr(current_user, 'id') and current_user.id:
+            #     qr_data['generated_by'] = current_user.id
+
+            qr_insert = supabase_service.admin_client.table('qr_codes').insert(qr_data).execute()
+
+            if qr_insert.data:
+                logger.info(f"✅ Stored QR code in qr_codes table for property {id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to store QR code in qr_codes table: {e}")
+            # Continue anyway - we'll save to properties table as fallback
+
+        # Also save to properties table for backward compatibility
+        try:
+            update_result = supabase_service.admin_client.table('properties').update({
+                'qr_code_url': qr_code_data_url,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }).eq('id', id).execute()
+
+            if not update_result.data:
+                logger.warning("Failed to update properties.qr_code_url")
+        except Exception as e:
+            logger.warning(f"Failed to update properties table: {e}")
+
         return {
             "success": True,
             "data": {
@@ -2614,15 +2707,17 @@ async def generate_property_qr_code(
                 "property_name": property_obj.name,
                 "application_url": application_url,
                 "qr_code_url": qr_code_data_url,
-                "printable_qr_url": qr_code_data_url
+                "printable_qr_url": qr_code_data_url,
+                "from_database": False,
+                "newly_generated": True
             }
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate QR code: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
+        logger.error(f"Failed to get QR code: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get QR code: {str(e)}")
 
 @app.get("/api/hr/properties/{property_id}/stats")
 async def get_property_stats(
@@ -3004,14 +3099,14 @@ async def list_manager_properties(current_user: User = Depends(require_manager_w
             detail="An error occurred while fetching properties"
         )
 
-@app.post("/api/manager/properties/{property_id}/qr-code")
-async def manager_generate_property_qr_code(
+@app.get("/api/manager/properties/{property_id}/qr-code")
+async def manager_get_property_qr_code(
     property_id: str,
     current_user: User = Depends(require_manager_with_property_access)
 ):
-    """Generate or regenerate the QR code for a manager's property"""
-    # Reuse the existing QR generation logic, which already validates access
-    return await generate_property_qr_code(property_id, current_user=current_user)
+    """Get the QR code for a manager's property"""
+    # Reuse the existing QR get logic, which already validates access
+    return await get_property_qr_code(property_id, current_user=current_user)
 
 @app.get("/api/manager/dashboard-stats")
 async def get_manager_dashboard_stats(current_user: User = Depends(require_manager_with_property_access)):
@@ -11730,7 +11825,16 @@ async def generate_i9_complete_pdf(employee_id: str, request: Request):
         # Debug log the form_data to see what we're working with
         logger.info(f"Form data fields available: {list(form_data.keys()) if isinstance(form_data, dict) else 'not a dict'}")
         logger.info(f"Sample form data - firstName: {form_data.get('firstName', 'NOT FOUND') if isinstance(form_data, dict) else 'N/A'}")
-        logger.info(f"Sample form data - ssn: {form_data.get('ssn', 'NOT FOUND')[:7] + '****' if isinstance(form_data, dict) and form_data.get('ssn') else 'NOT FOUND'}")
+        def _mask_ssn_for_log(raw_value: Optional[str]) -> str:
+            if not raw_value:
+                return "NOT FOUND"
+            digits_only = ''.join(filter(str.isdigit, raw_value))
+            if len(digits_only) >= 4:
+                return f"***-**-{digits_only[-4:]}"
+            return "***"
+
+        masked_ssn = _mask_ssn_for_log(form_data.get('ssn') if isinstance(form_data, dict) else None)
+        logger.info(f"Sample form data - ssn: {masked_ssn}")
         logger.info(f"Documents data received: {bool(documents_data)}, has uploadedDocuments: {bool(documents_data.get('uploadedDocuments') if documents_data else False)}")
         
         def get_form_value(*keys, default=""):
@@ -11769,7 +11873,7 @@ async def generate_i9_complete_pdf(employee_id: str, request: Request):
             'phone': get_form_value('phone', 'telephone'),
             'citizenship_status': normalized_citizenship,
             'uscis_number': get_form_value('alien_registration_number', 'uscis_number'),
-            'i94_admission_number': get_form_value('form_i94_number', 'i94_number'),
+            'i94_admission_number': get_form_value('i94_admission_number', 'form_i94_number', 'i94_number'),
             'passport_number': get_form_value('foreign_passport_number', 'passport_number'),
             'passport_country': get_form_value('country_of_issuance', 'passport_country'),
             'work_authorization_expiration': get_form_value('expiration_date', 'work_authorization_expiration'),
@@ -12220,7 +12324,41 @@ async def generate_i9_section1_pdf(employee_id: str, request: Request):
         
         # Use form data from request if provided (for preview)
         if employee_data_from_request:
-            form_data = employee_data_from_request
+            # DEBUG: Log the received data structure
+            print(f"\n=== DEBUG: I-9 PDF Generation - Received Data ===")
+            print(f"employee_data keys: {list(employee_data_from_request.keys()) if isinstance(employee_data_from_request, dict) else 'NOT A DICT'}")
+            print(f"citizenship_status: {employee_data_from_request.get('citizenship_status', 'NOT FOUND')}")
+            print(f"alien_registration_number: {employee_data_from_request.get('alien_registration_number', 'NOT FOUND')}")
+            print(f"i94_admission_number: {employee_data_from_request.get('i94_admission_number', 'NOT FOUND')}")
+            print(f"foreign_passport_number: {employee_data_from_request.get('foreign_passport_number', 'NOT FOUND')}")
+            print(f"country_of_issuance: {employee_data_from_request.get('country_of_issuance', 'NOT FOUND')}")
+            print(f"expiration_date: {employee_data_from_request.get('expiration_date', 'NOT FOUND')}")
+
+            # Check if data is nested in personalInfo (from ReviewAndSign component)
+            if 'personalInfo' in employee_data_from_request and isinstance(employee_data_from_request['personalInfo'], dict):
+                print(f"⚠️  Data is nested in 'personalInfo' - flattening...")
+                # Flatten the structure - merge personalInfo into root level
+                form_data = {**employee_data_from_request}
+                personal_info = form_data.pop('personalInfo', {})
+                # Map personalInfo fields to I-9 field names
+                form_data['first_name'] = personal_info.get('firstName', form_data.get('first_name', ''))
+                form_data['last_name'] = personal_info.get('lastName', form_data.get('last_name', ''))
+                form_data['middle_initial'] = personal_info.get('middleInitial', form_data.get('middle_initial', ''))
+                form_data['ssn'] = personal_info.get('ssn', form_data.get('ssn', ''))
+                form_data['date_of_birth'] = personal_info.get('dateOfBirth', form_data.get('date_of_birth', ''))
+                form_data['address'] = personal_info.get('address', form_data.get('address', ''))
+                form_data['apt_number'] = personal_info.get('aptNumber', form_data.get('apt_number', ''))
+                form_data['city'] = personal_info.get('city', form_data.get('city', ''))
+                form_data['state'] = personal_info.get('state', form_data.get('state', ''))
+                form_data['zip_code'] = personal_info.get('zipCode', personal_info.get('zip', form_data.get('zip_code', '')))
+                form_data['phone'] = personal_info.get('phone', form_data.get('phone', ''))
+                form_data['email'] = personal_info.get('email', form_data.get('email', ''))
+                print(f"✅ Flattened data - citizenship_status: {form_data.get('citizenship_status', 'STILL NOT FOUND')}")
+            else:
+                form_data = employee_data_from_request
+                print(f"✅ Data is already flat")
+
+            print(f"=== END DEBUG ===\n")
         # For test employees, use session data instead of database
         elif employee_id.startswith('test-'):
             # Try to get I-9 data from onboarding_form_data table (which exists)
@@ -12290,9 +12428,11 @@ async def generate_i9_section1_pdf(employee_id: str, request: Request):
             "citizenship_permanent_resident": form_data.get("citizenship_status") == "permanent_resident",
             "citizenship_authorized_alien": form_data.get("citizenship_status") == "authorized_alien",
             "uscis_number": form_data.get("alien_registration_number", ""),
-            "i94_admission_number": form_data.get("foreign_passport_number", ""),
+            "i94_admission_number": form_data.get("i94_admission_number", ""),  # Form I-94 Admission Number
             "passport_number": form_data.get("foreign_passport_number", ""),
             "passport_country": form_data.get("country_of_issuance", ""),
+            "expiration_date": form_data.get("expiration_date", ""),  # Work authorization expiration date for authorized aliens
+            "work_authorization_expiration": form_data.get("expiration_date", ""),  # Alternative field name for compatibility
             "employee_signature_date": form_data.get("completed_at", datetime.utcnow().isoformat()),
             
             # Section 2 fields (auto-filled from OCR data)

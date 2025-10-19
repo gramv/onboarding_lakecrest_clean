@@ -614,7 +614,6 @@ function PropertiesTab({ onStatsUpdate = () => {} }: PropertiesTabProps) {
                         <QRCodeDisplay
                           property={property}
                           onRegenerate={fetchProperties}
-                          showRegenerateButton={true}
                         />
                         <Button 
                           variant="outline" 

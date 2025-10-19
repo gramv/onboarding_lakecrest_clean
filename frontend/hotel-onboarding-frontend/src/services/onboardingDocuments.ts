@@ -1,4 +1,5 @@
 import { getApiUrl } from '@/config/api'
+import { secureStorage } from '@/services/SecureStorageService'
 
 interface UploadOnboardingDocumentParams {
   employeeId: string
@@ -8,7 +9,10 @@ interface UploadOnboardingDocumentParams {
 }
 
 export async function uploadOnboardingDocument({ employeeId, documentType, documentCategory, file }: UploadOnboardingDocumentParams) {
-  const sessionToken = sessionStorage.getItem('current_onboarding_token') || ''
+  const sessionToken =
+    (secureStorage.getItem('current_onboarding_token') as string | null) ||
+    sessionStorage.getItem('current_onboarding_token') ||
+    ''
 
   const formData = new FormData()
   formData.append('file', file)
@@ -45,7 +49,10 @@ export async function uploadSignedI9Pdf({
   documentsData
 }: UploadSignedI9PdfParams) {
   // Get session token for authentication
-  const sessionToken = sessionStorage.getItem('current_onboarding_token') || ''
+  const sessionToken =
+    (secureStorage.getItem('current_onboarding_token') as string | null) ||
+    sessionStorage.getItem('current_onboarding_token') ||
+    ''
 
   const payload: Record<string, unknown> = {
     pdfBase64,

@@ -9,7 +9,13 @@ import logging
 import re
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
-from openai import OpenAI
+# Optional OpenAI import
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    OpenAI = None
 
 logger = logging.getLogger(__name__)
 

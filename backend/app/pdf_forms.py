@@ -512,7 +512,7 @@ class PDFFormFiller:
                 # The static folder should contain these files
             else:
                 print(f"✅ Official {form_type.upper()} template found: {template_path}")
-    
+
     def fill_i9_form(self, employee_data: Dict[str, Any], employer_data: Optional[Dict[str, Any]] = None) -> bytes:
         """Fill I-9 form with employee and optionally employer data - OFFICIAL TEMPLATE ONLY"""
         if not HAS_PYMUPDF:
@@ -1108,9 +1108,36 @@ class PDFFormFiller:
         return buffer.read()
     
 
+    def _mask_sensitive(self, value: Any, show_last: int = 4) -> str:
+        """Simple masking helper to avoid logging full PII values"""
+        if not value:
+            return "NOT PROVIDED"
+        value_str = str(value)
+        if '@' in value_str:
+            local, _, domain = value_str.partition('@')
+            if local:
+                return f"{local[0]}***@{domain}"
+            return f"***@{domain}"
+        if len(value_str) <= show_last:
+            return "***"
+        return f"***{value_str[-show_last:]}"
+
     def _fill_i9_section1(self, doc, employee_data: Dict[str, Any]):
         """Fill Section 1 of I-9 form (Employee portion) using explicit field mappings"""
         try:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "I-9 Section 1 input summary: uscis=%s, i94=%s, passport=%s, passport_country=%s, "
+                    "expiration=%s, work_auth=%s, status=%s",
+                    self._mask_sensitive(employee_data.get('uscis_number')),
+                    self._mask_sensitive(employee_data.get('i94_admission_number')),
+                    self._mask_sensitive(employee_data.get('passport_number')),
+                    employee_data.get('passport_country', 'NOT PROVIDED'),
+                    self._mask_sensitive(employee_data.get('expiration_date')),
+                    self._mask_sensitive(employee_data.get('work_authorization_expiration')),
+                    employee_data.get('citizenship_status', 'NOT PROVIDED')
+                )
+
             if hasattr(doc, "set_need_appearances"):
                 try:
                     doc.set_need_appearances(True)
@@ -1136,17 +1163,41 @@ class PDFFormFiller:
             if employee_data.get('date_of_birth'):
                 field_value_map['Date of Birth mmddyyyy'] = self._format_date(employee_data['date_of_birth'])
 
-            if employee_data.get('work_authorization_expiration'):
-                field_value_map['Exp Date mmddyyyy'] = self._format_date(employee_data['work_authorization_expiration'])
-
-            if employee_data.get('passport_number') or employee_data.get('passport_country'):
-                passport_number = employee_data.get('passport_number', '')
-                passport_country = employee_data.get('passport_country', '')
-                field_value_map['Foreign Passport Number and Country of IssuanceRow1'] = f"{passport_number} {passport_country}".strip()
+            passport_number = employee_data.get('passport_number', '')
+            passport_country = employee_data.get('passport_country', '')
+            if passport_number or passport_country:
+                combined_passport = f"{passport_number} {passport_country}".strip()
+                field_value_map['Foreign Passport Number and Country of IssuanceRow1'] = combined_passport
+            work_auth_exp = employee_data.get('work_authorization_expiration') or employee_data.get('expiration_date')
+            if work_auth_exp:
+                formatted_exp = self._format_date(work_auth_exp)
+                field_value_map['Exp Date mmddyyyy'] = formatted_exp
 
             signature_date = employee_data.get('employee_signature_date') or datetime.now().strftime('%m/%d/%Y')
             field_value_map["Today's Date mmddyyy"] = self._format_date(signature_date)
 
+            if logger.isEnabledFor(logging.DEBUG):
+                sensitive_fields = {
+                    'Last Name (Family Name)',
+                    'First Name Given Name',
+                    'Employee Middle Initial (if any)',
+                    'Employees E-mail Address',
+                    'Telephone Number',
+                    'USCIS ANumber',
+                    'Form I94 Admission Number',
+                    'Foreign Passport Number and Country of IssuanceRow1',
+                    'Date of Birth mmddyyyy',
+                    'Exp Date mmddyyyy',
+                    "Today's Date mmddyyy"
+                }
+                masked_preview = {
+                    field_name: (self._mask_sensitive(value) if field_name in sensitive_fields else value)
+                    for field_name, value in field_value_map.items()
+                    if value not in (None, '')
+                }
+                logger.debug("I-9 Section 1 prepared field map: %s", masked_preview)
+
+            filled_fields = []
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 for widget in list(page.widgets()):
@@ -1159,6 +1210,7 @@ class PDFFormFiller:
                         if field_name == 'US Social Security Number':
                             value = ''.join(filter(str.isdigit, value))
                         self._set_widget_value(widget, value)
+                        filled_fields.append(field_name)
                         continue
 
                     if field_name == 'US Social Security Number':
@@ -1184,8 +1236,11 @@ class PDFFormFiller:
                         self._set_widget_value(widget, not bool(employee_data.get('preparer_signature')))
                         continue
 
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("I-9 Section 1 filled %s fields: %s", len(filled_fields), filled_fields)
+
         except Exception as e:
-            print(f"Error filling I-9 Section 1: {e}")
+            logger.error("Error filling I-9 Section 1: %s", e)
             # Continue even if some fields fail
 
     def _fill_i9_section2(self, doc, employer_data: Dict[str, Any]):

@@ -1692,8 +1692,8 @@ class EmailService:
                     <p style="font-size: 16px; color: #374151;">Please review this application and take appropriate action.</p>
                     
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="{self.frontend_url}/manager/applications?highlight={application_id}" class="button">
-                            Review Applications →
+                        <a href="{self.frontend_url}/manager" class="button">
+                            Go to Manager Dashboard →
                         </a>
                     </div>
                     
@@ -1737,9 +1737,9 @@ class EmailService:
         Available From: {availability_date}
         
         Please review this application and take appropriate action.
-        
-        View Applications: {self.frontend_url}/manager/applications?highlight={application_id}
-        
+
+        Go to Manager Dashboard: {self.frontend_url}/manager
+
         Quick Actions Available:
         - Review applicant qualifications
         - Approve for onboarding

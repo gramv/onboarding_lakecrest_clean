@@ -349,17 +349,17 @@ export default function PositionAvailabilityStep({
               <RadioGroup
                 value={formData.availability_weekends || ''}
                 onValueChange={(value) => handleInputChange('availability_weekends', value)}
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="weekends_yes" className="min-w-[20px] min-h-[20px]" />
-                  <Label htmlFor="weekends_yes" className="font-normal cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                  <RadioGroupItem value="yes" id="weekends_yes" />
+                  <Label htmlFor="weekends_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
                     {t('common.yes')}
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="weekends_no" className="min-w-[20px] min-h-[20px]" />
-                  <Label htmlFor="weekends_no" className="font-normal cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                  <RadioGroupItem value="no" id="weekends_no" />
+                  <Label htmlFor="weekends_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
                     {t('common.no')}
                   </Label>
                 </div>
@@ -376,17 +376,17 @@ export default function PositionAvailabilityStep({
               <RadioGroup
                 value={formData.availability_holidays || ''}
                 onValueChange={(value) => handleInputChange('availability_holidays', value)}
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="holidays_yes" className="min-w-[20px] min-h-[20px]" />
-                  <Label htmlFor="holidays_yes" className="font-normal cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                  <RadioGroupItem value="yes" id="holidays_yes" />
+                  <Label htmlFor="holidays_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
                     {t('common.yes')}
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="holidays_no" className="min-w-[20px] min-h-[20px]" />
-                  <Label htmlFor="holidays_no" className="font-normal cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                  <RadioGroupItem value="no" id="holidays_no" />
+                  <Label htmlFor="holidays_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
                     {t('common.no')}
                   </Label>
                 </div>
@@ -415,17 +415,17 @@ export default function PositionAvailabilityStep({
             <RadioGroup
               value={formData.previously_employed || ''}
               onValueChange={(value) => handleInputChange('previously_employed', value)}
-              className="flex flex-col sm:flex-row gap-4"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="prev_emp_no" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="prev_emp_no" className="font-normal cursor-pointer">
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="no" id="prev_emp_no" />
+                <Label htmlFor="prev_emp_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
                   {t('common.no')}
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id="prev_emp_yes" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="prev_emp_yes" className="font-normal cursor-pointer">
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="yes" id="prev_emp_yes" />
+                <Label htmlFor="prev_emp_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
                   {t('common.yes')}
                 </Label>
               </div>

@@ -7,14 +7,17 @@ from fastapi.responses import Response
 from typing import Dict, Any, Optional
 import json
 import base64
+import logging
 from datetime import datetime
 from .pdf_forms import pdf_form_service
 from .models import I9PDFGenerationRequest, W4PDFGenerationRequest, I9Section1Data, W4FormData, I9Section2Data
+from .dependencies import require_onboarding_or_user
 # Note: get_current_user is defined in main_enhanced.py, not auth.py
 # For now, we'll comment this out since we're temporarily disabling auth
 # from .auth import get_current_user
 
 router = APIRouter(prefix="/api/forms", tags=["PDF Forms"])
+logger = logging.getLogger(__name__)
 
 @router.get("/test")
 async def test_pdf_service():
@@ -90,8 +93,8 @@ async def debug_i9_fields():
 
 @router.post("/i9/add-signature")
 async def add_signature_to_i9(
-    form_data: dict
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    form_data: dict,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """🚨 FEDERAL COMPLIANCE: Add digital signature to I-9 PDF"""
     try:
@@ -120,13 +123,13 @@ async def add_signature_to_i9(
         )
         
     except Exception as e:
-        print(f"🚨 CRITICAL ERROR: I-9 signature addition failed: {str(e)}")
+        logger.error("I-9 signature addition failed: %s", e)
         raise HTTPException(status_code=500, detail=f"Error adding signature to I-9: {str(e)}")
 
 @router.post("/w4/add-signature")
 async def add_signature_to_w4(
-    form_data: dict
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    form_data: dict,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """🚨 IRS COMPLIANCE: Add digital signature to W-4 PDF"""
     try:
@@ -155,13 +158,13 @@ async def add_signature_to_w4(
         )
         
     except Exception as e:
-        print(f"🚨 CRITICAL ERROR: W-4 signature addition failed: {str(e)}")
+        logger.error("W-4 signature addition failed: %s", e)
         raise HTTPException(status_code=500, detail=f"Error adding signature to W-4: {str(e)}")
 
 @router.post("/health-insurance/add-signature")
 async def add_signature_to_health_insurance(
-    form_data: dict
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    form_data: dict,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Add digital signature to Health Insurance PDF"""
     try:
@@ -191,13 +194,13 @@ async def add_signature_to_health_insurance(
         )
 
     except Exception as e:
-        print(f"🚨 CRITICAL ERROR: Health Insurance signature addition failed: {str(e)}")
+        logger.error("Health Insurance signature addition failed: %s", e)
         raise HTTPException(status_code=500, detail=f"Error adding signature to Health Insurance: {str(e)}")
 
 @router.post("/i9/generate")
 async def generate_i9_pdf(
-    request: I9PDFGenerationRequest
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    request: I9PDFGenerationRequest,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """🚨 FEDERAL COMPLIANCE: Generate official I-9 PDF with validated employee data"""
     try:
@@ -216,8 +219,8 @@ async def generate_i9_pdf(
                 detail=f"Federal compliance violation: Missing required I-9 fields: {', '.join(missing_fields)}"
             )
         
-        # FEDERAL COMPLIANCE: Log PDF generation for audit trail
-        print(f"🚨 FEDERAL COMPLIANCE: Generating official I-9 PDF for employee: {employee_data.get('employee_first_name')} {employee_data.get('employee_last_name')}")
+        masked_employee = f"{(employee_data.get('employee_first_name') or '')[:1]}*** {(employee_data.get('employee_last_name') or '')[:1]}***".strip()
+        logger.info("Generating official I-9 PDF for employee %s", masked_employee)
         
         # Generate PDF using official template only
         pdf_bytes = pdf_form_service.fill_i9_form(employee_data, employer_data)
@@ -234,13 +237,13 @@ async def generate_i9_pdf(
         )
         
     except Exception as e:
-        print(f"🚨 CRITICAL ERROR: I-9 PDF generation failed: {str(e)}")
+        logger.exception("I-9 PDF generation failed: %s", e)
         raise HTTPException(status_code=500, detail=f"Error generating official I-9 PDF: {str(e)}")
 
 @router.post("/i9/generate-legacy")
 async def generate_i9_pdf_legacy(
-    form_data: dict
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    form_data: dict,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Legacy endpoint for I-9 PDF generation (for backward compatibility)"""
     try:
@@ -263,8 +266,8 @@ async def generate_i9_pdf_legacy(
 
 @router.post("/w4/generate")
 async def generate_w4_pdf(
-    request: W4PDFGenerationRequest
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    request: W4PDFGenerationRequest,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """🚨 IRS COMPLIANCE: Generate official W-4 PDF with validated employee data"""
     try:
@@ -281,8 +284,8 @@ async def generate_w4_pdf(
                 detail=f"IRS compliance violation: Missing required W-4 fields: {', '.join(missing_fields)}"
             )
         
-        # IRS COMPLIANCE: Log PDF generation for audit trail
-        print(f"🚨 IRS COMPLIANCE: Generating official W-4 PDF for employee: {employee_data.get('first_name')} {employee_data.get('last_name')}")
+        masked_employee = f"{(employee_data.get('first_name') or '')[:1]}*** {(employee_data.get('last_name') or '')[:1]}***".strip()
+        logger.info("Generating official W-4 PDF for employee %s", masked_employee)
         
         # Generate PDF using official IRS template only
         pdf_bytes = pdf_form_service.fill_w4_form(employee_data)
@@ -298,13 +301,13 @@ async def generate_w4_pdf(
         )
         
     except Exception as e:
-        print(f"🚨 CRITICAL ERROR: W-4 PDF generation failed: {str(e)}")
+        logger.exception("W-4 PDF generation failed: %s", e)
         raise HTTPException(status_code=500, detail=f"Error generating official W-4 PDF: {str(e)}")
 
 @router.post("/w4/generate-legacy")
 async def generate_w4_pdf_legacy(
-    form_data: dict
-    # Temporarily disable auth for testing: current_user = Depends(get_current_user)
+    form_data: dict,
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Legacy endpoint for W-4 PDF generation (for backward compatibility)"""
     try:
@@ -327,7 +330,7 @@ async def generate_w4_pdf_legacy(
 @router.post("/i9/manager-complete")
 async def complete_i9_section2(
     form_data: dict,
-    # Temporarily disable auth: current_user = Depends(get_current_user)
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Manager completes I-9 Section 2 with document verification"""
     try:
@@ -361,7 +364,7 @@ async def complete_i9_section2(
 @router.post("/package/hr")
 async def generate_hr_package(
     package_data: dict,
-    # Temporarily disable auth: current_user = Depends(get_current_user)
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Generate complete HR package with all signed forms"""
     try:
@@ -409,7 +412,7 @@ async def generate_hr_package(
 @router.get("/health-insurance/generate")
 async def generate_health_insurance_form(
     employee_id: str,
-    # Temporarily disable auth: current_user = Depends(get_current_user)
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Generate health insurance enrollment form"""
     try:
@@ -436,7 +439,7 @@ async def generate_health_insurance_form(
 @router.get("/direct-deposit/generate")
 async def generate_direct_deposit_form(
     employee_id: str,
-    # Temporarily disable auth: current_user = Depends(get_current_user)
+    _auth=Depends(require_onboarding_or_user)
 ):
     """Generate direct deposit authorization form"""
     try:

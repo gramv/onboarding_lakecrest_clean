@@ -5,6 +5,7 @@ import { CheckCircle, FileText, Upload, Camera, Globe, AlertTriangle } from 'luc
 import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
+import { NavigationButtons } from '@/components/navigation/NavigationButtons'
 import I9Section1FormClean from '@/components/I9Section1FormClean'
 import I9SupplementA from '@/components/I9SupplementA'
 import DocumentUploadEnhanced from './DocumentUploadEnhanced'
@@ -37,6 +38,7 @@ export default function I9CompleteStep({
   markStepComplete,
   saveProgress,
   advanceToNextStep,
+  goToPreviousStep,
   language = 'en',
   employee,
   property,
@@ -362,6 +364,7 @@ export default function I9CompleteStep({
 
             // Clear remote URL since we have decrypted data
             setRemotePdfUrl(null)
+            setMissingFiles(prev => ({ ...prev, i9Pdf: false }))
 
             // If we have a signed document, ensure states are set
             if (response.has_document) {
@@ -379,6 +382,7 @@ export default function I9CompleteStep({
               if (checkResponse.ok) {
                 setRemotePdfUrl(response.document_metadata.signed_url)
                 console.log('Found existing I-9 document in Supabase (fallback URL):', response.document_metadata.signed_url)
+                setMissingFiles(prev => ({ ...prev, i9Pdf: false }))
 
                 // If we have a signed document, ensure states are set
                 if (response.has_document) {
@@ -451,14 +455,30 @@ export default function I9CompleteStep({
         setUploadedDocsMetadata(documents)
         console.log('Found uploaded I-9 documents:', documents.length)
 
-        const hasDL = documents.some(doc =>
+        // Combine documents returned from API with those cached in local state
+        const localDocuments = documentsData?.uploadedDocuments ?? []
+
+        const allDocuments = [
+          ...documents,
+          ...localDocuments
+            .filter((localDoc: any) => Boolean(localDoc.storageMetadata?.signed_url || localDoc.storageMetadata?.path))
+            .map((localDoc: any) => ({
+              ...localDoc,
+              category: localDoc.category || localDoc.documentType,
+              documentType: localDoc.documentType || localDoc.category,
+              signed_url: localDoc.storageMetadata?.signed_url,
+              path: localDoc.storageMetadata?.path
+            }))
+        ]
+
+        const hasDL = allDocuments.some(doc =>
           doc.category === 'dl' || doc.documentType === 'drivers_license'
         )
-        const hasSSN = documents.some(doc =>
+        const hasSSN = allDocuments.some(doc =>
           doc.category === 'ssn' || doc.documentType === 'social_security_card'
         )
 
-        if (documents.length === 0) {
+        if (allDocuments.length === 0) {
           setMissingFiles(prev => ({
             ...prev,
             dlDocument: true,
@@ -471,10 +491,11 @@ export default function I9CompleteStep({
         let dlMissing = false
         let ssnMissing = false
 
-        for (const doc of documents) {
-          if (doc.signed_url) {
+        for (const doc of allDocuments) {
+          const signedUrl = doc.signed_url || doc.storageMetadata?.signed_url
+          if (signedUrl) {
             try {
-              const headResponse = await fetch(doc.signed_url, { method: 'HEAD' })
+              const headResponse = await fetch(signedUrl, { method: 'HEAD' })
               if (!headResponse.ok) {
                 if (doc.category === 'dl' || doc.documentType === 'drivers_license') {
                   dlMissing = true
@@ -500,6 +521,9 @@ export default function I9CompleteStep({
             dlDocument: !hasDL || dlMissing,
             ssnDocument: !hasSSN || ssnMissing
           }))
+          setFilesValidated(true)
+        } else {
+          setMissingFiles({ i9Pdf: false, dlDocument: false, ssnDocument: false })
           setFilesValidated(true)
         }
       } catch (error) {
@@ -870,14 +894,25 @@ export default function I9CompleteStep({
       }
     }
 
-    const sanitizedUploadedDocuments = (data.uploadedDocuments || []).map((doc: any) => ({
-      type: doc.type,
-      category: doc.category,
-      fileName: doc.file?.name || doc.fileName || `${doc.type}`,
-      status: doc.status || 'complete',
-      extractedData: doc.extractedData,
-      storageMetadata: doc.storageMetadata ?? null
-    }))
+    const sanitizedUploadedDocuments = (data.uploadedDocuments || []).map((doc: any) => {
+      const storageMetadata =
+        doc.storageMetadata ??
+        (doc.signed_url || doc.path
+          ? {
+              signed_url: doc.signed_url,
+              path: doc.path
+            }
+          : null)
+
+      return {
+        type: doc.type,
+        category: doc.category,
+        fileName: doc.file?.name || doc.fileName || `${doc.type}`,
+        status: doc.status || 'complete',
+        extractedData: doc.extractedData,
+        storageMetadata
+      }
+    })
 
     const sanitizedData = {
       ...data,
@@ -1036,6 +1071,17 @@ export default function I9CompleteStep({
     if (isSigned) {
       return
     }
+
+    // DEBUG: Log authorized alien fields before signing
+    console.log('=== I9CompleteStep handleSign - DEBUG ===')
+    console.log('formData.citizenship_status:', formData.citizenship_status)
+    console.log('formData.alien_registration_number:', formData.alien_registration_number)
+    console.log('formData.i94_admission_number:', formData.i94_admission_number)
+    console.log('formData.foreign_passport_number:', formData.foreign_passport_number)
+    console.log('formData.country_of_issuance:', formData.country_of_issuance)
+    console.log('formData.expiration_date:', formData.expiration_date)
+    console.log('Full formData keys:', Object.keys(formData))
+    console.log('=== END DEBUG ===')
 
     setSignatureData(signature)
 
@@ -1641,6 +1687,23 @@ export default function I9CompleteStep({
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Navigation Buttons - Only show when signed (not during review/sign process) */}
+        {isSigned && (
+          <NavigationButtons
+            showPrevious={true}
+            showNext={true}
+            showSave={false}
+            onPrevious={goToPreviousStep || (() => {})}
+            onNext={advanceToNextStep || (async () => ({ allowed: false, reason: 'Navigation not available' }))}
+            disabled={saveStatus?.saving}
+            saving={saveStatus?.saving}
+            hasErrors={false}
+            language={language}
+            nextButtonText={progress.currentStepIndex === progress.totalSteps - 1 ? 'Submit' : 'Next'}
+          />
+        )}
+
         </div>
       </StepContentWrapper>
     </StepContainer>

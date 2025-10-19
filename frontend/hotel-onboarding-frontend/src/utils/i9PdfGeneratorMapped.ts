@@ -16,6 +16,7 @@ interface I9FormData {
   phone: string
   citizenship_status: string
   alien_registration_number?: string
+  i94_admission_number?: string
   foreign_passport_number?: string
   country_of_issuance?: string
   expiration_date?: string
@@ -217,27 +218,43 @@ export async function generateMappedI9Pdf(formData: I9FormData): Promise<Uint8Ar
     }
     
     if (formData.citizenship_status === 'authorized_alien') {
+      // DEBUG: Log the form data for authorized alien
+      console.log('=== AUTHORIZED ALIEN DATA ===')
+      console.log('citizenship_status:', formData.citizenship_status)
+      console.log('alien_registration_number:', formData.alien_registration_number)
+      console.log('i94_admission_number:', formData.i94_admission_number)
+      console.log('foreign_passport_number:', formData.foreign_passport_number)
+      console.log('country_of_issuance:', formData.country_of_issuance)
+      console.log('expiration_date:', formData.expiration_date)
+      console.log('=== END DATA ===')
+
       // Additional fields for authorized aliens
       const alienFields = {
         'USCIS ANumber': formData.alien_registration_number || '',
+        'Form I94 Admission Number': formData.i94_admission_number || '',
         'Exp Date mmddyyyy': formatDateWithSlashes(formData.expiration_date || ''),
-        'Foreign Passport Number and Country of IssuanceRow1': 
-          formData.foreign_passport_number && formData.country_of_issuance 
-            ? `${formData.foreign_passport_number} ${formData.country_of_issuance}` 
+        'Foreign Passport Number and Country of IssuanceRow1':
+          formData.foreign_passport_number && formData.country_of_issuance
+            ? `${formData.foreign_passport_number} ${formData.country_of_issuance}`
             : ''
       }
-      
+
+      console.log('=== ATTEMPTING TO FILL FIELDS ===')
       for (const [fieldName, value] of Object.entries(alienFields)) {
+        console.log(`Field "${fieldName}": value="${value}", hasValue=${!!value}`)
         if (value) {
           try {
             const field = form.getTextField(fieldName)
             field.setText(value)
-            console.log(`Filled alien field "${fieldName}" with "${value}"`)
+            console.log(`✓ Successfully filled alien field "${fieldName}" with "${value}"`)
           } catch (e) {
-            console.error(`Failed to fill alien field "${fieldName}":`, e)
+            console.error(`✗ Failed to fill alien field "${fieldName}":`, e)
           }
+        } else {
+          console.log(`⊘ Skipping empty field "${fieldName}"`)
         }
       }
+      console.log('=== END FIELD FILLING ===')
     }
     
     // Handle Employee Signature if provided

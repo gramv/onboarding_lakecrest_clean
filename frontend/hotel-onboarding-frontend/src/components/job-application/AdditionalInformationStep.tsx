@@ -183,17 +183,18 @@ export default function AdditionalInformationStep({
 
           <div className="space-y-2">
             <Label className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.convictionQuestion')} *</Label>
-            <RadioGroup 
-              value={formData.has_conviction || ''} 
+            <RadioGroup
+              value={formData.has_conviction || ''}
               onValueChange={(value) => handleInputChange('has_conviction', value)}
+              className="space-y-2 sm:space-y-1"
             >
-              <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+              <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                 <RadioGroupItem value="yes" id="conviction_yes" />
-                <Label htmlFor="conviction_yes" className="font-normal">{t('common.yes')}</Label>
+                <Label htmlFor="conviction_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.yes')}</Label>
               </div>
-              <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+              <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                 <RadioGroupItem value="no" id="conviction_no" />
-                <Label htmlFor="conviction_no" className="font-normal">{t('common.no')}</Label>
+                <Label htmlFor="conviction_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.no')}</Label>
               </div>
             </RadioGroup>
             {getError('has_conviction') && (
@@ -228,17 +229,18 @@ export default function AdditionalInformationStep({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.licenseDenied')} *</Label>
-                <RadioGroup 
-                  value={formData.has_driving_denied || ''} 
+                <RadioGroup
+                  value={formData.has_driving_denied || ''}
                   onValueChange={(value) => handleInputChange('has_driving_denied', value)}
+                  className="space-y-2 sm:space-y-1"
                 >
-                  <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                     <RadioGroupItem value="yes" id="driving_denied_yes" />
-                    <Label htmlFor="driving_denied_yes" className="font-normal">{t('common.yes')}</Label>
+                    <Label htmlFor="driving_denied_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.yes')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                     <RadioGroupItem value="no" id="driving_denied_no" />
-                    <Label htmlFor="driving_denied_no" className="font-normal">{t('common.no')}</Label>
+                    <Label htmlFor="driving_denied_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.no')}</Label>
                   </div>
                 </RadioGroup>
                 {getError('has_driving_denied') && (
@@ -248,17 +250,18 @@ export default function AdditionalInformationStep({
 
               <div className="space-y-2">
                 <Label className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.licenseSuspended')} *</Label>
-                <RadioGroup 
-                  value={formData.has_driving_issues || ''} 
+                <RadioGroup
+                  value={formData.has_driving_issues || ''}
                   onValueChange={(value) => handleInputChange('has_driving_issues', value)}
+                  className="space-y-2 sm:space-y-1"
                 >
-                  <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                     <RadioGroupItem value="yes" id="driving_yes" />
-                    <Label htmlFor="driving_yes" className="font-normal">{t('common.yes')}</Label>
+                    <Label htmlFor="driving_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.yes')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                     <RadioGroupItem value="no" id="driving_no" />
-                    <Label htmlFor="driving_no" className="font-normal">{t('common.no')}</Label>
+                    <Label htmlFor="driving_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.no')}</Label>
                   </div>
                 </RadioGroup>
                 {getError('has_driving_issues') && (

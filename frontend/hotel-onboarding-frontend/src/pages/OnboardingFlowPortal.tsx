@@ -18,6 +18,7 @@ import { PersonalInfoModal } from '@/components/modals/PersonalInfoModal'
 import { OnboardingFlowController, StepProps, NavigationValidationResult } from '../controllers/OnboardingFlowController'
 import { ProgressBar } from '../components/navigation/ProgressBar'
 import { NavigationButtons } from '../components/navigation/NavigationButtons'
+import { secureStorage } from '@/services/SecureStorageService'
 
 type StepContentWithMeta = React.ReactNode & { props?: { canProceed?: boolean } }
 
@@ -115,7 +116,9 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
         })
 
         // Clear old session data when using a new token
-        const lastToken = sessionStorage.getItem('current_onboarding_token')
+        const lastToken =
+          (secureStorage.getItem('current_onboarding_token') as string | null) ??
+          sessionStorage.getItem('current_onboarding_token')
         if (lastToken && lastToken !== token) {
           console.log('🧹 Clearing old session data for new token')
           // Clear all onboarding-related sessionStorage
@@ -128,7 +131,8 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
           }
           keysToRemove.forEach(key => sessionStorage.removeItem(key))
         }
-        sessionStorage.setItem('current_onboarding_token', token)
+        secureStorage.setItem('current_onboarding_token', token)
+        sessionStorage.removeItem('current_onboarding_token')
 
         if (singleStepRequested) {
           console.log('📋 Initializing SINGLE-STEP mode')

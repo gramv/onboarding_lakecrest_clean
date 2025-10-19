@@ -17,6 +17,7 @@ interface I9FormData {
   phone: string
   citizenship_status: string
   alien_registration_number?: string
+  i94_admission_number?: string
   foreign_passport_number?: string
   country_of_issuance?: string
   expiration_date?: string
@@ -190,6 +191,75 @@ export async function generateCleanI9Pdf(formData: I9FormData): Promise<Uint8Arr
       } catch (e) {
         console.error('✗ Failed to fill USCIS number:', e)
       }
+    }
+
+    // Handle authorized alien fields (Section 1, Item 4)
+    if (formData.citizenship_status === 'authorized_alien') {
+      console.log('=== AUTHORIZED ALIEN DATA ===')
+      console.log('alien_registration_number:', formData.alien_registration_number)
+      console.log('i94_admission_number:', formData.i94_admission_number)
+      console.log('foreign_passport_number:', formData.foreign_passport_number)
+      console.log('country_of_issuance:', formData.country_of_issuance)
+      console.log('expiration_date:', formData.expiration_date)
+
+      // USCIS A-Number
+      if (formData.alien_registration_number) {
+        try {
+          const field = form.getTextField('USCIS ANumber')
+          // Try with the original format first
+          field.setText(formData.alien_registration_number)
+          console.log(`✓ Filled USCIS ANumber: ${formData.alien_registration_number}`)
+        } catch (e) {
+          console.error('✗ Failed to fill USCIS ANumber with formatted value:', e)
+
+          // Try removing the "A-" prefix and hyphen, just use numbers
+          try {
+            const numbersOnly = formData.alien_registration_number.replace(/[^0-9]/g, '')
+            const field = form.getTextField('USCIS ANumber')
+            field.setText(`A${numbersOnly}`)
+            console.log(`✓ Filled USCIS ANumber (reformatted): A${numbersOnly}`)
+          } catch (e2) {
+            console.error('✗ Failed to fill USCIS ANumber (all attempts):', e2)
+          }
+        }
+      }
+
+      // Form I-94 Admission Number
+      if (formData.i94_admission_number) {
+        try {
+          const field = form.getTextField('Form I94 Admission Number')
+          field.setText(formData.i94_admission_number)
+          console.log(`✓ Filled Form I94 Admission Number: ${formData.i94_admission_number}`)
+        } catch (e) {
+          console.error('✗ Failed to fill Form I94 Admission Number:', e)
+        }
+      }
+
+      // Foreign Passport Number and Country (combined field)
+      if (formData.foreign_passport_number && formData.country_of_issuance) {
+        try {
+          const combinedPassport = `${formData.foreign_passport_number} ${formData.country_of_issuance}`
+          const field = form.getTextField('Foreign Passport Number and Country of IssuanceRow1')
+          field.setText(combinedPassport)
+          console.log(`✓ Filled Foreign Passport: ${combinedPassport}`)
+        } catch (e) {
+          console.error('✗ Failed to fill Foreign Passport:', e)
+        }
+      }
+
+      // Work Authorization Expiration Date (REQUIRED for authorized alien)
+      if (formData.expiration_date) {
+        try {
+          const formatted = formatDateWithSlashes(formData.expiration_date)
+          const field = form.getTextField('Exp Date mmddyyyy')
+          field.setText(formatted)
+          console.log(`✓ Filled Work Authorization Expiration: ${formatted}`)
+        } catch (e) {
+          console.error('✗ Failed to fill expiration date:', e)
+        }
+      }
+
+      console.log('=== END AUTHORIZED ALIEN ===')
     }
     
     // Handle today's date

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { QrCode, Copy, ExternalLink, Printer, RefreshCw, Download } from 'lucide-react'
+import { QrCode, Copy, ExternalLink, Printer, Download } from 'lucide-react'
 import { apiClient } from '@/services/api'
 
 interface Property {
@@ -17,7 +17,6 @@ interface Property {
 interface QRCodeDisplayProps {
   property: Property
   onRegenerate?: (propertyId: string, qrData?: QRCodeData) => void
-  showRegenerateButton?: boolean
   size?: 'small' | 'medium' | 'large'
   className?: string
   requestPath?: string
@@ -30,10 +29,9 @@ interface QRCodeData {
   property_name: string
 }
 
-export function QRCodeDisplay({ 
-  property, 
-  onRegenerate, 
-  showRegenerateButton = true,
+export function QRCodeDisplay({
+  property,
+  onRegenerate,
   className = '',
   requestPath,
 }: QRCodeDisplayProps) {
@@ -42,27 +40,22 @@ export function QRCodeDisplay({
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
-  const handleRegenerateQR = async () => {
+  const fetchQRCode = async () => {
     setLoading(true)
     try {
       const path = requestPath || `/hr/properties/${property.id}/qr-code`
-      const response = await apiClient.post(path, {})
+      const response = await apiClient.get(path)
 
       setQrData(response.data)
 
       if (onRegenerate) {
         onRegenerate(property.id, response.data)
       }
-      
-      toast({
-        title: "Success",
-        description: "QR code regenerated successfully"
-      })
     } catch (error: any) {
-      console.error('Error regenerating QR code:', error)
+      console.error('Error fetching QR code:', error)
       toast({
         title: "Error",
-        description: error.response?.data?.detail || error.response?.data?.error || "Failed to regenerate QR code",
+        description: error.response?.data?.detail || error.response?.data?.error || "Failed to load QR code",
         variant: "destructive"
       })
     } finally {
@@ -92,62 +85,101 @@ export function QRCodeDisplay({
       const imageUrl = qrData?.printable_qr_url || property.qr_code_url
       const propertyName = qrData?.property_name || property.name
       const applicationUrl = qrData?.application_url || `http://localhost:3000/apply/${property.id}`
-      
+
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
             <title>QR Code - ${propertyName}</title>
             <style>
-              body {
-                font-family: Arial, sans-serif;
-                text-align: center;
+              * {
                 margin: 0;
-                padding: 20px;
+                padding: 0;
+                box-sizing: border-box;
+              }
+
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
                 background: white;
-              }
-              .qr-container {
-                max-width: 600px;
-                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
                 padding: 40px;
-                border: 2px solid #e5e7eb;
-                border-radius: 12px;
               }
-              .property-title {
+
+              .container {
+                max-width: 600px;
+                text-align: center;
+              }
+
+              .property-name {
+                font-size: 48px;
+                font-weight: 700;
+                color: #000;
+                margin-bottom: 40px;
+              }
+
+              .hiring-text {
                 font-size: 32px;
-                font-weight: bold;
-                margin-bottom: 30px;
-                color: #1f2937;
-              }
-              .qr-image {
-                max-width: 100%;
-                height: auto;
-                margin: 20px 0;
-              }
-              .scan-text {
-                font-size: 24px;
                 font-weight: 600;
-                margin: 30px 0 20px 0;
-                color: #374151;
+                color: #000;
+                margin-bottom: 20px;
               }
-              .url-text {
+
+              .qr-code {
+                margin: 40px auto;
+                padding: 30px;
+                background: white;
+                border: 3px solid #000;
+                border-radius: 20px;
+                display: inline-block;
+              }
+
+              .qr-code img {
+                width: 350px;
+                height: 350px;
+                display: block;
+              }
+
+              .instruction {
+                font-size: 24px;
+                color: #333;
+                margin-top: 30px;
+                font-weight: 500;
+              }
+
+              .url {
                 font-size: 16px;
-                color: #6b7280;
+                color: #666;
+                margin-top: 30px;
                 word-break: break-all;
-                margin-top: 20px;
               }
+
               @media print {
-                body { margin: 0; padding: 0; }
-                .qr-container { border: none; }
+                body {
+                  padding: 0;
+                  margin: 0;
+                }
+
+                @page {
+                  size: letter;
+                  margin: 0.5in;
+                }
               }
             </style>
           </head>
           <body>
-            <div class="qr-container">
-              <div class="property-title">${propertyName}</div>
-              <img src="${imageUrl}" alt="QR Code" class="qr-image" />
-              <div class="scan-text">Scan to Apply for Jobs</div>
-              <div class="url-text">${applicationUrl}</div>
+            <div class="container">
+              <h1 class="property-name">${propertyName}</h1>
+              <h2 class="hiring-text">We're Hiring</h2>
+
+              <div class="qr-code">
+                <img src="${imageUrl}" alt="QR Code" />
+              </div>
+
+              <p class="instruction">Scan to Apply</p>
+              <p class="url">${applicationUrl}</p>
             </div>
           </body>
         </html>
@@ -168,11 +200,12 @@ export function QRCodeDisplay({
     document.body.removeChild(link)
   }
 
-  const openDialog = () => {
+  const openDialog = async () => {
     setIsDialogOpen(true)
-    // If we don't have QR data yet, fetch it
-    if (!qrData) {
-      handleRegenerateQR()
+
+    // Fetch QR code from backend (will return existing or generate if doesn't exist)
+    if (!property.qr_code_url || !property.qr_code_url.startsWith('data:image/png;base64,')) {
+      await fetchQRCode()
     }
   }
 
@@ -257,17 +290,6 @@ export function QRCodeDisplay({
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              {showRegenerateButton && (
-                <Button
-                  variant="outline"
-                  onClick={handleRegenerateQR}
-                  disabled={loading}
-                  className="flex-1 min-w-0"
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Regenerate QR Code
-                </Button>
-              )}
               <Button
                 variant="outline"
                 onClick={handlePrint}
@@ -295,15 +317,13 @@ export function QRCodeDisplay({
 interface QRCodeCardProps {
   property: Property
   onRegenerate?: (propertyId: string, qrData?: QRCodeData) => void
-  showRegenerateButton?: boolean
   className?: string
   scope?: 'manager' | 'hr'
 }
 
-export function QRCodeCard({ 
-  property, 
-  onRegenerate, 
-  showRegenerateButton = true,
+export function QRCodeCard({
+  property,
+  onRegenerate,
   className = '',
   scope = 'hr'
 }: QRCodeCardProps) {
@@ -335,13 +355,12 @@ export function QRCodeCard({
             )}
           </div>
         </div>
-        
+
         <div className="text-center">
           <p className="text-sm text-gray-600 mb-3">Scan to apply for jobs</p>
           <QRCodeDisplay
             property={property}
             onRegenerate={onRegenerate}
-            showRegenerateButton={showRegenerateButton}
             requestPath={requestPath}
             className="w-full"
           />

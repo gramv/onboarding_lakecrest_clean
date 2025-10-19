@@ -269,19 +269,25 @@ class GoogleDocumentOCRServiceProduction:
                             # For SSN (specific field)
                             elif any(x in field_name_lower for x in ['social security number', 'ssn', 'ss number', 'social security no']):
                                 if "ssn" not in extracted:
-                                    extracted["ssn"] = field_value.strip()
-                                    logger.info(f"Extracted ssn: {field_value}")
+                                    value_clean = field_value.strip()
+                                    extracted["ssn"] = value_clean
+                                    masked = f"***{value_clean[-4:]}" if len(value_clean) >= 4 else "***"
+                                    logger.info(f"Extracted ssn (masked): {masked}")
 
                             # For Alien/USCIS numbers
                             elif any(x in field_name_lower for x in ['alien number', 'a-number', 'a number', 'alien no', 'a#']):
                                 if "alien_number" not in extracted:
-                                    extracted["alien_number"] = field_value.strip()
-                                    logger.info(f"Extracted alien_number: {field_value}")
+                                    value_clean = field_value.strip()
+                                    extracted["alien_number"] = value_clean
+                                    masked = f"***{value_clean[-4:]}" if len(value_clean) >= 4 else "***"
+                                    logger.info(f"Extracted alien_number (masked): {masked}")
 
                             elif any(x in field_name_lower for x in ['uscis number', 'uscis no', 'uscis #']):
                                 if "uscis_number" not in extracted:
-                                    extracted["uscis_number"] = field_value.strip()
-                                    logger.info(f"Extracted uscis_number: {field_value}")
+                                    value_clean = field_value.strip()
+                                    extracted["uscis_number"] = value_clean
+                                    masked = f"***{value_clean[-4:]}" if len(value_clean) >= 4 else "***"
+                                    logger.info(f"Extracted uscis_number (masked): {masked}")
 
                             # For expiration dates
                             elif any(x in field_name_lower for x in ['exp', 'expires', 'expiration', 'expiry',

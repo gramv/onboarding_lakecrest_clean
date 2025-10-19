@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import DOMPurify from 'dompurify'
 import { getApiUrl } from '@/config/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,7 +39,7 @@ const FormattedPolicyText = ({ text, className = '' }: { text: string; className
             return (
               <div 
                 key={segmentIndex}
-                dangerouslySetInnerHTML={{ __html: segment }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(segment, { USE_PROFILES: { html: true } }) }}
                 className="my-4"
               />
             )

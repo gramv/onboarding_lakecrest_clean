@@ -47,6 +47,7 @@ interface FormData {
   
   // Additional fields for non-citizens
   alien_registration_number: string
+  i94_admission_number: string
   foreign_passport_number: string
   country_of_issuance: string
   expiration_date: string
@@ -90,6 +91,7 @@ export default function I9Section1FormClean({
     phone: initialData.phone || '',
     citizenship_status: initialData.citizenship_status || '',
     alien_registration_number: initialData.alien_registration_number || '',
+    i94_admission_number: initialData.i94_admission_number || '',
     foreign_passport_number: initialData.foreign_passport_number || '',
     country_of_issuance: initialData.country_of_issuance || '',
     expiration_date: initialData.expiration_date || ''
@@ -120,6 +122,7 @@ export default function I9Section1FormClean({
           phone: initialData.phone || prev.phone || '',
           citizenship_status: initialData.citizenship_status || prev.citizenship_status || '',
           alien_registration_number: initialData.alien_registration_number || prev.alien_registration_number || '',
+          i94_admission_number: initialData.i94_admission_number || prev.i94_admission_number || '',
           foreign_passport_number: initialData.foreign_passport_number || prev.foreign_passport_number || '',
           country_of_issuance: initialData.country_of_issuance || prev.country_of_issuance || '',
           expiration_date: initialData.expiration_date || prev.expiration_date || ''
@@ -357,9 +360,25 @@ export default function I9Section1FormClean({
           }
         }
       } else if (formData.citizenship_status === 'authorized_alien') {
-        if (!formData.alien_registration_number.trim()) {
-          newErrors.alien_registration_number = 'Alien Registration Number is required'
+        // Check that at least ONE of the three options is provided
+        const hasUSCIS = formData.alien_registration_number.trim().length > 0
+        const hasI94 = (formData.i94_admission_number || '').trim().length > 0
+        const hasPassport = formData.foreign_passport_number.trim().length > 0 && formData.country_of_issuance.trim().length > 0
+
+        if (!hasUSCIS && !hasI94 && !hasPassport) {
+          newErrors.authorized_alien_docs = 'Please provide at least ONE of the following: USCIS Number, Form I-94 Admission Number, or Foreign Passport Number with Country of Issuance'
         }
+
+        // If passport is partially filled, require both fields
+        if ((formData.foreign_passport_number.trim().length > 0 || formData.country_of_issuance.trim().length > 0) && !hasPassport) {
+          if (!formData.foreign_passport_number.trim()) {
+            newErrors.foreign_passport_number = 'Passport number is required when country is provided'
+          }
+          if (!formData.country_of_issuance.trim()) {
+            newErrors.country_of_issuance = 'Country is required when passport number is provided'
+          }
+        }
+
         if (!formData.expiration_date) {
           newErrors.expiration_date = 'Work authorization expiration date is required'
         } else {
@@ -844,39 +863,34 @@ export default function I9Section1FormClean({
                 )}
               </div>
 
-              {/* Additional fields for permanent residents and authorized aliens */}
-              {(formData.citizenship_status === 'permanent_resident' || formData.citizenship_status === 'authorized_alien') && (
+              {/* Additional fields for permanent residents */}
+              {formData.citizenship_status === 'permanent_resident' && (
                 <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-700">Additional Information Required</p>
-                  
+
                   <div>
                     <Label htmlFor="alien_registration_number">
-                      {formData.citizenship_status === 'permanent_resident' ? 'USCIS Number' : 'Alien Registration Number'} *
+                      USCIS Number *
                     </Label>
                     <Input
                       id="alien_registration_number"
                       value={formData.alien_registration_number}
                       onChange={(e) => {
-                        if (formData.citizenship_status === 'permanent_resident') {
-                          const formatted = formatUSCISNumber(e.target.value)
-                          handleInputChange('alien_registration_number', formatted)
-                        } else {
-                          handleInputChange('alien_registration_number', e.target.value)
-                        }
+                        const formatted = formatUSCISNumber(e.target.value)
+                        handleInputChange('alien_registration_number', formatted)
                       }}
                       className={errors.alien_registration_number ? 'border-red-500' : ''}
-                      placeholder={formData.citizenship_status === 'permanent_resident' ? "A-123456789" : "123456789"}
-                      maxLength={formData.citizenship_status === 'permanent_resident' ? 11 : undefined}
+                      placeholder="A-123456789"
+                      maxLength={11}
                     />
                     {errors.alien_registration_number && (
                       <p className="text-sm text-red-500 mt-1">{errors.alien_registration_number}</p>
                     )}
                   </div>
 
-                  {/* Expiration date for both permanent residents and authorized aliens */}
                   <div>
                     <Label htmlFor="expiration_date">
-                      {formData.citizenship_status === 'permanent_resident' ? 'Card Expiration Date' : 'Work Authorization Expiration Date'} *
+                      Card Expiration Date *
                     </Label>
                     <Input
                       id="expiration_date"
@@ -890,7 +904,101 @@ export default function I9Section1FormClean({
                       <p className="text-sm text-red-500 mt-1">{errors.expiration_date}</p>
                     )}
                   </div>
+                </div>
+              )}
 
+              {/* Additional fields for authorized aliens */}
+              {formData.citizenship_status === 'authorized_alien' && (
+                <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Additional Information Required</p>
+
+                  <Alert className="mb-4">
+                    <AlertDescription className="text-sm">
+                      Please provide <strong>ONE</strong> of the following: USCIS Number, Form I-94 Admission Number, or Foreign Passport Number with Country of Issuance.
+                    </AlertDescription>
+                  </Alert>
+
+                  {/* USCIS Number (A-Number) */}
+                  <div>
+                    <Label htmlFor="alien_registration_number">
+                      USCIS Number (A-Number)
+                    </Label>
+                    <Input
+                      id="alien_registration_number"
+                      value={formData.alien_registration_number}
+                      onChange={(e) => {
+                        const formatted = formatUSCISNumber(e.target.value)
+                        handleInputChange('alien_registration_number', formatted)
+                      }}
+                      className={errors.alien_registration_number ? 'border-red-500' : ''}
+                      placeholder="A-123456789"
+                      maxLength={11}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Format: A-123456789</p>
+                  </div>
+
+                  {/* Form I-94 Admission Number */}
+                  <div>
+                    <Label htmlFor="i94_admission_number">
+                      Form I-94 Admission Number
+                    </Label>
+                    <Input
+                      id="i94_admission_number"
+                      value={formData.i94_admission_number || ''}
+                      onChange={(e) => handleInputChange('i94_admission_number', e.target.value)}
+                      placeholder="12345678901"
+                      maxLength={11}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">11-digit number from your I-94 arrival/departure record</p>
+                  </div>
+
+                  {/* Foreign Passport Number and Country */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="foreign_passport_number">
+                        Foreign Passport Number
+                      </Label>
+                      <Input
+                        id="foreign_passport_number"
+                        value={formData.foreign_passport_number}
+                        onChange={(e) => handleInputChange('foreign_passport_number', e.target.value)}
+                        placeholder="Passport number"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="country_of_issuance">
+                        Country of Issuance
+                      </Label>
+                      <Input
+                        id="country_of_issuance"
+                        value={formData.country_of_issuance}
+                        onChange={(e) => handleInputChange('country_of_issuance', e.target.value)}
+                        placeholder="Country"
+                      />
+                    </div>
+                  </div>
+
+                  {errors.authorized_alien_docs && (
+                    <p className="text-sm text-red-500 mt-1">{errors.authorized_alien_docs}</p>
+                  )}
+
+                  {/* Work Authorization Expiration Date */}
+                  <div>
+                    <Label htmlFor="expiration_date">
+                      Work Authorization Expiration Date *
+                    </Label>
+                    <Input
+                      id="expiration_date"
+                      type="date"
+                      value={formData.expiration_date}
+                      onChange={(e) => handleInputChange('expiration_date', e.target.value)}
+                      className={errors.expiration_date ? 'border-red-500' : ''}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                    {errors.expiration_date && (
+                      <p className="text-sm text-red-500 mt-1">{errors.expiration_date}</p>
+                    )}
+                  </div>
                 </div>
               )}
 

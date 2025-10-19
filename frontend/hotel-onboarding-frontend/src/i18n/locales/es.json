@@ -242,9 +242,11 @@
           "collegeMajor": "Campo principal de estudio / Secundaria (si aplica)",
           "skills": "Ejemplo: Fluido en inglés, Microsoft Office Suite, Certificado en RCP, Licencia de Manipulador de Alimentos..."
         },
-        "noTechnicalEducation": "No he asistido a escuela técnica/vocacional",
-        "noOtherEducation": "No tengo otra educación que reportar",
-        "noSkillsCertifications": "No tengo habilidades especiales o certificaciones que reportar"
+        "noEducation": "No tengo educación que reportar",
+        "note": {
+          "title": "Nota",
+          "noEducationText": "Ha indicado que no tiene educación que reportar. Aún puede continuar con su solicitud."
+        }
       },
       "additionalInfo": {
         "title": "Información Adicional",

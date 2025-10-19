@@ -414,15 +414,15 @@ export default function PersonalInformationStep({
             <RadioGroup
               value={formData.work_authorized || ''}
               onValueChange={(value) => handleInputChange('work_authorized', value)}
-              className="space-y-2"
+              className="space-y-3 sm:space-y-2"
             >
-              <div className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-gray-50 transition-colors">
-                <RadioGroupItem value="yes" id="work_auth_yes" className="flex-shrink-0" />
-                <Label htmlFor="work_auth_yes" className="font-normal cursor-pointer flex-1 text-sm sm:text-base">{t('common.yes')}</Label>
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-1 sm:px-1 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="yes" id="work_auth_yes" />
+                <Label htmlFor="work_auth_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm leading-relaxed">{t('common.yes')}</Label>
               </div>
-              <div className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-gray-50 transition-colors">
-                <RadioGroupItem value="no" id="work_auth_no" className="flex-shrink-0" />
-                <Label htmlFor="work_auth_no" className="font-normal cursor-pointer flex-1 text-sm sm:text-base">{t('common.no')}</Label>
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-1 sm:px-1 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="no" id="work_auth_no" />
+                <Label htmlFor="work_auth_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm leading-relaxed">{t('common.no')}</Label>
               </div>
             </RadioGroup>
             {getError('work_authorized') && (
@@ -435,15 +435,15 @@ export default function PersonalInformationStep({
             <RadioGroup
               value={formData.sponsorship_required || ''}
               onValueChange={(value) => handleInputChange('sponsorship_required', value)}
-              className="space-y-2"
+              className="space-y-3 sm:space-y-2"
             >
-              <div className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-gray-50 transition-colors">
-                <RadioGroupItem value="yes" id="sponsor_yes" className="flex-shrink-0" />
-                <Label htmlFor="sponsor_yes" className="font-normal cursor-pointer flex-1 text-sm sm:text-base">{t('common.yes')}</Label>
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-1 sm:px-1 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="yes" id="sponsor_yes" />
+                <Label htmlFor="sponsor_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm leading-relaxed">{t('common.yes')}</Label>
               </div>
-              <div className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-gray-50 transition-colors">
-                <RadioGroupItem value="no" id="sponsor_no" className="flex-shrink-0" />
-                <Label htmlFor="sponsor_no" className="font-normal cursor-pointer flex-1 text-sm sm:text-base">{t('common.no')}</Label>
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-1 sm:px-1 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="no" id="sponsor_no" />
+                <Label htmlFor="sponsor_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm leading-relaxed">{t('common.no')}</Label>
               </div>
             </RadioGroup>
             {getError('sponsorship_required') && (
@@ -456,15 +456,15 @@ export default function PersonalInformationStep({
             <RadioGroup
               value={formData.reliable_transportation || ''}
               onValueChange={(value) => handleInputChange('reliable_transportation', value)}
-              className="space-y-2"
+              className="space-y-3 sm:space-y-2"
             >
-              <div className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-gray-50 transition-colors">
-                <RadioGroupItem value="yes" id="transport_yes" className="flex-shrink-0" />
-                <Label htmlFor="transport_yes" className="font-normal cursor-pointer flex-1 text-sm sm:text-base">{t('common.yes')}</Label>
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-1 sm:px-1 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="yes" id="transport_yes" />
+                <Label htmlFor="transport_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm leading-relaxed">{t('common.yes')}</Label>
               </div>
-              <div className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-gray-50 transition-colors">
-                <RadioGroupItem value="no" id="transport_no" className="flex-shrink-0" />
-                <Label htmlFor="transport_no" className="font-normal cursor-pointer flex-1 text-sm sm:text-base">{t('common.no')}</Label>
+              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-1 sm:px-1 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
+                <RadioGroupItem value="no" id="transport_no" />
+                <Label htmlFor="transport_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm leading-relaxed">{t('common.no')}</Label>
               </div>
             </RadioGroup>
             {getError('reliable_transportation') && (
@@ -475,29 +475,30 @@ export default function PersonalInformationStep({
           {formData.reliable_transportation === 'yes' && (
             <div className="space-y-2 ml-6">
               <Label className="font-semibold text-gray-900">{t('jobApplication.steps.personalInfo.fields.transportationMethod')} *</Label>
-              <RadioGroup 
-                value={formData.transportation_method || ''} 
+              <RadioGroup
+                value={formData.transportation_method || ''}
                 onValueChange={(value) => handleInputChange('transportation_method', value)}
+                className="space-y-2 sm:space-y-1"
               >
-                <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                   <RadioGroupItem value="public_transport" id="method_public" />
-                  <Label htmlFor="method_public" className="font-normal cursor-pointer">{t('jobApplication.steps.personalInfo.fields.transportationOptions.publicTransport')}</Label>
+                  <Label htmlFor="method_public" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('jobApplication.steps.personalInfo.fields.transportationOptions.publicTransport')}</Label>
                 </div>
-                <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                   <RadioGroupItem value="own_vehicle" id="method_own" />
-                  <Label htmlFor="method_own" className="font-normal cursor-pointer">{t('jobApplication.steps.personalInfo.fields.transportationOptions.ownVehicle')}</Label>
+                  <Label htmlFor="method_own" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('jobApplication.steps.personalInfo.fields.transportationOptions.ownVehicle')}</Label>
                 </div>
-                <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                   <RadioGroupItem value="family_friend" id="method_family" />
-                  <Label htmlFor="method_family" className="font-normal cursor-pointer">{t('jobApplication.steps.personalInfo.fields.transportationOptions.familyFriend')}</Label>
+                  <Label htmlFor="method_family" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('jobApplication.steps.personalInfo.fields.transportationOptions.familyFriend')}</Label>
                 </div>
-                <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                   <RadioGroupItem value="rideshare" id="method_rideshare" />
-                  <Label htmlFor="method_rideshare" className="font-normal cursor-pointer">{t('jobApplication.steps.personalInfo.fields.transportationOptions.rideshare')}</Label>
+                  <Label htmlFor="method_rideshare" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('jobApplication.steps.personalInfo.fields.transportationOptions.rideshare')}</Label>
                 </div>
-                <div className="flex items-center space-x-2 py-0.5 sm:space-x-3 sm:py-1">
+                <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
                   <RadioGroupItem value="other" id="method_other" />
-                  <Label htmlFor="method_other" className="font-normal cursor-pointer">{t('jobApplication.steps.personalInfo.fields.transportationOptions.other')}</Label>
+                  <Label htmlFor="method_other" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('jobApplication.steps.personalInfo.fields.transportationOptions.other')}</Label>
                 </div>
               </RadioGroup>
               {getError('transportation_method') && (

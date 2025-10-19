@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import DOMPurify from 'dompurify'
 import { useTranslation } from 'react-i18next'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -369,7 +370,14 @@ export default function ReviewConsentStep({
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed">
-                  <span dangerouslySetInnerHTML={{ __html: t('jobApplication.steps.reviewConsent.certification1', { propertyName: formData.property_name || 'this hotel' }) }} />
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(
+                        t('jobApplication.steps.reviewConsent.certification1', { propertyName: formData.property_name || 'this hotel' }),
+                        { USE_PROFILES: { html: true } }
+                      )
+                    }}
+                  />
                 </p>
               </div>
             </div>

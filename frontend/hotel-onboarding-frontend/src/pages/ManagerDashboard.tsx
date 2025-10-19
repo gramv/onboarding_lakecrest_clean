@@ -325,7 +325,6 @@ export default function ManagerDashboard() {
               <QRCodeCard
                 property={property}
                 onRegenerate={handleQrUpdated}
-                showRegenerateButton={true}
                 className="bg-white shadow-sm border border-slate-200/70 rounded-2xl"
                 scope="manager"
               />

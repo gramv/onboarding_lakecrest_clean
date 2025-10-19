@@ -82,9 +82,7 @@ export default function EducationSkillsStep({
     return saved
   })
   const [skills_certifications, setSkillsCertifications] = useState(formData.skills_certifications || '')
-  const [hasNoTechnicalEducation, setHasNoTechnicalEducation] = useState(formData.has_no_technical_education || false)
-  const [hasNoOtherEducation, setHasNoOtherEducation] = useState(formData.has_no_other_education || false)
-  const [hasNoSkillsCertifications, setHasNoSkillsCertifications] = useState(formData.has_no_skills_certifications || false)
+  const [hasNoEducation, setHasNoEducation] = useState(formData.has_no_education || false)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -158,133 +156,15 @@ export default function EducationSkillsStep({
     })
   }
 
-  const renderEducationEntryWithCheckbox = (label: string, schoolKey: string, icon: React.ReactNode, accentColor: string = "blue", hasNoEducation: boolean, setHasNoEducation: (value: boolean) => void) => {
-    const school = education[schoolKey] || {}
-    
-    return (
-      <Card key={schoolKey} className="mb-4 overflow-hidden">
-        <div className={`h-2 ${
-          accentColor === 'blue' ? 'bg-blue-500' : 
-          accentColor === 'green' ? 'bg-green-500' : 
-          accentColor === 'orange' ? 'bg-orange-500' : 
-          'bg-gray-500'
-        }`} />
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            {icon}
-            {label}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="mb-4">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <Checkbox
-                id={`no_${schoolKey}`}
-                checked={hasNoEducation}
-                onCheckedChange={(checked) => {
-                  setHasNoEducation(checked as boolean)
-                  updateFormData({ [`has_no_${schoolKey}_education`]: checked })
-                  if (checked) {
-                    // Clear education fields when checked
-                    setEducation({
-                      ...education,
-                      [schoolKey]: {
-                        name: '',
-                        location: '',
-                        years_attended: '',
-                        graduated: '',
-                        major_minor: '',
-                        degree_received: ''
-                      }
-                    })
-                  }
-                }}
-                className="h-5 w-5"
-              />
-              <Label htmlFor={`no_${schoolKey}`} className="text-base font-medium cursor-pointer">
-                {t(`jobApplication.steps.education.no${schoolKey.charAt(0).toUpperCase() + schoolKey.slice(1)}Education`)}
-              </Label>
-            </div>
-          </div>
-          
-          {!hasNoEducation && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor={`${schoolKey}_name`}>{t('jobApplication.steps.education.fields.schoolName')}</Label>
-                  <Input
-                    id={`${schoolKey}_name`}
-                    value={school.name || ''}
-                    onChange={(e) => updateEducationEntry(schoolKey, 'name', e.target.value)}
-                    placeholder=""
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`${schoolKey}_location`}>{t('jobApplication.steps.education.fields.location')}</Label>
-                  <Input
-                    id={`${schoolKey}_location`}
-                    value={school.location || ''}
-                    onChange={(e) => updateEducationEntry(schoolKey, 'location', e.target.value)}
-                    placeholder=""
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor={`${schoolKey}_years`}>{t('jobApplication.steps.education.fields.yearsAttended')}</Label>
-                  <Input
-                    id={`${schoolKey}_years`}
-                    value={school.years_attended || ''}
-                    onChange={(e) => updateEducationEntry(schoolKey, 'years_attended', e.target.value)}
-                    placeholder="4"
-                    className="text-center"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('jobApplication.steps.education.fields.graduated')}</Label>
-                  <RadioGroup 
-                    value={school.graduated || ''} 
-                    onValueChange={(value) => updateEducationEntry(schoolKey, 'graduated', value)}
-                    className="flex gap-4 mt-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id={`${schoolKey}_grad_yes`} />
-                      <Label htmlFor={`${schoolKey}_grad_yes`} className="font-normal">{t('common.yes')}</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id={`${schoolKey}_grad_no`} />
-                      <Label htmlFor={`${schoolKey}_grad_no`} className="font-normal">{t('common.no')}</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`${schoolKey}_degree`}>{t('jobApplication.steps.education.fields.degreeReceived')}</Label>
-                  <Input
-                    id={`${schoolKey}_degree`}
-                    value={school.degree_received || ''}
-                    onChange={(e) => updateEducationEntry(schoolKey, 'degree_received', e.target.value)}
-                    placeholder=""
-                  />
-                </div>
-              </div>
-              
-              {schoolKey !== 'high_school' && (
-                <div className="space-y-2">
-                  <Label htmlFor={`${schoolKey}_major`}>{t('jobApplication.steps.education.fields.major')}</Label>
-                  <Input
-                    id={`${schoolKey}_major`}
-                    value={school.major_minor || ''}
-                    onChange={(e) => updateEducationEntry(schoolKey, 'major_minor', e.target.value)}
-                    placeholder=""
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-    )
+  const handleNoEducationChange = (checked: boolean) => {
+    setHasNoEducation(checked)
+    updateFormData({ has_no_education: checked })
+
+    if (checked) {
+      // Clear all education fields when checked
+      setEducation(defaultEducation)
+      setSkillsCertifications('')
+    }
   }
 
   const renderEducationEntry = (label: string, schoolKey: string, icon: React.ReactNode, accentColor: string = "blue") => {
@@ -480,109 +360,94 @@ export default function EducationSkillsStep({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center text-lg font-semibold mb-4">
-        <GraduationCap className="w-5 h-5 mr-2" />
-        {t('jobApplication.steps.education.title')}
-      </div>
-      
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          {t('jobApplication.steps.education.instruction')}
-        </AlertDescription>
-      </Alert>
+      <div className="flex items-center justify-between">
+        <Alert className="flex-1 mr-4">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            {t('jobApplication.steps.education.instruction')}
+          </AlertDescription>
+        </Alert>
 
-      {/* High School */}
-      {renderEducationEntry(
-        t('jobApplication.steps.education.schools.highSchool'), 
-        'high_school',
-        <School className="w-5 h-5 text-blue-600" />,
-        "blue"
-      )}
-
-      {/* Colleges/Universities Section */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="font-medium text-gray-700">{t('jobApplication.steps.education.collegeSection')}</h4>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addCollege}
-            className="gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t('jobApplication.steps.education.addCollege')}
-          </Button>
+        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200 whitespace-nowrap">
+          <Checkbox
+            id="no_education"
+            checked={hasNoEducation}
+            onCheckedChange={handleNoEducationChange}
+            className="h-5 w-5"
+          />
+          <Label htmlFor="no_education" className="text-base font-medium cursor-pointer">
+            {t('jobApplication.steps.education.noEducation')}
+          </Label>
         </div>
-        {education.colleges.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-8 text-center text-gray-500">
-              <GraduationCap className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>{t('jobApplication.steps.education.noCollege')}</p>
+      </div>
+
+      {!hasNoEducation && (
+        <>
+          {/* High School */}
+          {renderEducationEntry(
+            t('jobApplication.steps.education.schools.highSchool'),
+            'high_school',
+            <School className="w-5 h-5 text-blue-600" />,
+            "blue"
+          )}
+
+          {/* Colleges/Universities Section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-gray-700">{t('jobApplication.steps.education.collegeSection')}</h4>
               <Button
                 type="button"
-                variant="link"
+                variant="outline"
+                size="sm"
                 onClick={addCollege}
-                className="mt-2"
+                className="gap-2"
               >
-                {t('jobApplication.steps.education.addFirstCollege')}
+                <Plus className="w-4 h-4" />
+                {t('jobApplication.steps.education.addCollege')}
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          education.colleges.map((college, index) => renderCollegeEntry(college, index))
-        )}
-      </div>
-
-      {/* Technical/Vocational School */}
-      {renderEducationEntryWithCheckbox(
-        t('jobApplication.steps.education.schools.technical'), 
-        'technical',
-        <Briefcase className="w-5 h-5 text-green-600" />,
-        "green",
-        hasNoTechnicalEducation,
-        setHasNoTechnicalEducation
-      )}
-
-      {/* Other Education */}
-      {renderEducationEntryWithCheckbox(
-        t('jobApplication.steps.education.schools.other'), 
-        'other',
-        <Award className="w-5 h-5 text-orange-600" />,
-        "orange",
-        hasNoOtherEducation,
-        setHasNoOtherEducation
-      )}
-      
-      {/* Skills and Certifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('jobApplication.steps.education.fields.skills')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="mb-4">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <Checkbox
-                id="no_skills"
-                checked={hasNoSkillsCertifications}
-                onCheckedChange={(checked) => {
-                  setHasNoSkillsCertifications(checked as boolean)
-                  updateFormData({ has_no_skills_certifications: checked })
-                  if (checked) {
-                    setSkillsCertifications('')
-                  }
-                }}
-                className="h-5 w-5"
-              />
-              <Label htmlFor="no_skills" className="text-base font-medium cursor-pointer">
-                {t('jobApplication.steps.education.noSkillsCertifications')}
-              </Label>
             </div>
+            {education.colleges.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-8 text-center text-gray-500">
+                  <GraduationCap className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>{t('jobApplication.steps.education.noCollege')}</p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={addCollege}
+                    className="mt-2"
+                  >
+                    {t('jobApplication.steps.education.addFirstCollege')}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              education.colleges.map((college, index) => renderCollegeEntry(college, index))
+            )}
           </div>
-          
-          {!hasNoSkillsCertifications && (
-            <>
+
+          {/* Technical/Vocational School */}
+          {renderEducationEntry(
+            t('jobApplication.steps.education.schools.technical'),
+            'technical',
+            <Briefcase className="w-5 h-5 text-green-600" />,
+            "green"
+          )}
+
+          {/* Other Education */}
+          {renderEducationEntry(
+            t('jobApplication.steps.education.schools.other'),
+            'other',
+            <Award className="w-5 h-5 text-orange-600" />,
+            "orange"
+          )}
+
+          {/* Skills and Certifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t('jobApplication.steps.education.fields.skills')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               <Label htmlFor="skills_certifications">
                 {t('jobApplication.steps.education.fields.skillsDescription')}
               </Label>
@@ -597,10 +462,18 @@ export default function EducationSkillsStep({
               <p className="text-xs text-gray-500">
                 {t('jobApplication.steps.education.fields.skillsNote')}
               </p>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {hasNoEducation && (
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>{t('jobApplication.steps.education.note.title')}:</strong> {t('jobApplication.steps.education.note.noEducationText')}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

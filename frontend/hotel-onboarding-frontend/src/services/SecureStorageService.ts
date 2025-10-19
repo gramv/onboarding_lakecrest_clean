@@ -165,7 +165,8 @@ class SecureStorageService {
         'i9-section1_data',
         'health-insurance_data',
         'w4_signature_data',
-        'i9-complete_data'
+        'i9-complete_data',
+        'current_onboarding_token'
       ]
 
       sensitiveKeys.forEach(key => {

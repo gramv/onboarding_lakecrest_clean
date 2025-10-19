@@ -242,9 +242,11 @@
           "collegeMajor": "Major field of study / Minor (if applicable)",
           "skills": "Example: Fluent in Spanish, Microsoft Office Suite, CPR Certified, Food Handler's License..."
         },
-        "noTechnicalEducation": "I have not attended technical/vocational school",
-        "noOtherEducation": "I have no other education to report",
-        "noSkillsCertifications": "I have no special skills or certifications to report"
+        "noEducation": "I have no education to report",
+        "note": {
+          "title": "Note",
+          "noEducationText": "You have indicated that you have no education to report. You may still proceed with your application."
+        }
       },
       "additionalInfo": {
         "title": "Additional Information",
