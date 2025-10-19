@@ -67,6 +67,25 @@ export function getWebSocketUrl(): string {
 }
 
 /**
+ * Get the frontend URL based on environment
+ * Used for generating application URLs, QR codes, etc.
+ *
+ * In development: Uses window.location.origin (http://localhost:5173)
+ * In production: Uses VITE_FRONTEND_URL environment variable or falls back to window.location.origin
+ */
+export function getFrontendUrl(): string {
+  const envFrontendUrl = import.meta.env.VITE_FRONTEND_URL
+
+  // Production: Use the frontend URL from environment variable
+  if (envFrontendUrl && envFrontendUrl.trim() !== '') {
+    return envFrontendUrl.replace(/\/$/, '') // Remove trailing slash
+  }
+
+  // Fallback: Use current origin (works for both dev and prod)
+  return window.location.origin
+}
+
+/**
  * Runtime configuration validation
  * Logs configuration issues for debugging
  */
