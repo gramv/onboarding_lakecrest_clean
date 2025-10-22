@@ -510,11 +510,11 @@ export default function WeaponsPolicyStep({
                       {React.cloneElement(section.icon, { className: 'h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0' })}
                       <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{section.title}</h3>
                     </div>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2 sm:space-y-2.5">
                       {section.content.map((item, itemIndex) => (
-                        <li key={itemIndex} className="flex items-start gap-2">
-                          <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
-                          <span className="text-xs sm:text-sm text-gray-700">{item}</span>
+                        <li key={itemIndex} className="flex items-start gap-2 sm:gap-3">
+                          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                          <span className="text-sm sm:text-sm text-gray-700 leading-relaxed">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -523,69 +523,80 @@ export default function WeaponsPolicyStep({
               </div>
 
               {/* Exceptions */}
-              <div className="mt-6 sm:mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
-                <h4 className="font-semibold text-yellow-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+              <div className="mt-6 sm:mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-4">
+                <h4 className="font-semibold text-yellow-800 mb-3 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
                   <Info className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                   {language === 'es' ? 'Excepciones Limitadas' : 'Limited Exceptions'}
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-2 sm:space-y-1.5">
                   {t.policy.exceptions.map((exception, index) => (
-                    <li key={index} className="flex items-start gap-2 text-yellow-700">
-                      <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm">{exception}</span>
+                    <li key={index} className="flex items-start gap-2 sm:gap-2.5 text-yellow-700">
+                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
+                      <span className="text-sm sm:text-sm leading-relaxed">{exception}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
               {/* Read Confirmation */}
-              <div className="mt-6 flex items-center gap-3">
+              <label
+                htmlFor="policy-read"
+                className="mt-6 flex items-start gap-3 sm:gap-4 cursor-pointer group min-h-[44px] p-3 sm:p-2 -mx-3 sm:mx-0 rounded-lg hover:bg-gray-50 transition-colors"
+              >
                 <Checkbox
                   id="policy-read"
                   checked={formData.hasReadPolicy}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setFormData(prev => ({ ...prev, hasReadPolicy: checked as boolean }))
                   }
+                  className="mt-0.5 shrink-0 h-5 w-5 sm:h-4 sm:w-4"
                 />
-                <label htmlFor="policy-read" className="text-gray-700 font-medium cursor-pointer">
-                  {language === 'es' 
+                <span className="text-sm sm:text-base text-gray-700 font-medium flex-1">
+                  {language === 'es'
                     ? 'He leído y entiendo la política completa anterior'
                     : 'I have read and understand the complete policy above'}
-                </label>
-              </div>
+                </span>
+              </label>
             </CardContent>
           </Card>
 
           {/* Acknowledgments */}
           {formData.hasReadPolicy && (
             <Card>
-              <CardHeader>
-                <CardTitle>{language === 'es' ? 'Reconocimientos Requeridos' : 'Required Acknowledgments'}</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">
+                  {language === 'es' ? 'Reconocimientos Requeridos' : 'Required Acknowledgments'}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-4 sm:space-y-5">
                   {t.acknowledgmentStatements.map((statement, index) => (
-                    <div key={index} className="flex items-start gap-3">
+                    <label
+                      key={index}
+                      htmlFor={`ack-${index}`}
+                      className="flex items-start gap-3 sm:gap-4 cursor-pointer group min-h-[44px] p-3 sm:p-2 -mx-3 sm:mx-0 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
                       <Checkbox
                         id={`ack-${index}`}
                         checked={formData.acknowledgments[index] || false}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           handleAcknowledgmentChange(index, checked as boolean)
                         }
+                        className="mt-0.5 shrink-0 h-5 w-5 sm:h-4 sm:w-4"
                       />
-                      <label htmlFor={`ack-${index}`} className="text-gray-700 leading-relaxed cursor-pointer">
+                      <span className="text-sm sm:text-base text-gray-700 leading-relaxed flex-1">
                         {statement}
-                      </label>
-                    </div>
+                      </span>
+                    </label>
                   ))}
                 </div>
 
                 {/* Proceed to Review Button */}
                 {allAcknowledgmentsChecked && (
-                  <div className="mt-6 text-center">
+                  <div className="mt-6 sm:mt-8 text-center">
                     <button
                       onClick={handleProceedToReview}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                      className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-2.5 rounded-lg hover:bg-blue-700 active:bg-blue-800 active:scale-95 transition-all font-semibold text-base sm:text-sm shadow-md min-h-[48px] sm:min-h-[44px]"
                     >
                       {language === 'es' ? 'Proceder a Revisar y Firmar' : 'Proceed to Review and Sign'}
                     </button>

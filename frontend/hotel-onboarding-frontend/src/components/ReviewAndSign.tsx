@@ -433,11 +433,11 @@ export default function ReviewAndSign({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{title}</h2>
         {description && (
-          <p className="text-gray-600">{description}</p>
+          <p className="text-sm sm:text-base text-gray-600 px-4 sm:px-0">{description}</p>
         )}
       </div>
 
@@ -471,14 +471,14 @@ export default function ReviewAndSign({
         </div>
       ) : (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Eye className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
               <span>{t.reviewTitle}</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+          <CardContent className="p-4 sm:p-6">
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4">
               {renderPreview && renderPreview(formData)}
             </div>
           </CardContent>
@@ -486,13 +486,13 @@ export default function ReviewAndSign({
       )}
 
       {federalCompliance && (
-        <Alert className="bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
+        <Alert className="bg-blue-50 border-blue-200 p-3 sm:p-4">
+          <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
           <AlertDescription className="text-blue-800">
             <div className="space-y-1">
-              <p className="font-medium">{federalCompliance.formName}</p>
+              <p className="font-medium text-sm sm:text-base">{federalCompliance.formName}</p>
               {federalCompliance.requiresWitness && (
-                <p className="text-sm">{t.witnessRequired}</p>
+                <p className="text-xs sm:text-sm">{t.witnessRequired}</p>
               )}
             </div>
           </AlertDescription>
@@ -501,40 +501,43 @@ export default function ReviewAndSign({
 
       {/* Signature Section */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Pen className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+            <Pen className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             <span>{t.signatureTitle}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-gray-600 text-sm">{t.signatureInstructions}</p>
-          
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+          <p className="text-gray-600 text-sm sm:text-base">{t.signatureInstructions}</p>
+
           {/* Signature Canvas */}
-          <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
+          <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white">
             <SignatureCanvas
               ref={signatureRef}
               canvasProps={{
-                className: 'w-full h-48'
+                className: 'w-full h-40 sm:h-48 touch-none',
+                style: { touchAction: 'none' }
               }}
-              backgroundColor="rgba(0,0,0,0)"
+              backgroundColor="white"
               penColor="black"
             />
           </div>
-          
+
           {/* Electronic Signature Legal Notice */}
-          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-xs text-blue-800 flex items-start">
-              <Info className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
-              {language === 'es' 
-                ? 'Las firmas electrónicas tienen el mismo nivel de autenticidad y validez legal que las firmas físicas según la Ley ESIGN y UETA.'
-                : 'Electronic signatures have the same level of authenticity and legal validity as physical signatures under the ESIGN Act and UETA.'}
+          <div className="mt-3 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-xs sm:text-sm text-blue-800 flex items-start">
+              <Info className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 mt-0.5 flex-shrink-0" />
+              <span>
+                {language === 'es'
+                  ? 'Las firmas electrónicas tienen el mismo nivel de autenticidad y validez legal que las firmas físicas según la Ley ESIGN y UETA.'
+                  : 'Electronic signatures have the same level of authenticity and legal validity as physical signatures under the ESIGN Act and UETA.'}
+              </span>
             </p>
           </div>
 
           {/* Agreement Checkbox */}
           <div className="space-y-3">
-            <label className="flex items-start space-x-3 cursor-pointer">
+            <label className="flex items-start gap-3 sm:gap-4 cursor-pointer group min-h-[44px] p-3 sm:p-2 -mx-3 sm:mx-0 rounded-lg hover:bg-gray-50 transition-colors">
               <input
                 type="checkbox"
                 checked={hasAgreed}
@@ -542,9 +545,9 @@ export default function ReviewAndSign({
                   setHasAgreed(e.target.checked)
                   setSignatureError('')
                 }}
-                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="mt-0.5 h-5 w-5 sm:h-4 sm:w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 shrink-0"
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm sm:text-base text-gray-700 flex-1">
                 {agreementText || t.agreementLabel}
               </span>
             </label>
@@ -568,7 +571,7 @@ export default function ReviewAndSign({
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             {onBack && (
               <Button
                 type="button"
@@ -578,7 +581,7 @@ export default function ReviewAndSign({
                   e.stopPropagation()
                   onBack()
                 }}
-                className="flex-1"
+                className="w-full sm:flex-1 min-h-[48px] sm:min-h-[44px] text-sm sm:text-base"
               >
                 {t.editButton}
               </Button>
@@ -591,7 +594,7 @@ export default function ReviewAndSign({
                 e.stopPropagation()
                 handleClearSignature()
               }}
-              className="flex-1"
+              className="w-full sm:flex-1 min-h-[48px] sm:min-h-[44px] text-sm sm:text-base"
             >
               {t.clearSignature}
             </Button>
@@ -602,7 +605,7 @@ export default function ReviewAndSign({
                 e.stopPropagation()
                 handleSubmitSignature()
               }}
-              className="flex-1"
+              className="w-full sm:flex-1 min-h-[48px] sm:min-h-[44px] text-sm sm:text-base"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
               {t.submitSignature}
