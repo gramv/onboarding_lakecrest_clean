@@ -475,7 +475,7 @@ export default function PersonalInformationStep({
             <RadioGroup
               value={formData.work_authorized || ''}
               onValueChange={(value) => handleInputChange('work_authorized', value)}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
             >
               <label
                 htmlFor="work_auth_yes"
@@ -508,7 +508,7 @@ export default function PersonalInformationStep({
             <RadioGroup
               value={formData.sponsorship_required || ''}
               onValueChange={(value) => handleInputChange('sponsorship_required', value)}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
             >
               <label
                 htmlFor="sponsor_yes"
@@ -541,7 +541,7 @@ export default function PersonalInformationStep({
             <RadioGroup
               value={formData.reliable_transportation || ''}
               onValueChange={(value) => handleInputChange('reliable_transportation', value)}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
             >
               <label
                 htmlFor="transport_yes"
