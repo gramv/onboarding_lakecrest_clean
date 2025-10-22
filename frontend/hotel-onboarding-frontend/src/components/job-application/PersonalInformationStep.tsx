@@ -479,18 +479,18 @@ export default function PersonalInformationStep({
             >
               <label
                 htmlFor="work_auth_yes"
-                className="flex items-center space-x-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                className="flex items-center gap-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
               >
-                <RadioGroupItem value="yes" id="work_auth_yes" />
+                <RadioGroupItem value="yes" id="work_auth_yes" className="shrink-0" />
                 <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-normal flex-1">
                   {t('common.yes')}
                 </span>
               </label>
               <label
                 htmlFor="work_auth_no"
-                className="flex items-center space-x-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                className="flex items-center gap-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
               >
-                <RadioGroupItem value="no" id="work_auth_no" />
+                <RadioGroupItem value="no" id="work_auth_no" className="shrink-0" />
                 <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-normal flex-1">
                   {t('common.no')}
                 </span>
@@ -512,18 +512,18 @@ export default function PersonalInformationStep({
             >
               <label
                 htmlFor="sponsor_yes"
-                className="flex items-center space-x-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                className="flex items-center gap-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
               >
-                <RadioGroupItem value="yes" id="sponsor_yes" />
+                <RadioGroupItem value="yes" id="sponsor_yes" className="shrink-0" />
                 <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-normal flex-1">
                   {t('common.yes')}
                 </span>
               </label>
               <label
                 htmlFor="sponsor_no"
-                className="flex items-center space-x-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                className="flex items-center gap-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
               >
-                <RadioGroupItem value="no" id="sponsor_no" />
+                <RadioGroupItem value="no" id="sponsor_no" className="shrink-0" />
                 <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-normal flex-1">
                   {t('common.no')}
                 </span>
@@ -545,18 +545,18 @@ export default function PersonalInformationStep({
             >
               <label
                 htmlFor="transport_yes"
-                className="flex items-center space-x-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                className="flex items-center gap-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
               >
-                <RadioGroupItem value="yes" id="transport_yes" />
+                <RadioGroupItem value="yes" id="transport_yes" className="shrink-0" />
                 <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-normal flex-1">
                   {t('common.yes')}
                 </span>
               </label>
               <label
                 htmlFor="transport_no"
-                className="flex items-center space-x-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                className="flex items-center gap-3 min-h-[56px] sm:min-h-[48px] p-4 sm:p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
               >
-                <RadioGroupItem value="no" id="transport_no" />
+                <RadioGroupItem value="no" id="transport_no" className="shrink-0" />
                 <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-normal flex-1">
                   {t('common.no')}
                 </span>
