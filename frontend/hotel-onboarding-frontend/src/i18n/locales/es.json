@@ -51,7 +51,7 @@
           "email": "Dirección de Correo Electrónico",
           "eligibility": {
             "workAuth": "¿Está legalmente elegible para ser empleado en los Estados Unidos?",
-            "sponsorship": "¿Requerirá ahora, o en el futuro, que {{propertyName}} le ayude a mantener su elegibilidad de empleo?",
+            "sponsorship": "¿Necesitará patrocinio de autorización de trabajo?",
             "ageVerification": "¿Tiene al menos 18 años de edad?",
             "transportation": "¿Tiene un medio de transporte confiable para ir y venir del trabajo?"
           },

@@ -845,21 +845,20 @@ export default function JobApplicationFormV2() {
           </CardContent>
         </Card>
 
-        {/* Mobile-Optimized Sticky Navigation */}
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t shadow-lg mt-8 -mx-4 sm:mx-0 sm:relative sm:bg-transparent sm:border-0 sm:shadow-none">
-          <div className="flex gap-3 p-4 sm:p-0 sm:pt-6">
+        {/* Navigation Buttons */}
+        <div className="mt-8 border-t pt-6">
+          <div className="flex gap-3">
             {/* Previous Button */}
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 0}
-              className="flex-1 sm:flex-initial sm:min-w-[140px] min-h-[48px] font-medium
+              className="sm:min-w-[140px] min-h-[48px] font-medium
                          hover:bg-gray-50 hover:text-gray-900 active:scale-95
                          transition-all duration-150 shadow-sm"
             >
               <ChevronLeft className="w-5 h-5 mr-2" />
-              <span className="hidden sm:inline">{t('common.previous')}</span>
-              <span className="sm:hidden">{t('common.back')}</span>
+              {t('common.previous')}
             </Button>
 
             {/* Submit or Next Button */}
@@ -867,7 +866,7 @@ export default function JobApplicationFormV2() {
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 sm:flex-initial sm:min-w-[140px] min-h-[48px] font-medium
+                className="sm:min-w-[140px] min-h-[48px] font-medium
                           bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95
                           text-white shadow-md transition-all duration-150"
               >
@@ -886,7 +885,7 @@ export default function JobApplicationFormV2() {
             ) : (
               <Button
                 onClick={handleNext}
-                className="flex-1 sm:flex-initial sm:min-w-[140px] min-h-[48px] font-medium
+                className="sm:min-w-[140px] min-h-[48px] font-medium
                           bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95
                           text-white shadow-md transition-all duration-150"
               >
@@ -896,14 +895,6 @@ export default function JobApplicationFormV2() {
             )}
           </div>
 
-          {/* Mobile Progress Indicator */}
-          <div className="sm:hidden px-4 pb-2">
-            <div className="flex justify-between items-center text-xs text-gray-600">
-              <span>Step {currentStep + 1} of {steps.length}</span>
-              <span>{Math.round(calculateProgress())}% Complete</span>
-            </div>
-            <Progress value={calculateProgress()} className="h-1 mt-1" />
-          </div>
         </div>
         
         {/* Legal Disclaimer - Only show on Additional Information step */}

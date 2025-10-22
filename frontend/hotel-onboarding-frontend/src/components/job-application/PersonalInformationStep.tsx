@@ -503,7 +503,7 @@ export default function PersonalInformationStep({
 
           <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
             <Label className="text-[clamp(0.875rem,2.5vw,1rem)] font-semibold text-gray-900">
-              {t('jobApplication.steps.personalInfo.fields.eligibility.sponsorship', { propertyName: formData.property_name || 'this hotel' })} *
+              {t('jobApplication.steps.personalInfo.fields.eligibility.sponsorship')} *
             </Label>
             <RadioGroup
               value={formData.sponsorship_required || ''}

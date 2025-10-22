@@ -51,7 +51,7 @@
           "email": "E-mail Address",
           "eligibility": {
             "workAuth": "Are you legally eligible to be employed in the United States?",
-            "sponsorship": "Will you now, or in the future, require {{propertyName}} to assist in maintaining your employment eligibility?",
+            "sponsorship": "Will you require work authorization sponsorship?",
             "ageVerification": "Are you at least 18 years of age?",
             "transportation": "Do you have a reliable means of transportation to get to and from work?"
           },
