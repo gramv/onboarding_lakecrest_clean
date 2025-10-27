@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import HumanTraffickingAwareness from '@/components/HumanTraffickingAwareness'
 import ReviewAndSign from '@/components/ReviewAndSign'
-import { CheckCircle, GraduationCap, Shield, AlertTriangle, FileText } from 'lucide-react'
+import { CheckCircle, FileText, Shield } from 'lucide-react'
 import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
@@ -471,47 +469,13 @@ export default function TraffickingAwarenessStep({
   return (
     <StepContainer saveStatus={saveStatus} canProceed={false}>
       <StepContentWrapper>
-        <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
-        {/* Step Header */}
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-3 sm:mb-4">
-            <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{t.title}</h1>
-          </div>
-          <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">{t.description}</p>
-        </div>
-
-        {/* Federal Requirement Notice */}
-        <Alert className="bg-red-50 border-red-200 p-3 sm:p-4">
-          <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
-          <AlertDescription className="text-xs sm:text-sm text-red-800">
-            <strong>{t.federalRequirement}</strong> {t.federalNotice}
-          </AlertDescription>
-        </Alert>
-
-        {/* Training Module Card */}
-        <Card>
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
-              <span>{t.trainingModule}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <HumanTraffickingAwareness
-              onTrainingComplete={handleTrainingComplete}
-              language={language}
-              stepId={currentStep.id}
-              initialProgress={trainingProgress}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Time Estimate */}
-        <div className="text-center text-xs sm:text-sm text-gray-500">
-          <p>{t.estimatedTime}</p>
-        </div>
-        </div>
+        {/* Training Module - has its own full-page layout */}
+        <HumanTraffickingAwareness
+          onTrainingComplete={handleTrainingComplete}
+          language={language}
+          stepId={currentStep.id}
+          initialProgress={trainingProgress}
+        />
       </StepContentWrapper>
     </StepContainer>
   )

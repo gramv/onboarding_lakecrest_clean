@@ -26,10 +26,9 @@ const RadioGroupItem = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        // Mobile-first sizing: larger on mobile, smaller on desktop
-        "h-6 w-6 sm:h-5 sm:w-5 rounded-full border-2 border-zinc-300 text-zinc-900 shadow-sm transition-all",
-        // Minimum touch target for mobile (44px as per Apple HIG)
-        "min-h-[44px] min-w-[44px] sm:min-h-[20px] sm:min-w-[20px]",
+        // Radio button visual size - consistent and small (20px)
+        // The parent container provides the 44px touch target
+        "h-5 w-5 rounded-full border-2 border-zinc-300 text-zinc-900 shadow-sm transition-all",
         // Better mobile interaction states
         "hover:border-zinc-400 active:scale-95 active:bg-blue-50",
         // Focus states
@@ -45,7 +44,7 @@ const RadioGroupItem = React.forwardRef<
       {...props}
     >
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-3 w-3 sm:h-2.5 sm:w-2.5 fill-blue-600 dark:fill-blue-500" />
+        <Circle className="h-2.5 w-2.5 fill-blue-600 dark:fill-blue-500" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )

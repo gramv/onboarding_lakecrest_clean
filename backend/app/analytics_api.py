@@ -126,8 +126,9 @@ class ManagerPerformanceRequest(BaseModel):
 # ANALYTICS ROUTER
 # =====================================
 
-# Initialize services
-supabase_service = EnhancedSupabaseService()
+# Initialize services - use singleton pattern
+from .supabase_service_enhanced import get_enhanced_supabase_service
+supabase_service = get_enhanced_supabase_service()
 analytics_cache = AnalyticsCache()
 analytics_engine = AnalyticsEngine(supabase_service, analytics_cache.redis_client)
 

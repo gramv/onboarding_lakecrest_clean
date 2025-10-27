@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Users, Info } from 'lucide-react'
+import {
+  MobileSelect,
+  MobileLabel,
+  MobileRadioGroup,
+  MobileCheckbox,
+  MobileErrorMessage,
+  MobileFormField
+} from './mobile-optimized'
 
 interface VoluntarySelfIdentificationStepProps {
   formData: any
@@ -95,99 +99,79 @@ export default function VoluntarySelfIdentificationStep({
             
             {/* Decline to Identify Option */}
             <div className="mb-6">
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <Checkbox
-                  id="decline_to_identify"
-                  checked={declineToIdentify}
-                  onCheckedChange={(checked) => {
-                    setDeclineToIdentify(checked as boolean)
-                    handleInputChange('decline_to_identify', checked)
-                  }}
-                  className="h-5 w-5"
-                />
-                <Label htmlFor="decline_to_identify" className="text-base font-medium cursor-pointer">
-                  {t('jobApplication.steps.voluntaryIdentification.declineToIdentify')}
-                </Label>
-              </div>
+              <MobileCheckbox
+                id="decline_to_identify"
+                checked={declineToIdentify}
+                onCheckedChange={(checked) => {
+                  setDeclineToIdentify(checked as boolean)
+                  handleInputChange('decline_to_identify', checked)
+                }}
+                label={t('jobApplication.steps.voluntaryIdentification.declineToIdentify')}
+                className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+              />
             </div>
 
             {!declineToIdentify && (
               <>
                 {/* Race or Ethnic Identity */}
-                <div className="space-y-4 mb-6">
-                  <Label className="text-base font-semibold">{t('jobApplication.steps.voluntaryIdentification.raceEthnicity.title')}</Label>
+                <MobileFormField className="mb-6">
+                  <MobileLabel className="text-base font-semibold">{t('jobApplication.steps.voluntaryIdentification.raceEthnicity.title')}</MobileLabel>
                   <div className="space-y-3">
                     {raceEthnicityOptions.map((option) => (
                       <div key={option.value} className="border rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex items-start space-x-3">
-                          <Checkbox
-                            id={option.value}
-                            checked={formData[`race_${option.value}`] || false}
-                            onCheckedChange={(checked) => handleInputChange(`race_${option.value}`, checked)}
-                            className="mt-1"
-                          />
-                          <div className="space-y-1">
-                            <Label htmlFor={option.value} className="font-medium cursor-pointer">
-                              {option.label}
-                            </Label>
-                            <p className="text-xs text-gray-500">
-                              {option.description}
-                            </p>
-                          </div>
-                        </div>
+                        <MobileCheckbox
+                          id={option.value}
+                          checked={formData[`race_${option.value}`] || false}
+                          onCheckedChange={(checked) => handleInputChange(`race_${option.value}`, checked)}
+                          label={
+                            <div className="space-y-1">
+                              <div className="font-medium">{option.label}</div>
+                              <p className="text-xs text-gray-500">{option.description}</p>
+                            </div>
+                          }
+                        />
                       </div>
                     ))}
                   </div>
-                </div>
+                </MobileFormField>
 
                 {/* Gender */}
-                <div className="space-y-2 mb-6">
-                  <Label className="text-base font-semibold">{t('jobApplication.steps.voluntaryIdentification.gender.title')}</Label>
-                  <RadioGroup 
-                    value={formData.gender || ''} 
+                <MobileFormField className="mb-6">
+                  <MobileLabel className="text-base font-semibold">{t('jobApplication.steps.voluntaryIdentification.gender.title')}</MobileLabel>
+                  <MobileRadioGroup
+                    value={formData.gender || ''}
                     onValueChange={(value) => handleInputChange('gender', value)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="male" id="gender_male" />
-                        <Label htmlFor="gender_male" className="font-normal">{t('jobApplication.steps.voluntaryIdentification.gender.male')}</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="female" id="gender_female" />
-                        <Label htmlFor="gender_female" className="font-normal">{t('jobApplication.steps.voluntaryIdentification.gender.female')}</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="decline_gender" id="gender_decline" />
-                        <Label htmlFor="gender_decline" className="font-normal">{t('jobApplication.steps.voluntaryIdentification.gender.decline')}</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
+                    columns={1}
+                    options={[
+                      { value: 'male', label: t('jobApplication.steps.voluntaryIdentification.gender.male'), id: 'gender_male' },
+                      { value: 'female', label: t('jobApplication.steps.voluntaryIdentification.gender.female'), id: 'gender_female' },
+                      { value: 'decline_gender', label: t('jobApplication.steps.voluntaryIdentification.gender.decline'), id: 'gender_decline' }
+                    ]}
+                  />
+                </MobileFormField>
 
                 {/* How did you hear about our job opening */}
-                <div className="space-y-2">
-                  <Label htmlFor="referral_source_voluntary" className="text-base font-semibold">
+                <MobileFormField>
+                  <MobileLabel htmlFor="referral_source_voluntary" className="text-base font-semibold">
                     {t('jobApplication.steps.voluntaryIdentification.referralSource')}
-                  </Label>
-                  <Select 
-                    value={formData.referral_source_voluntary || ''} 
+                  </MobileLabel>
+                  <MobileSelect
+                    id="referral_source_voluntary"
+                    value={formData.referral_source_voluntary || ''}
                     onValueChange={(value) => handleInputChange('referral_source_voluntary', value)}
-                  >
-                    <SelectTrigger id="referral_source_voluntary">
-                      <SelectValue placeholder={t('jobApplication.steps.voluntaryIdentification.placeholders.referralSource')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="employee">{t('jobApplication.steps.voluntaryIdentification.referralOptions.employee')}</SelectItem>
-                      <SelectItem value="indeed">{t('jobApplication.steps.voluntaryIdentification.referralOptions.indeed')}</SelectItem>
-                      <SelectItem value="linkedin">{t('jobApplication.steps.voluntaryIdentification.referralOptions.linkedin')}</SelectItem>
-                      <SelectItem value="company_website">{t('jobApplication.steps.voluntaryIdentification.referralOptions.companyWebsite')}</SelectItem>
-                      <SelectItem value="job_fair">{t('jobApplication.steps.voluntaryIdentification.referralOptions.jobFair')}</SelectItem>
-                      <SelectItem value="recruitment_agency">{t('jobApplication.steps.voluntaryIdentification.referralOptions.recruitmentAgency')}</SelectItem>
-                      <SelectItem value="social_media">{t('jobApplication.steps.voluntaryIdentification.referralOptions.socialMedia')}</SelectItem>
-                      <SelectItem value="other">{t('jobApplication.steps.voluntaryIdentification.referralOptions.other')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    placeholder={t('jobApplication.steps.voluntaryIdentification.placeholders.referralSource')}
+                    options={[
+                      { value: 'employee', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.employee') },
+                      { value: 'indeed', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.indeed') },
+                      { value: 'linkedin', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.linkedin') },
+                      { value: 'company_website', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.companyWebsite') },
+                      { value: 'job_fair', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.jobFair') },
+                      { value: 'recruitment_agency', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.recruitmentAgency') },
+                      { value: 'social_media', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.socialMedia') },
+                      { value: 'other', label: t('jobApplication.steps.voluntaryIdentification.referralOptions.other') }
+                    ]}
+                  />
+                </MobileFormField>
               </>
             )}
           </div>

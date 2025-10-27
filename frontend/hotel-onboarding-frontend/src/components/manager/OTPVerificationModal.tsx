@@ -59,8 +59,10 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
     }
   };
 
-  const verifyOTP = async () => {
-    const otpCode = otp.join('');
+  const verifyOTP = async (otpArray?: string[]) => {
+    // Use provided OTP array or current state
+    const otpToVerify = otpArray || otp;
+    const otpCode = otpToVerify.join('');
 
     if (otpCode.length !== 6) {
       setError('Please enter all 6 digits');
@@ -102,9 +104,9 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit when all 6 digits are entered
+    // Auto-submit when all 6 digits are entered - pass newOtp directly
     if (newOtp.every(digit => digit !== '')) {
-      setTimeout(() => verifyOTP(), 200);
+      setTimeout(() => verifyOTP(newOtp), 300);
     }
   };
 
@@ -117,12 +119,13 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
-    
+
     if (/^\d{6}$/.test(pastedData)) {
       const digits = pastedData.split('');
       setOtp(digits);
       inputRefs.current[5]?.focus();
-      setTimeout(() => verifyOTP(), 100);
+      // Pass digits array directly to verifyOTP
+      setTimeout(() => verifyOTP(digits), 300);
     }
   };
 
@@ -135,11 +138,11 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-[clamp(1rem,3vw,1.5rem)]">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between p-[clamp(1rem,3vw,1.5rem)] border-b">
+          <h2 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold text-gray-900">
             Verify Your Identity
           </h2>
           <button
@@ -147,26 +150,26 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
             className="text-gray-400 hover:text-gray-600"
             disabled={loading}
           >
-            <X className="w-5 h-5" />
+            <X className="w-[clamp(1.25rem,3vw,1.5rem)] h-[clamp(1.25rem,3vw,1.5rem)]" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-[clamp(1rem,3vw,1.5rem)]">
           {step === 'request' && (
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-blue-600" />
+              <div className="w-[clamp(4rem,10vw,5rem)] h-[clamp(4rem,10vw,5rem)] bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-[clamp(1rem,3vw,1.5rem)]">
+                <Mail className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] text-blue-600" />
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 mb-[clamp(1rem,3vw,1.5rem)]">
                 Sending verification code to:
               </p>
-              <p className="font-semibold text-gray-900 mb-6">
+              <p className="font-semibold text-[clamp(1rem,2.5vw,1.125rem)] text-gray-900 mb-[clamp(1.5rem,4vw,2rem)]">
                 {managerEmail}
               </p>
               {loading && (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-[clamp(2rem,5vw,2.5rem)] w-[clamp(2rem,5vw,2.5rem)] border-b-2 border-blue-600"></div>
                 </div>
               )}
             </div>
@@ -174,23 +177,23 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
 
           {step === 'verify' && (
             <div>
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-8 h-8 text-blue-600" />
+              <div className="text-center mb-[clamp(1.5rem,4vw,2rem)]">
+                <div className="w-[clamp(4rem,10vw,5rem)] h-[clamp(4rem,10vw,5rem)] bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-[clamp(1rem,3vw,1.5rem)]">
+                  <Mail className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] text-blue-600" />
                 </div>
-                <p className="text-gray-600 mb-2">
+                <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 mb-[clamp(0.5rem,1.5vw,0.75rem)]">
                   We sent a 6-digit code to:
                 </p>
-                <p className="font-semibold text-gray-900 mb-2">
+                <p className="font-semibold text-[clamp(1rem,2.5vw,1.125rem)] text-gray-900 mb-[clamp(0.5rem,1.5vw,0.75rem)]">
                   {managerEmail}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500">
                   To access documents for <strong>{employeeName}</strong>
                 </p>
               </div>
 
               {/* OTP Input */}
-              <div className="flex justify-center gap-2 mb-6" onPaste={handlePaste}>
+              <div className="flex justify-center gap-[clamp(0.375rem,1.5vw,0.5rem)] mb-[clamp(1.5rem,4vw,2rem)]" onPaste={handlePaste}>
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -201,50 +204,55 @@ export const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                    className="w-[clamp(2.5rem,8vw,3rem)] h-[clamp(3rem,10vw,3.5rem)] text-center text-[clamp(1.25rem,4vw,1.5rem)] font-bold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
                     disabled={loading}
                   />
                 ))}
               </div>
 
-              {/* Error */}
-              {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  <p className="text-sm text-red-800">{error}</p>
+              {/* Loading Indicator */}
+              {loading && (
+                <div className="flex items-center justify-center gap-[clamp(0.5rem,1.5vw,0.75rem)] p-[clamp(0.75rem,2vw,1rem)] bg-blue-50 border border-blue-200 rounded-lg mb-[clamp(1rem,3vw,1.5rem)]">
+                  <div className="animate-spin rounded-full h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] border-b-2 border-blue-600"></div>
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-blue-800 font-medium">Verifying...</p>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={verifyOTP}
-                  disabled={loading || otp.some(d => !d)}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Verifying...' : 'Verify Code'}
-                </button>
-                
-                <button
-                  onClick={requestOTP}
-                  disabled={loading}
-                  className="w-full text-blue-600 py-2 rounded-lg font-semibold hover:bg-blue-50"
-                >
-                  Resend Code
-                </button>
+              {/* Error */}
+              {error && (
+                <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] p-[clamp(0.75rem,2vw,1rem)] bg-red-50 border border-red-200 rounded-lg mb-[clamp(1rem,3vw,1.5rem)]">
+                  <AlertCircle className="w-[clamp(1.25rem,3vw,1.5rem)] h-[clamp(1.25rem,3vw,1.5rem)] text-red-600 flex-shrink-0" />
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-800">{error}</p>
+                </div>
+              )}
+
+              {/* Helper Text */}
+              <div className="text-center mb-[clamp(1rem,3vw,1.5rem)]">
+                <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500">
+                  {loading ? 'Please wait...' : 'Enter the code to verify your identity'}
+                </p>
               </div>
+
+              {/* Resend Button */}
+              <button
+                onClick={requestOTP}
+                disabled={loading}
+                className="w-full text-blue-600 py-[clamp(0.5rem,1.5vw,0.75rem)] rounded-lg font-semibold hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed text-[clamp(0.875rem,2.5vw,1rem)]"
+              >
+                Resend Code
+              </button>
             </div>
           )}
 
           {step === 'success' && (
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="w-[clamp(4rem,10vw,5rem)] h-[clamp(4rem,10vw,5rem)] bg-green-100 rounded-full flex items-center justify-center mx-auto mb-[clamp(1rem,3vw,1.5rem)]">
+                <CheckCircle className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold text-gray-900 mb-[clamp(0.5rem,1.5vw,0.75rem)]">
                 Verified Successfully!
               </h3>
-              <p className="text-gray-600">
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">
                 Loading documents...
               </p>
             </div>

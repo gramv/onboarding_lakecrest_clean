@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Building2, Users, Shield, Loader2 } from 'lucide-react'
+import { Building2, Users, Shield, Loader2, Eye, EyeOff } from 'lucide-react'
+import { MobileInput } from '@/components/job-application/mobile-optimized/MobileInput'
+import { MobileLabel } from '@/components/job-application/mobile-optimized/MobileLabel'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, user, isAuthenticated, returnUrl, setReturnUrl } = useAuth()
@@ -119,87 +120,97 @@ export default function LoginPage() {
   }
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br ${config.gradient} padding-md`}>
-      <Card className="w-full max-w-md card-elevated card-rounded-lg animate-fade-in">
-        <CardHeader className="card-padding-lg text-center spacing-md">
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br ${config.gradient} p-[clamp(1rem,3vw,1.5rem)]`}>
+      <Card className="w-full max-w-md shadow-xl rounded-lg">
+        <CardHeader className="p-[clamp(1.5rem,4vw,2rem)] text-center space-y-[clamp(1rem,3vw,1.5rem)]">
           <div className="flex justify-center">
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
+            <div className="p-[clamp(1rem,3vw,1.25rem)] bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
               {config.icon}
             </div>
           </div>
-          
-          <div className="spacing-sm">
-            <Badge className={`badge-${config.badgeVariant} badge-md`}>
+
+          <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <Badge className={`badge-${config.badgeVariant}`}>
               {config.badge}
             </Badge>
-            <CardTitle className="text-display-sm">
+            <CardTitle className="text-[clamp(1.5rem,4vw,2rem)] font-bold">
               {config.title}
             </CardTitle>
-            <CardDescription className="text-body-md text-secondary">
+            <CardDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">
               {config.description}
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="card-padding-lg spacing-md">
+        <CardContent className="p-[clamp(1.5rem,4vw,2rem)] space-y-[clamp(1rem,3vw,1.5rem)]">
           {returnUrl && (
-            <Alert className="mb-4 bg-blue-50 border-blue-200">
-              <AlertDescription className="text-blue-800">
+            <Alert className="bg-blue-50 border-blue-200 p-[clamp(0.75rem,2vw,1rem)]">
+              <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-blue-800">
                 You'll be redirected to <strong>{returnUrl}</strong> after signing in.
               </AlertDescription>
             </Alert>
           )}
-          
-          <form onSubmit={handleSubmit} className="spacing-sm">
+
+          <form onSubmit={handleSubmit} className="space-y-[clamp(1rem,3vw,1.5rem)]">
             {error && (
-              <Alert variant="destructive" className="bg-error border-error animate-slide-down">
-                <AlertDescription className="text-error">
+              <Alert variant="destructive" className="p-[clamp(0.75rem,2vw,1rem)]">
+                <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
                   {error}
                 </AlertDescription>
               </Alert>
             )}
-            
-            <div className="form-group">
-              <Label htmlFor="email" className="form-label">
+
+            <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <MobileLabel htmlFor="email" required>
                 Email Address
-              </Label>
-              <Input
+              </MobileLabel>
+              <MobileInput
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
-                className="form-input-base form-input-md focus-ring"
                 disabled={loading}
-                autoComplete="email"
+                mobileKeyboard="email"
               />
             </div>
-            
-            <div className="form-group">
-              <Label htmlFor="password" className="form-label">
+
+            <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <MobileLabel htmlFor="password" required>
                 Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="form-input-base form-input-md focus-ring"
-                disabled={loading}
-                autoComplete="current-password"
-              />
+              </MobileLabel>
+              <div className="relative">
+                <MobileInput
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-[clamp(0.75rem,2vw,1rem)] top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  disabled={loading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)]" />
+                  ) : (
+                    <Eye className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)]" />
+                  )}
+                </button>
+              </div>
             </div>
-            
+
             <Button
               type="submit"
-              size="lg"
-              className="w-full"
+              className="w-full h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] font-semibold flex items-center justify-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -209,11 +220,11 @@ export default function LoginPage() {
           </form>
 
           {/* Forgot Password Link */}
-          <div className="text-center pt-3">
+          <div className="text-center">
             <Button
               variant="link"
               onClick={() => navigate('/forgot-password')}
-              className="text-body-sm text-secondary hover:text-primary smooth-transition"
+              className="text-[clamp(0.875rem,2.5vw,1rem)] text-blue-600 hover:text-blue-700 h-auto p-0"
               disabled={loading}
             >
               Forgot your password?
@@ -222,24 +233,23 @@ export default function LoginPage() {
 
           {/* Test credentials helper */}
           {config.testCredentials && (
-            <div className="pt-4 border-t border-muted">
-              <Button 
-                variant="secondary" 
-                size="sm" 
+            <div className="pt-[clamp(1rem,3vw,1.5rem)] border-t border-gray-200">
+              <Button
+                variant="secondary"
                 onClick={fillTestCredentials}
-                className="w-full"
+                className="w-full h-[clamp(2.5rem,5vw,2.75rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                 disabled={loading}
               >
                 Use Test Credentials
               </Button>
             </div>
           )}
-          
-          <div className="text-center pt-2">
-            <Button 
-              variant="link" 
+
+          <div className="text-center">
+            <Button
+              variant="link"
               onClick={() => navigate('/')}
-              className="text-body-sm text-secondary hover:text-primary smooth-transition"
+              className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 hover:text-gray-800 h-auto p-0"
               disabled={loading}
             >
               ← Back to Home

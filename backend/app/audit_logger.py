@@ -123,7 +123,8 @@ class AuditLogger:
     """Service for logging audit entries with batching and async support"""
     
     def __init__(self):
-        self.supabase_service = EnhancedSupabaseService()
+        from .supabase_service_enhanced import get_enhanced_supabase_service
+        self.supabase_service = get_enhanced_supabase_service()
         self._batch_queue: List[AuditEntry] = []
         self._batch_size = 10
         self._batch_interval = 5.0  # seconds

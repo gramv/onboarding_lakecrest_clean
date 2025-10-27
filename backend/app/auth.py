@@ -382,46 +382,46 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
 # Import supabase service here to avoid circular imports
 def get_supabase_service():
     """Get supabase service instance to avoid circular imports"""
-    from .supabase_service_enhanced import EnhancedSupabaseService
-    return EnhancedSupabaseService()
+    from .supabase_service_enhanced import get_enhanced_supabase_service
+    return get_enhanced_supabase_service()
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
-    """JWT token validation with Supabase lookup"""
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+    """JWT token validation with Supabase lookup (async version)"""
     if not credentials:
         raise HTTPException(
             status_code=401,
             detail="Authentication required"
         )
-    
+
     token = credentials.credentials
-    
+
     try:
         # Use the same JWT_SECRET_KEY that was used for token creation
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         token_type = payload.get("token_type")
-        
-        # Get supabase service instance
+
+        # Get supabase service instance (singleton)
         supabase_service = get_supabase_service()
-        
+
         if token_type == "manager_auth":
             # Use 'sub' field (standard JWT) with fallback to 'manager_id' for backward compatibility
             user_id = payload.get("sub") or payload.get("manager_id")
-            user = supabase_service.get_user_by_id_sync(user_id)
+            user = await supabase_service.get_user_by_id(user_id)
             if not user or user.role != "manager":
                 raise HTTPException(
-                    status_code=401, 
+                    status_code=401,
                     detail="Manager not found"
                 )
             return user
-            
+
         elif token_type == "hr_auth":
             # Use 'sub' field (standard JWT) with fallback to 'user_id' for backward compatibility
             user_id = payload.get("sub") or payload.get("user_id")
-            user = supabase_service.get_user_by_id_sync(user_id)
+            user = await supabase_service.get_user_by_id(user_id)
             if not user or user.role != "hr":
                 raise HTTPException(
-                    status_code=401, 
+                    status_code=401,
                     detail="HR user not found"
                 )
             return user

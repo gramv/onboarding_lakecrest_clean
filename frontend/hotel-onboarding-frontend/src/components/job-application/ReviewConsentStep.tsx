@@ -1,16 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react'
 import DOMPurify from 'dompurify'
 import { useTranslation } from 'react-i18next'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Input } from '@/components/ui/input'
-import { 
-  FileText, 
+import {
+  FileText,
   CheckCircle2,
   AlertTriangle
 } from 'lucide-react'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileCheckbox,
+  MobileErrorMessage,
+  MobileFormField
+} from './mobile-optimized'
 
 interface ReviewConsentStepProps {
   formData: any
@@ -352,7 +357,7 @@ export default function ReviewConsentStep({
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="relative">
-                    <Input
+                    <MobileInput
                       type="text"
                       value={initials.truthfulness}
                       onChange={(e) => handleInitialsChange('truthfulness', e.target.value)}
@@ -361,6 +366,7 @@ export default function ReviewConsentStep({
                       }`}
                       placeholder="Initials"
                       maxLength={4}
+                      error={!!getError('initials_truthfulness')}
                     />
                     {getError('initials_truthfulness') && (
                       <p className="text-xs text-red-600 mt-1 absolute whitespace-nowrap">
@@ -387,7 +393,7 @@ export default function ReviewConsentStep({
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="relative">
-                    <Input
+                    <MobileInput
                       type="text"
                       value={initials.at_will}
                       onChange={(e) => handleInitialsChange('at_will', e.target.value)}
@@ -396,6 +402,7 @@ export default function ReviewConsentStep({
                       }`}
                       placeholder="Initials"
                       maxLength={4}
+                      error={!!getError('initials_at_will')}
                     />
                     {getError('initials_at_will') && (
                       <p className="text-xs text-red-600 mt-1 absolute whitespace-nowrap">
@@ -415,7 +422,7 @@ export default function ReviewConsentStep({
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="relative">
-                    <Input
+                    <MobileInput
                       type="text"
                       value={initials.screening}
                       onChange={(e) => handleInitialsChange('screening', e.target.value)}
@@ -424,6 +431,7 @@ export default function ReviewConsentStep({
                       }`}
                       placeholder="Initials"
                       maxLength={4}
+                      error={!!getError('initials_screening')}
                     />
                     {getError('initials_screening') && (
                       <p className="text-xs text-red-600 mt-1 absolute whitespace-nowrap">
@@ -443,34 +451,33 @@ export default function ReviewConsentStep({
           <div className="space-y-4 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="signature">{t('jobApplication.steps.reviewConsent.signatureSection.applicantSignature')} *</Label>
+                <MobileLabel htmlFor="signature">{t('jobApplication.steps.reviewConsent.signatureSection.applicantSignature')} *</MobileLabel>
                 <div className="space-y-3">
                   {/* Step 1: Type your printed name */}
                   <div>
-                    <Label className="text-sm font-medium">Printed Name *</Label>
-                    <Input
+                    <MobileLabel className="text-sm font-medium">Printed Name *</MobileLabel>
+                    <MobileInput
                       id="signature"
                       type="text"
                       value={typedSignature}
                       onChange={(e) => handleSignatureChange(e.target.value)}
-                      className={getError('signature') ? 'border-red-500 mt-1' : 'mt-1'}
+                      error={!!getError('signature')}
+                      className="mt-1"
                       placeholder="Type your full legal name"
                     />
-                    {getError('signature') && (
-                      <p className="text-sm text-red-600 mt-1">{getError('signature')}</p>
-                    )}
+                    <MobileErrorMessage>{getError('signature')}</MobileErrorMessage>
                   </div>
-                  
+
                   {/* Step 2: Draw your signature */}
                   <div>
-                    <Label className="text-sm font-medium">Signature *</Label>
+                    <MobileLabel className="text-sm font-medium">Signature *</MobileLabel>
                     <div className="relative mt-1">
                       <canvas
                         ref={canvasRef}
                         width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 48, 400) : 400}
                         height={150}
                         className={`border rounded-md cursor-crosshair bg-white w-full ${getError('drawn_signature') ? 'border-red-500' : 'border-gray-300'}`}
-                        style={{ 
+                        style={{
                           maxWidth: '400px',
                           touchAction: 'none' // Disable browser touch gestures
                         }}
@@ -495,30 +502,26 @@ export default function ReviewConsentStep({
                         </Button>
                       )}
                     </div>
-                    {getError('drawn_signature') && (
-                      <p className="text-sm text-red-600 mt-1">{getError('drawn_signature')}</p>
-                    )}
+                    <MobileErrorMessage>{getError('drawn_signature')}</MobileErrorMessage>
                   </div>
-                  
+
                   <p className="text-xs text-gray-500">
                     Please provide both your printed name and signature above
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="signature_date">{t('jobApplication.steps.reviewConsent.signatureSection.date')} *</Label>
-                <Input
+                <MobileLabel htmlFor="signature_date">{t('jobApplication.steps.reviewConsent.signatureSection.date')} *</MobileLabel>
+                <MobileInput
                   id="signature_date"
                   type="date"
                   value={signatureDate}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className={getError('signature_date') ? 'border-red-500' : ''}
+                  error={!!getError('signature_date')}
                   max={new Date().toISOString().split('T')[0]}
                 />
-                {getError('signature_date') && (
-                  <p className="text-sm text-red-600">{getError('signature_date')}</p>
-                )}
+                <MobileErrorMessage>{getError('signature_date')}</MobileErrorMessage>
               </div>
             </div>
           </div>

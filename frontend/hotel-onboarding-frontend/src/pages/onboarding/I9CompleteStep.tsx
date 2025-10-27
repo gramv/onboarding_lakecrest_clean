@@ -1413,21 +1413,28 @@ export default function I9CompleteStep({
         
         {/* Tabbed Interface */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 sticky top-0 z-10 bg-white shadow-sm">
-            {tabs.map(tab => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                disabled={!tab.enabled}
-                className="flex flex-col sm:flex-row items-center justify-center sm:space-x-2 min-h-[44px] text-xs sm:text-sm px-1 sm:px-3"
-              >
-                {React.cloneElement(tab.icon, { className: 'h-4 w-4 flex-shrink-0' })}
-                <span className="text-[10px] sm:text-sm mt-0.5 sm:mt-0 truncate">{tab.label}</span>
-                {tab.complete && <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 ml-0 sm:ml-1 flex-shrink-0 hidden sm:block" />}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
+          {/* Mobile: Horizontal Scroll, Desktop: Grid */}
+          <div className="mb-6">
+            <TabsList className="w-full h-auto bg-transparent p-0 flex sm:grid sm:grid-cols-4 gap-2 overflow-x-auto sm:overflow-visible scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2 sm:pb-0">
+              {tabs.map(tab => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  disabled={!tab.enabled}
+                  className="flex-shrink-0 sm:flex-shrink flex flex-col items-center justify-center gap-1 min-w-[140px] sm:min-w-0 min-h-[72px] sm:min-h-[64px] text-xs sm:text-sm px-3 py-2 bg-white border border-gray-200 rounded-lg data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 hover:bg-gray-50 transition-colors relative"
+                >
+                  {React.cloneElement(tab.icon, { className: 'h-5 w-5 flex-shrink-0' })}
+                  <span className="text-[11px] sm:text-sm leading-tight text-center font-medium">{tab.label}</span>
+                  {tab.complete && (
+                    <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                      <CheckCircle className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
           {/* Form Tab */}
           <TabsContent value="form" className="space-y-6">
             <I9Section1FormClean
@@ -1438,7 +1445,7 @@ export default function I9CompleteStep({
               showPreview={false}
             />
           </TabsContent>
-          
+
           {/* Supplements Tab */}
           <TabsContent value="supplements" className="space-y-6">
             <div className="space-y-4">
@@ -1549,7 +1556,7 @@ export default function I9CompleteStep({
               employee={employee}
             />
           </TabsContent>
-          
+
           {/* Preview Tab */}
           <TabsContent value="preview" className="space-y-6">
             {isGeneratingPdf ? (

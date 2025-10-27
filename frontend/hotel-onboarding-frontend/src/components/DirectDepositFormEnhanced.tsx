@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Checkbox } from '@/components/ui/checkbox'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileRadioGroup,
+  MobileSelect,
+  MobileSelectItem,
+  MobileCheckbox
+} from '@/components/job-application/mobile-optimized'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { CreditCard, Building, Plus, Trash2, AlertTriangle, Info, Upload, Save, Check, CheckCircle2, Loader2 } from 'lucide-react'
@@ -182,10 +184,15 @@ export default function DirectDepositFormEnhanced({
       if (!formData.voidedCheckUploaded && !formData.bankLetterUploaded) {
         newErrors.verification = 'Please upload either a voided check or bank letter'
       }
-    }
 
-    if (!formData.authorizeDeposit) {
-      newErrors.authorizeDeposit = 'Authorization is required'
+      if (!formData.authorizeDeposit) {
+        newErrors.authorizeDeposit = 'Authorization is required'
+      }
+    } else if (formData.paymentMethod === 'paper_check') {
+      // Paper check only requires authorization
+      if (!formData.authorizeDeposit) {
+        newErrors.authorizeDeposit = 'Authorization is required'
+      }
     }
 
     setErrors(newErrors)
@@ -373,184 +380,188 @@ export default function DirectDepositFormEnhanced({
   const totalSplitPercentage = formData.primaryAccount.percentage + formData.additionalAccounts.reduce((sum, acc) => sum + (acc.percentage || 0), 0)
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Payment Method</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
+    <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
+      {/* Payment Method Section */}
+      <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+        <div className="space-y-[clamp(0.25rem,1vw,0.5rem)]">
+          <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Payment Method</h3>
+          <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-muted-foreground">
             Choose how you would like to receive your pay.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <RadioGroup
-            value={formData.paymentMethod}
-            onValueChange={(value) => handleInputChange('paymentMethod', value)}
-            className="grid grid-cols-1 md:grid-cols-2 gap-3"
-          >
-            <div className="flex items-start space-x-3 p-3 border rounded-lg">
-              <RadioGroupItem value="direct_deposit" id="direct_deposit" className="mt-0.5" />
-              <div>
-                <Label htmlFor="direct_deposit" className="font-medium text-sm">Direct Deposit</Label>
-                <p className="text-xs text-gray-600 mt-0.5">Fast, secure electronic deposit to your bank account.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3 p-3 border rounded-lg">
-              <RadioGroupItem value="paper_check" id="paper_check" className="mt-0.5" />
-              <div>
-                <Label htmlFor="paper_check" className="font-medium text-sm">Paper Check</Label>
-                <p className="text-xs text-gray-600 mt-0.5">Pick up physical checks on payday.</p>
-              </div>
-            </div>
-          </RadioGroup>
+          </p>
+        </div>
 
-          {formData.paymentMethod === 'direct_deposit' && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Deposit Type</Label>
-              <RadioGroup
-                value={formData.depositType}
-                onValueChange={(value) => handleInputChange('depositType', value)}
-                className="grid grid-cols-1 md:grid-cols-3 gap-2"
-              >
-                <div className="flex items-center space-x-2 p-2 border rounded">
-                  <RadioGroupItem value="full" id="deposit_full" />
-                  <Label htmlFor="deposit_full" className="text-sm">Full Deposit</Label>
-                </div>
-                <div className="flex items-center space-x-2 p-2 border rounded">
-                  <RadioGroupItem value="partial" id="deposit_partial" />
-                  <Label htmlFor="deposit_partial" className="text-sm">Partial Deposit</Label>
-                </div>
-                <div className="flex items-center space-x-2 p-2 border rounded">
-                  <RadioGroupItem value="split" id="deposit_split" />
-                  <Label htmlFor="deposit_split" className="text-sm">Split Accounts</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <MobileRadioGroup
+          value={formData.paymentMethod}
+          onValueChange={(value) => handleInputChange('paymentMethod', value)}
+          options={[
+            {
+              value: 'direct_deposit',
+              label: 'Direct Deposit',
+              description: 'Fast, secure electronic deposit to your bank account.'
+            },
+            {
+              value: 'paper_check',
+              label: 'Paper Check',
+              description: 'Pick up physical checks on payday.'
+            }
+          ]}
+        />
+
+        {formData.paymentMethod === 'direct_deposit' && (
+          <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)] pt-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <MobileLabel>Deposit Type</MobileLabel>
+            <MobileRadioGroup
+              value={formData.depositType}
+              onValueChange={(value) => handleInputChange('depositType', value)}
+              options={[
+                {
+                  value: 'full',
+                  label: 'Full Deposit',
+                  description: 'Deposit entire paycheck to one account'
+                },
+                {
+                  value: 'partial',
+                  label: 'Partial Deposit',
+                  description: 'Deposit a fixed amount, receive rest as check'
+                },
+                {
+                  value: 'split',
+                  label: 'Split Accounts',
+                  description: 'Split paycheck across multiple accounts'
+                }
+              ]}
+            />
+          </div>
+        )}
+      </div>
 
       {formData.paymentMethod === 'direct_deposit' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building className="h-4 w-4" />
-              <span>Primary Account</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="md:col-span-2">
-                <Label htmlFor="bankName" className="text-sm">Bank Name *</Label>
-                <Input
+        <div className="space-y-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] border rounded-lg bg-white">
+          <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <Building className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-gray-600" />
+            <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Primary Account</h3>
+          </div>
+
+          <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <div className="sm:col-span-2">
+                <MobileLabel htmlFor="bankName" required>Bank Name</MobileLabel>
+                <MobileInput
                   id="bankName"
                   value={formData.primaryAccount.bankName}
                   onChange={(e) => handleInputChange('primaryAccount.bankName', e.target.value)}
-                  className={showErrors && errors['primaryAccount.bankName'] ? 'border-red-500' : ''}
+                  error={showErrors && !!errors['primaryAccount.bankName']}
+                  placeholder="Enter bank name"
                 />
                 {showErrors && errors['primaryAccount.bankName'] && (
-                  <p className="text-xs text-red-600 mt-1">{errors['primaryAccount.bankName']}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors['primaryAccount.bankName']}</p>
                 )}
               </div>
               <div>
-                <Label htmlFor="accountType" className="text-sm">Account Type *</Label>
-                <Select
+                <MobileLabel htmlFor="accountType" required>Account Type</MobileLabel>
+                <MobileSelect
                   value={formData.primaryAccount.accountType}
                   onValueChange={(value) => handleInputChange('primaryAccount.accountType', value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="checking">Checking</SelectItem>
-                    <SelectItem value="savings">Savings</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <MobileSelectItem value="checking">Checking</MobileSelectItem>
+                  <MobileSelectItem value="savings">Savings</MobileSelectItem>
+                </MobileSelect>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="routingNumber" className="text-sm">Routing Number (9 digits) *</Label>
+              <MobileLabel htmlFor="routingNumber" required>Routing Number (9 digits)</MobileLabel>
               <div className="relative">
-                <Input
+                <MobileInput
                   id="routingNumber"
                   value={formData.primaryAccount.routingNumber}
                   onChange={(e) => handleInputChange('primaryAccount.routingNumber', e.target.value.replace(/\D/g, '').slice(0, 9))}
-                  className={showErrors && errors['primaryAccount.routingNumber'] ? 'border-red-500' : ''}
+                  error={showErrors && !!errors['primaryAccount.routingNumber']}
                   placeholder="123456789"
+                  mobileKeyboard="numeric"
+                  maxLength={9}
                 />
                 {routingValidation.primary?.validating && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    <Loader2 className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] animate-spin text-gray-400" />
                   </div>
                 )}
                 {!routingValidation.primary?.validating && routingValidation.primary?.bankInfo && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <CheckCircle2 className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-green-500" />
                   </div>
                 )}
               </div>
               {routingValidation.primary?.bankInfo && (
-                <p className="text-xs text-green-600 mt-1 flex items-center">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-green-600 mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)]" />
                   {routingValidation.primary.bankInfo.bank_name || routingValidation.primary.bankInfo.short_name}
                 </p>
               )}
               {routingValidation.primary?.error && (
-                <p className="text-xs text-amber-600 mt-1 flex items-center">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
+                <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-amber-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)]" />
                   {routingValidation.primary.error}
                 </p>
               )}
               {showErrors && errors['primaryAccount.routingNumber'] && (
-                <p className="text-xs text-red-600 mt-1">{errors['primaryAccount.routingNumber']}</p>
+                <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors['primaryAccount.routingNumber']}</p>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.5rem,1.5vw,0.75rem)]">
               <div>
-                <Label htmlFor="accountNumber" className="text-sm">Account Number *</Label>
-                <Input
+                <MobileLabel htmlFor="accountNumber" required>Account Number</MobileLabel>
+                <MobileInput
                   id="accountNumber"
                   value={formData.primaryAccount.accountNumber}
                   onChange={(e) => handleInputChange('primaryAccount.accountNumber', e.target.value.replace(/\D/g, '').slice(0, 17))}
-                  className={showErrors && errors['primaryAccount.accountNumber'] ? 'border-red-500' : ''}
+                  error={showErrors && !!errors['primaryAccount.accountNumber']}
+                  placeholder="Enter account number"
+                  mobileKeyboard="numeric"
+                  maxLength={17}
                 />
                 {showErrors && errors['primaryAccount.accountNumber'] && (
-                  <p className="text-xs text-red-600 mt-1">{errors['primaryAccount.accountNumber']}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors['primaryAccount.accountNumber']}</p>
                 )}
               </div>
               <div>
-                <Label htmlFor="accountNumberConfirm" className="text-sm">Confirm Account Number *</Label>
-                <Input
+                <MobileLabel htmlFor="accountNumberConfirm" required>Confirm Account Number</MobileLabel>
+                <MobileInput
                   id="accountNumberConfirm"
                   value={formData.primaryAccount.accountNumberConfirm}
                   onChange={(e) => handleInputChange('primaryAccount.accountNumberConfirm', e.target.value.replace(/\D/g, '').slice(0, 17))}
-                  className={showErrors && errors['primaryAccount.accountNumberConfirm'] ? 'border-red-500' : ''}
+                  error={showErrors && !!errors['primaryAccount.accountNumberConfirm']}
+                  placeholder="Re-enter account number"
+                  mobileKeyboard="numeric"
+                  maxLength={17}
                 />
                 {showErrors && errors['primaryAccount.accountNumberConfirm'] && (
-                  <p className="text-xs text-red-600 mt-1">{errors['primaryAccount.accountNumberConfirm']}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors['primaryAccount.accountNumberConfirm']}</p>
                 )}
               </div>
             </div>
 
             {formData.depositType === 'partial' && (
               <div>
-                <Label htmlFor="depositAmount" className="text-sm">Direct Deposit Amount *</Label>
-                <Input
+                <MobileLabel htmlFor="depositAmount" required>Direct Deposit Amount</MobileLabel>
+                <MobileInput
                   id="depositAmount"
                   type="number"
                   min="0"
                   step="0.01"
                   value={formData.primaryAccount.depositAmount || ''}
                   onChange={(e) => handleInputChange('primaryAccount.depositAmount', parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  mobileKeyboard="decimal"
                 />
               </div>
             )}
 
             {formData.depositType === 'split' && (
               <div>
-                <Label htmlFor="percentage" className="text-sm">Percentage *</Label>
-                <Input
+                <MobileLabel htmlFor="percentage" required>Percentage</MobileLabel>
+                <MobileInput
                   id="percentage"
                   type="number"
                   min="0"
@@ -558,112 +569,129 @@ export default function DirectDepositFormEnhanced({
                   step="1"
                   value={formData.primaryAccount.percentage || ''}
                   onChange={(e) => handleInputChange('primaryAccount.percentage', parseFloat(e.target.value) || 0)}
+                  placeholder="0-100"
+                  mobileKeyboard="numeric"
                 />
               </div>
             )}
 
-            <Alert className="py-2">
-              <CreditCard className="h-3 w-3" />
-              <AlertDescription className="text-xs">
+            <Alert className="py-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <CreditCard className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)]" />
+              <AlertDescription className="text-[clamp(0.75rem,2vw,0.875rem)]">
                 Find these numbers at the bottom of your checks.
               </AlertDescription>
             </Alert>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {formData.paymentMethod === 'direct_deposit' && formData.depositType === 'split' && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Additional Accounts</CardTitle>
-              <Button variant="outline" size="sm" onClick={addAdditionalAccount} disabled={formData.additionalAccounts.length >= 3}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Account
-              </Button>
-            </div>
-            <CardDescription className="text-sm text-muted-foreground">
-              Distribute your paycheck between multiple accounts.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] border rounded-lg bg-white">
+          <div className="flex items-center justify-between gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Additional Accounts</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addAdditionalAccount}
+              disabled={formData.additionalAccounts.length >= 3}
+              className="h-[clamp(2rem,4vw,2.25rem)] px-[clamp(0.75rem,2vw,1rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+            >
+              <Plus className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] mr-1" />
+              Add Account
+            </Button>
+          </div>
+          <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-muted-foreground">
+            Distribute your paycheck between multiple accounts.
+          </p>
+
+          <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
             {formData.additionalAccounts.map((account, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-3">
+              <div key={index} className="p-[clamp(0.75rem,2vw,1rem)] border rounded-lg space-y-[clamp(0.5rem,1.5vw,0.75rem)] bg-gray-50">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">Account {index + 2}</span>
-                  <Button variant="ghost" size="sm" onClick={() => removeAdditionalAccount(index)}>
-                    <Trash2 className="h-4 w-4" />
+                  <span className="font-medium text-[clamp(1rem,2.5vw,1.125rem)]">Account {index + 2}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAdditionalAccount(index)}
+                    className="h-[clamp(2rem,4vw,2.25rem)] px-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+                  >
+                    <Trash2 className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] mr-1" />
                     Remove
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.5rem,1.5vw,0.75rem)]">
                   <div>
-                    <Label className="text-sm" htmlFor={`account-${index}-bank`}>Bank Name *</Label>
-                    <Input
+                    <MobileLabel htmlFor={`account-${index}-bank`} required>Bank Name</MobileLabel>
+                    <MobileInput
                       id={`account-${index}-bank`}
                       value={account.bankName}
                       onChange={(e) => handleInputChange(`additionalAccounts.${index}.bankName`, e.target.value)}
-                      className={showErrors && errors[`additionalAccounts.${index}.bankName`] ? 'border-red-500' : ''}
+                      error={showErrors && !!errors[`additionalAccounts.${index}.bankName`]}
+                      placeholder="Enter bank name"
                     />
                     {showErrors && errors[`additionalAccounts.${index}.bankName`] && (
-                      <p className="text-xs text-red-600 mt-1">{errors[`additionalAccounts.${index}.bankName`]}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors[`additionalAccounts.${index}.bankName`]}</p>
                     )}
                   </div>
                   <div>
-                    <Label className="text-sm" htmlFor={`account-${index}-type`}>Account Type *</Label>
-                    <Select
+                    <MobileLabel htmlFor={`account-${index}-type`} required>Account Type</MobileLabel>
+                    <MobileSelect
                       value={account.accountType}
                       onValueChange={(value) => handleInputChange(`additionalAccounts.${index}.accountType`, value)}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="checking">Checking</SelectItem>
-                        <SelectItem value="savings">Savings</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <MobileSelectItem value="checking">Checking</MobileSelectItem>
+                      <MobileSelectItem value="savings">Savings</MobileSelectItem>
+                    </MobileSelect>
                   </div>
                   <div>
-                    <Label className="text-sm" htmlFor={`account-${index}-routing`}>Routing Number *</Label>
-                    <Input
+                    <MobileLabel htmlFor={`account-${index}-routing`} required>Routing Number</MobileLabel>
+                    <MobileInput
                       id={`account-${index}-routing`}
                       value={account.routingNumber}
                       onChange={(e) => handleInputChange(`additionalAccounts.${index}.routingNumber`, e.target.value.replace(/\D/g, '').slice(0, 9))}
-                      className={showErrors && errors[`additionalAccounts.${index}.routingNumber`] ? 'border-red-500' : ''}
+                      error={showErrors && !!errors[`additionalAccounts.${index}.routingNumber`]}
+                      placeholder="123456789"
+                      mobileKeyboard="numeric"
+                      maxLength={9}
                     />
                     {showErrors && errors[`additionalAccounts.${index}.routingNumber`] && (
-                      <p className="text-xs text-red-600 mt-1">{errors[`additionalAccounts.${index}.routingNumber`]}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors[`additionalAccounts.${index}.routingNumber`]}</p>
                     )}
                   </div>
                   <div>
-                    <Label className="text-sm" htmlFor={`account-${index}-number`}>Account Number *</Label>
-                    <Input
+                    <MobileLabel htmlFor={`account-${index}-number`} required>Account Number</MobileLabel>
+                    <MobileInput
                       id={`account-${index}-number`}
                       value={account.accountNumber}
                       onChange={(e) => handleInputChange(`additionalAccounts.${index}.accountNumber`, e.target.value.replace(/\D/g, '').slice(0, 17))}
-                      className={showErrors && errors[`additionalAccounts.${index}.accountNumber`] ? 'border-red-500' : ''}
+                      error={showErrors && !!errors[`additionalAccounts.${index}.accountNumber`]}
+                      placeholder="Enter account number"
+                      mobileKeyboard="numeric"
+                      maxLength={17}
                     />
                     {showErrors && errors[`additionalAccounts.${index}.accountNumber`] && (
-                      <p className="text-xs text-red-600 mt-1">{errors[`additionalAccounts.${index}.accountNumber`]}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors[`additionalAccounts.${index}.accountNumber`]}</p>
                     )}
                   </div>
                   <div>
-                    <Label className="text-sm" htmlFor={`account-${index}-confirm`}>Confirm Account Number *</Label>
-                    <Input
+                    <MobileLabel htmlFor={`account-${index}-confirm`} required>Confirm Account Number</MobileLabel>
+                    <MobileInput
                       id={`account-${index}-confirm`}
                       value={account.accountNumberConfirm}
                       onChange={(e) => handleInputChange(`additionalAccounts.${index}.accountNumberConfirm`, e.target.value.replace(/\D/g, '').slice(0, 17))}
-                      className={showErrors && errors[`additionalAccounts.${index}.accountNumberConfirm`] ? 'border-red-500' : ''}
+                      error={showErrors && !!errors[`additionalAccounts.${index}.accountNumberConfirm`]}
+                      placeholder="Re-enter account number"
+                      mobileKeyboard="numeric"
+                      maxLength={17}
                     />
                     {showErrors && errors[`additionalAccounts.${index}.accountNumberConfirm`] && (
-                      <p className="text-xs text-red-600 mt-1">{errors[`additionalAccounts.${index}.accountNumberConfirm`]}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors[`additionalAccounts.${index}.accountNumberConfirm`]}</p>
                     )}
                   </div>
                   <div>
-                    <Label className="text-sm" htmlFor={`account-${index}-percentage`}>Percentage *</Label>
-                    <Input
+                    <MobileLabel htmlFor={`account-${index}-percentage`} required>Percentage</MobileLabel>
+                    <MobileInput
                       id={`account-${index}-percentage`}
                       type="number"
                       min="0"
@@ -671,6 +699,8 @@ export default function DirectDepositFormEnhanced({
                       step="1"
                       value={account.percentage || ''}
                       onChange={(e) => handleInputChange(`additionalAccounts.${index}.percentage`, parseFloat(e.target.value) || 0)}
+                      placeholder="0-100"
+                      mobileKeyboard="numeric"
                     />
                   </div>
                 </div>
@@ -678,130 +708,145 @@ export default function DirectDepositFormEnhanced({
             ))}
 
             {formData.additionalAccounts.length > 0 && (
-              <div className="p-3 bg-blue-50 rounded-md">
+              <div className="p-[clamp(0.5rem,1.5vw,0.75rem)] bg-blue-50 rounded-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Total Percentage</span>
+                  <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium">Total Percentage</span>
                   <Badge variant={Math.abs(totalSplitPercentage - 100) < 0.5 ? 'default' : 'destructive'}>
                     {totalSplitPercentage.toFixed(1)}%
                   </Badge>
                 </div>
                 {showErrors && errors.totalPercentage && (
-                  <p className="text-xs text-red-600 mt-1">{errors.totalPercentage}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600 mt-1">{errors.totalPercentage}</p>
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Verification & Authorization</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            Upload verification documents and authorize deposits.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2 block">Voided Check</Label>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('voided-check-upload')?.click()}
-                className="w-full"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {formData.voidedCheckUploaded ? 'Replace Voided Check' : 'Upload Voided Check'}
-              </Button>
-              <input
-                id="voided-check-upload"
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  await handleUpload('voided_check', file)
-                }}
-              />
-              {formData.voidedCheckDocument?.original_filename && (
-                <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                  <Check className="h-3 w-3 text-green-500 mr-1" />
-                  {formData.voidedCheckDocument.original_filename}
-                </p>
-              )}
-            </div>
-            <div>
-              <Label className="mb-2 block">Bank Letter / Statement</Label>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('bank-letter-upload')?.click()}
-                className="w-full"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {formData.bankLetterUploaded ? 'Replace Bank Letter' : 'Upload Bank Letter'}
-              </Button>
-              <input
-                id="bank-letter-upload"
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  await handleUpload('bank_letter', file)
-                }}
-              />
-              {formData.bankLetterDocument?.original_filename && (
-                <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                  <Check className="h-3 w-3 text-green-500 mr-1" />
-                  {formData.bankLetterDocument.original_filename}
-                </p>
-              )}
-            </div>
-          </div>
+      {/* Verification & Authorization Section */}
+      <div className="space-y-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] border rounded-lg bg-white">
+        <div className="space-y-[clamp(0.25rem,1vw,0.5rem)]">
+          <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Verification & Authorization</h3>
+          <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-muted-foreground">
+            {formData.paymentMethod === 'direct_deposit'
+              ? 'Upload verification documents and authorize deposits.'
+              : 'Authorize paper check payment method.'}
+          </p>
+        </div>
 
-          {showErrors && errors.verification && (
-            <Alert className="bg-red-50 border-red-200">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-xs text-red-600">
-                {errors.verification}
-              </AlertDescription>
-            </Alert>
+        <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
+          {/* Only show upload fields for direct deposit */}
+          {formData.paymentMethod === 'direct_deposit' && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,2vw,1rem)]">
+                <div>
+                  <MobileLabel className="mb-2">Voided Check</MobileLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('voided-check-upload')?.click()}
+                    className="w-full h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+                  >
+                    <Upload className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] mr-2" />
+                    {formData.voidedCheckUploaded ? 'Replace Voided Check' : 'Upload Voided Check'}
+                  </Button>
+                  <input
+                    id="voided-check-upload"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      await handleUpload('voided_check', file)
+                    }}
+                  />
+                  {formData.voidedCheckDocument?.original_filename && (
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-muted-foreground mt-1 flex items-center gap-1">
+                      <Check className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)] text-green-500" />
+                      {formData.voidedCheckDocument.original_filename}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <MobileLabel className="mb-2">Bank Letter / Statement</MobileLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('bank-letter-upload')?.click()}
+                    className="w-full h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+                  >
+                    <Upload className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] mr-2" />
+                    {formData.bankLetterUploaded ? 'Replace Bank Letter' : 'Upload Bank Letter'}
+                  </Button>
+                  <input
+                    id="bank-letter-upload"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      await handleUpload('bank_letter', file)
+                    }}
+                  />
+                  {formData.bankLetterDocument?.original_filename && (
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-muted-foreground mt-1 flex items-center gap-1">
+                      <Check className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)] text-green-500" />
+                      {formData.bankLetterDocument.original_filename}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {showErrors && errors.verification && (
+                <Alert className="bg-red-50 border-red-200 p-[clamp(0.5rem,1.5vw,0.75rem)]">
+                  <AlertTriangle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-red-600" />
+                  <AlertDescription className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600">
+                    {errors.verification}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
 
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="authorizeDeposit"
-              checked={formData.authorizeDeposit}
-              onCheckedChange={(checked) => handleInputChange('authorizeDeposit', !!checked)}
-            />
-            <Label htmlFor="authorizeDeposit" className="text-sm leading-relaxed">
-              I authorize my employer to deposit my pay to the account(s) specified above.
-            </Label>
-          </div>
+          <MobileCheckbox
+            id="authorizeDeposit"
+            checked={formData.authorizeDeposit}
+            onCheckedChange={(checked) => handleInputChange('authorizeDeposit', !!checked)}
+            label={
+              formData.paymentMethod === 'direct_deposit'
+                ? "I authorize my employer to deposit my pay to the account(s) specified above."
+                : "I authorize my employer to issue my pay via paper check."
+            }
+          />
 
           {showErrors && errors.authorizeDeposit && (
-            <p className="text-xs text-red-600">{errors.authorizeDeposit}</p>
+            <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-600">{errors.authorizeDeposit}</p>
           )}
 
-          <Alert className="py-2">
-            <Info className="h-3 w-3" />
-            <AlertDescription className="text-xs">
-              Deposits may take one to two pay periods to take effect.
+          <Alert className="py-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <Info className="h-[clamp(0.75rem,2vw,0.875rem)] w-[clamp(0.75rem,2vw,0.875rem)]" />
+            <AlertDescription className="text-[clamp(0.75rem,2vw,0.875rem)]">
+              {formData.paymentMethod === 'direct_deposit'
+                ? 'Deposits may take one to two pay periods to take effect.'
+                : 'Paper checks will be available on payday at the designated pickup location.'}
             </AlertDescription>
           </Alert>
 
-          <div className="flex justify-end pt-4">
-            <Button onClick={handleSubmit} disabled={!isValid}>
-              <Save className="h-4 w-4 mr-2" />
+          <div className="flex justify-end pt-[clamp(0.75rem,2vw,1rem)]">
+            <Button
+              onClick={handleSubmit}
+              disabled={!isValid}
+              className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+            >
+              <Save className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] mr-2" />
               Continue to Review
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

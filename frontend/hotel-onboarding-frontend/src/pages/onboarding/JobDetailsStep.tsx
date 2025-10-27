@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { MobileCheckbox } from '@/components/job-application/mobile-optimized'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, MessageCircle } from 'lucide-react'
 import { CheckCircle, Briefcase, Calendar, DollarSign, Building } from 'lucide-react'
@@ -323,17 +323,14 @@ export default function JobDetailsStep({
                 )}>
                   <div className="flex items-start gap-3 sm:gap-4">
                     <div className="flex-shrink-0 mt-0.5 sm:mt-1">
-                      <Checkbox
+                      <MobileCheckbox
                         id="jobOfferAcknowledgment"
                         checked={acknowledged}
                         onCheckedChange={handleAcknowledgment}
                         disabled={isCompleting}
                         className={cn(
-                          "transition-all duration-200 h-6 w-6 sm:h-5 sm:w-5 sm:scale-110",
-                          isCompleting && "opacity-50 cursor-not-allowed",
-                          acknowledged
-                            ? "border-green-500 data-[state=checked]:bg-green-600"
-                            : "border-blue-400 hover:border-blue-500"
+                          "transition-all duration-200",
+                          isCompleting && "opacity-50 cursor-not-allowed"
                         )}
                       />
                     </div>
@@ -342,7 +339,7 @@ export default function JobDetailsStep({
                       <label
                         htmlFor="jobOfferAcknowledgment"
                         className={cn(
-                          "text-sm sm:text-base font-medium leading-relaxed block transition-colors duration-200",
+                          "text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-relaxed block transition-colors duration-200",
                           isCompleting ? "cursor-wait opacity-75" : "cursor-pointer",
                           acknowledged ? "text-green-800" : "text-blue-800 hover:text-blue-900"
                         )}

@@ -13,7 +13,6 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useStepValidation } from '@/hooks/useStepValidation'
 import { directDepositValidator } from '@/utils/stepValidators'
 import { ValidationSummary } from '@/components/ui/validation-summary'
-import { FormSection } from '@/components/ui/form-section'
 import axios from 'axios'
 import { getLatestPDFForStep, savePDFToStorage } from '@/services/pdfStorage'
 import { fetchStepDocumentMetadata, listStepDocuments, persistStepDocument, StepDocumentMetadata } from '@/services/documentService'
@@ -766,9 +765,9 @@ export default function DirectDepositStep({
   const translations = {
     en: {
       title: 'Payment Method Setup',
-      reviewTitle: 'Review Direct Deposit',
+      reviewTitle: 'Review & Sign Payment Authorization',
       description: 'Choose how you want to receive your pay. Direct deposit is the fastest and most secure way to receive your paycheck.',
-      completionMessage: 'Payment method configured successfully!',
+      completionMessage: 'Payment authorization form completed and signed successfully!',
       importantInfoTitle: 'Important Information',
       importantInfo: [
         'Direct deposit is available 1-2 days earlier than paper checks',
@@ -786,9 +785,9 @@ export default function DirectDepositStep({
     },
     es: {
       title: 'Configuración de Método de Pago',
-      reviewTitle: 'Revisar Depósito Directo',
+      reviewTitle: 'Revisar y Firmar Autorización de Pago',
       description: 'Elija cómo desea recibir su pago. El depósito directo es la forma más rápida y segura de recibir su salario.',
-      completionMessage: '¡Método de pago configurado exitosamente!',
+      completionMessage: '¡Formulario de autorización de pago completado y firmado exitosamente!',
       importantInfoTitle: 'Información Importante',
       importantInfo: [
         'El depósito directo está disponible 1-2 días antes que los cheques en papel',
@@ -827,13 +826,19 @@ export default function DirectDepositStep({
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
                   <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
-                  <span>Signed Direct Deposit Authorization</span>
+                  <span>
+                    {formData?.paymentMethod === 'paper_check'
+                      ? 'Signed Paper Check Authorization'
+                      : 'Signed Direct Deposit Authorization'}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
                   <p className="text-xs sm:text-sm text-gray-600">
-                    Your direct deposit authorization has been completed and signed.
+                    {formData?.paymentMethod === 'paper_check'
+                      ? 'Your paper check authorization has been completed and signed. You can now proceed to the next step.'
+                      : 'Your direct deposit authorization has been completed and signed. You can now proceed to the next step.'}
                   </p>
                   <PDFViewer pdfData={pdfUrl} height="600px" />
                 </div>
@@ -887,26 +892,29 @@ export default function DirectDepositStep({
             </Alert>
           )}
 
-          <FormSection
-            title={t.reviewTitle}
-            description="Please review your direct deposit information and sign to complete this step"
-            icon={<DollarSign className="h-5 w-5" />}
-            required={true}
-          >
-            <ReviewAndSign
-              formType="direct_deposit"
-              title="Direct Deposit Authorization Form"
-              formData={formData}
-              description={employee?.position ? `Position: ${employee.position}` : undefined}
-              onSign={(signatureData: any) => handleDigitalSignature(signatureData, pdfUrl || undefined)}
-              onBack={handleBackFromReview}
-              language={language}
-              usePDFPreview={!!previewEmployeeId}
-              pdfEndpoint={previewEmployeeId ? `${getApiUrl()}/onboarding/${previewEmployeeId}/direct-deposit/generate-pdf` : undefined}
-              onPdfGenerated={(pdf: string) => setPdfUrl(pdf)}
-              extraPdfData={extraPdfData}
-            />
-          </FormSection>
+          <Card>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+                <span>{t.reviewTitle}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              <ReviewAndSign
+                formType="direct_deposit"
+                title="Direct Deposit Authorization Form"
+                formData={formData}
+                description={employee?.position ? `Position: ${employee.position}` : undefined}
+                onSign={(signatureData: any) => handleDigitalSignature(signatureData, pdfUrl || undefined)}
+                onBack={handleBackFromReview}
+                language={language}
+                usePDFPreview={!!previewEmployeeId}
+                pdfEndpoint={previewEmployeeId ? `${getApiUrl()}/onboarding/${previewEmployeeId}/direct-deposit/generate-pdf` : undefined}
+                onPdfGenerated={(pdf: string) => setPdfUrl(pdf)}
+                extraPdfData={extraPdfData}
+              />
+            </CardContent>
+          </Card>
           </div>
         </StepContentWrapper>
       </StepContainer>
@@ -945,34 +953,33 @@ export default function DirectDepositStep({
         )}
 
         {/* Main Form Section */}
-        <FormSection
-          title={t.title}
-          description={t.description}
-          icon={<DollarSign className="h-5 w-5" />}
-          completed={isStepComplete}
-          required={true}
-        >
-          <div className="space-y-4 sm:space-y-6">
-            {/* Important Information */}
-            <Card className="border-amber-200 bg-amber-50">
-              <CardHeader className="pb-3 p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg flex items-center space-x-2 text-amber-800">
-                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span>{t.importantInfoTitle}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-amber-800 p-4 sm:p-6">
-                <ul className="space-y-2 text-xs sm:text-sm">
-                  {t.importantInfo.map((info, index) => (
-                    <li key={index}>• {info}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+              <span>Direct Deposit Authorization Form</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6">
+            <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
+              {/* Important Information */}
+              <Card className="border-amber-200 bg-amber-50">
+                <CardHeader className="pb-3 p-[clamp(0.75rem,2vw,1rem)]">
+                  <CardTitle className="text-[clamp(1rem,2.5vw,1.125rem)] flex items-center gap-2 text-amber-800">
+                    <AlertTriangle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] flex-shrink-0" />
+                    <span>{t.importantInfoTitle}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-amber-800 p-[clamp(0.75rem,2vw,1rem)]">
+                  <ul className="space-y-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.75rem,2vw,0.875rem)]">
+                    {t.importantInfo.map((info, index) => (
+                      <li key={index}>• {info}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
 
-            {/* Direct Deposit Form */}
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">{t.formTitle}</h3>
+              {/* Direct Deposit Form */}
               <DirectDepositFormEnhanced
                 initialData={formData}
                 language={language}
@@ -991,8 +998,8 @@ export default function DirectDepositStep({
                 }}
               />
             </div>
-          </div>
-        </FormSection>
+          </CardContent>
+        </Card>
         </div>
       </StepContentWrapper>
     </StepContainer>

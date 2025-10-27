@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { GraduationCap, Plus, Trash2, School, Briefcase, Award } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Info } from 'lucide-react'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileRadioGroup,
+  MobileTextarea,
+  MobileCheckbox,
+  MobileErrorMessage,
+  MobileFormField,
+  MobileFormGrid
+} from './mobile-optimized'
 
 interface EducationSkillsStepProps {
   formData: any
@@ -184,77 +189,74 @@ export default function EducationSkillsStep({
             {label}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`${schoolKey}_name`}>{t('jobApplication.steps.education.fields.schoolName')}</Label>
-              <Input
+        <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormGrid columns={2}>
+            <MobileFormField>
+              <MobileLabel htmlFor={`${schoolKey}_name`}>{t('jobApplication.steps.education.fields.schoolName')}</MobileLabel>
+              <MobileInput
                 id={`${schoolKey}_name`}
                 value={school.name || ''}
                 onChange={(e) => updateEducationEntry(schoolKey, 'name', e.target.value)}
                 placeholder=""
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`${schoolKey}_location`}>{t('jobApplication.steps.education.fields.location')}</Label>
-              <Input
+            </MobileFormField>
+            <MobileFormField>
+              <MobileLabel htmlFor={`${schoolKey}_location`}>{t('jobApplication.steps.education.fields.location')}</MobileLabel>
+              <MobileInput
                 id={`${schoolKey}_location`}
                 value={school.location || ''}
                 onChange={(e) => updateEducationEntry(schoolKey, 'location', e.target.value)}
                 placeholder=""
               />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`${schoolKey}_years`}>{t('jobApplication.steps.education.fields.yearsAttended')}</Label>
-              <Input
+            </MobileFormField>
+          </MobileFormGrid>
+
+          <MobileFormGrid columns={3}>
+            <MobileFormField>
+              <MobileLabel htmlFor={`${schoolKey}_years`}>{t('jobApplication.steps.education.fields.yearsAttended')}</MobileLabel>
+              <MobileInput
                 id={`${schoolKey}_years`}
+                type="text"
+                mobileKeyboard="numeric"
                 value={school.years_attended || ''}
                 onChange={(e) => updateEducationEntry(schoolKey, 'years_attended', e.target.value)}
                 placeholder="4"
                 className="text-center"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('jobApplication.steps.education.fields.graduated')}</Label>
-              <RadioGroup 
-                value={school.graduated || ''} 
+            </MobileFormField>
+            <MobileFormField>
+              <MobileLabel>{t('jobApplication.steps.education.fields.graduated')}</MobileLabel>
+              <MobileRadioGroup
+                value={school.graduated || ''}
                 onValueChange={(value) => updateEducationEntry(schoolKey, 'graduated', value)}
-                className="flex gap-4 mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id={`${schoolKey}_grad_yes`} />
-                  <Label htmlFor={`${schoolKey}_grad_yes`} className="font-normal">{t('common.yes')}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id={`${schoolKey}_grad_no`} />
-                  <Label htmlFor={`${schoolKey}_grad_no`} className="font-normal">{t('common.no')}</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`${schoolKey}_degree`}>{t('jobApplication.steps.education.fields.degreeReceived')}</Label>
-              <Input
+                columns={2}
+                options={[
+                  { value: 'yes', label: t('common.yes'), id: `${schoolKey}_grad_yes` },
+                  { value: 'no', label: t('common.no'), id: `${schoolKey}_grad_no` }
+                ]}
+              />
+            </MobileFormField>
+            <MobileFormField>
+              <MobileLabel htmlFor={`${schoolKey}_degree`}>{t('jobApplication.steps.education.fields.degreeReceived')}</MobileLabel>
+              <MobileInput
                 id={`${schoolKey}_degree`}
                 value={school.degree_received || ''}
                 onChange={(e) => updateEducationEntry(schoolKey, 'degree_received', e.target.value)}
                 placeholder=""
               />
-            </div>
-          </div>
-          
+            </MobileFormField>
+          </MobileFormGrid>
+
           {schoolKey !== 'high_school' && (
-            <div className="space-y-2">
-              <Label htmlFor={`${schoolKey}_major`}>{t('jobApplication.steps.education.fields.major')}</Label>
-              <Input
+            <MobileFormField>
+              <MobileLabel htmlFor={`${schoolKey}_major`}>{t('jobApplication.steps.education.fields.major')}</MobileLabel>
+              <MobileInput
                 id={`${schoolKey}_major`}
                 value={school.major_minor || ''}
                 onChange={(e) => updateEducationEntry(schoolKey, 'major_minor', e.target.value)}
                 placeholder=""
               />
-            </div>
+            </MobileFormField>
           )}
         </CardContent>
       </Card>
@@ -283,102 +285,95 @@ export default function EducationSkillsStep({
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`college_${index}_name`}>{t('jobApplication.steps.education.fields.schoolName')}</Label>
-              <Input
+        <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormGrid columns={2}>
+            <MobileFormField>
+              <MobileLabel htmlFor={`college_${index}_name`}>{t('jobApplication.steps.education.fields.schoolName')}</MobileLabel>
+              <MobileInput
                 id={`college_${index}_name`}
                 value={college.name || ''}
                 onChange={(e) => updateCollegeEntry(index, 'name', e.target.value)}
                 placeholder=""
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`college_${index}_location`}>{t('jobApplication.steps.education.fields.location')}</Label>
-              <Input
+            </MobileFormField>
+            <MobileFormField>
+              <MobileLabel htmlFor={`college_${index}_location`}>{t('jobApplication.steps.education.fields.location')}</MobileLabel>
+              <MobileInput
                 id={`college_${index}_location`}
                 value={college.location || ''}
                 onChange={(e) => updateCollegeEntry(index, 'location', e.target.value)}
                 placeholder=""
               />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`college_${index}_years`}>{t('jobApplication.steps.education.fields.yearsAttended')}</Label>
-              <Input
+            </MobileFormField>
+          </MobileFormGrid>
+
+          <MobileFormGrid columns={3}>
+            <MobileFormField>
+              <MobileLabel htmlFor={`college_${index}_years`}>{t('jobApplication.steps.education.fields.yearsAttended')}</MobileLabel>
+              <MobileInput
                 id={`college_${index}_years`}
+                type="text"
+                mobileKeyboard="numeric"
                 value={college.years_attended || ''}
                 onChange={(e) => updateCollegeEntry(index, 'years_attended', e.target.value)}
                 placeholder="4"
                 className="text-center"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('jobApplication.steps.education.fields.graduated')}</Label>
-              <RadioGroup 
-                value={college.graduated || ''} 
+            </MobileFormField>
+            <MobileFormField>
+              <MobileLabel>{t('jobApplication.steps.education.fields.graduated')}</MobileLabel>
+              <MobileRadioGroup
+                value={college.graduated || ''}
                 onValueChange={(value) => updateCollegeEntry(index, 'graduated', value)}
-                className="flex gap-4 mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id={`college_${index}_grad_yes`} />
-                  <Label htmlFor={`college_${index}_grad_yes`} className="font-normal">{t('common.yes')}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id={`college_${index}_grad_no`} />
-                  <Label htmlFor={`college_${index}_grad_no`} className="font-normal">{t('common.no')}</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`college_${index}_degree`}>{t('jobApplication.steps.education.fields.degreeReceived')}</Label>
-              <Input
+                columns={2}
+                options={[
+                  { value: 'yes', label: t('common.yes'), id: `college_${index}_grad_yes` },
+                  { value: 'no', label: t('common.no'), id: `college_${index}_grad_no` }
+                ]}
+              />
+            </MobileFormField>
+            <MobileFormField>
+              <MobileLabel htmlFor={`college_${index}_degree`}>{t('jobApplication.steps.education.fields.degreeReceived')}</MobileLabel>
+              <MobileInput
                 id={`college_${index}_degree`}
                 value={college.degree_received || ''}
                 onChange={(e) => updateCollegeEntry(index, 'degree_received', e.target.value)}
                 placeholder=""
               />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor={`college_${index}_major`}>{t('jobApplication.steps.education.fields.major')}</Label>
-            <Input
+            </MobileFormField>
+          </MobileFormGrid>
+
+          <MobileFormField>
+            <MobileLabel htmlFor={`college_${index}_major`}>{t('jobApplication.steps.education.fields.major')}</MobileLabel>
+            <MobileInput
               id={`college_${index}_major`}
               value={college.major_minor || ''}
               onChange={(e) => updateCollegeEntry(index, 'major_minor', e.target.value)}
               placeholder=""
             />
-          </div>
+          </MobileFormField>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Alert className="flex-1 mr-4">
-          <Info className="h-4 w-4" />
-          <AlertDescription>
+    <div className="space-y-[clamp(1.5rem,4vw,2rem)]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Alert className="flex-1">
+          <Info className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
+          <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
             {t('jobApplication.steps.education.instruction')}
           </AlertDescription>
         </Alert>
 
-        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200 whitespace-nowrap">
-          <Checkbox
-            id="no_education"
-            checked={hasNoEducation}
-            onCheckedChange={handleNoEducationChange}
-            className="h-5 w-5"
-          />
-          <Label htmlFor="no_education" className="text-base font-medium cursor-pointer">
-            {t('jobApplication.steps.education.noEducation')}
-          </Label>
-        </div>
+        <MobileCheckbox
+          id="no_education"
+          checked={hasNoEducation}
+          onCheckedChange={handleNoEducationChange}
+          label={t('jobApplication.steps.education.noEducation')}
+          className="bg-gray-50 rounded-lg border border-gray-200 p-3 whitespace-nowrap"
+        />
       </div>
 
       {!hasNoEducation && (
@@ -445,21 +440,20 @@ export default function EducationSkillsStep({
           {/* Skills and Certifications */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t('jobApplication.steps.education.fields.skills')}</CardTitle>
+              <CardTitle className="text-[clamp(1rem,2.5vw,1.125rem)]">{t('jobApplication.steps.education.fields.skills')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <Label htmlFor="skills_certifications">
+            <CardContent className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <MobileLabel htmlFor="skills_certifications">
                 {t('jobApplication.steps.education.fields.skillsDescription')}
-              </Label>
-              <Textarea
+              </MobileLabel>
+              <MobileTextarea
                 id="skills_certifications"
                 value={skills_certifications}
                 onChange={(e) => setSkillsCertifications(e.target.value)}
                 placeholder=""
                 rows={4}
-                className="text-sm"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500">
                 {t('jobApplication.steps.education.fields.skillsNote')}
               </p>
             </CardContent>

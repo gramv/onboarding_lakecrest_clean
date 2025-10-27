@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Mail, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react'
+import { MobileInput } from '@/components/job-application/mobile-optimized/MobileInput'
+import { MobileLabel } from '@/components/job-application/mobile-optimized/MobileLabel'
 import { api } from '@/services/api'
 import type { AxiosError } from 'axios'
 
@@ -49,50 +49,50 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 padding-md">
-        <Card className="w-full max-w-md card-elevated card-rounded-lg animate-fade-in">
-          <CardHeader className="card-padding-lg text-center spacing-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-[clamp(1rem,3vw,1.5rem)]">
+        <Card className="w-full max-w-md shadow-xl rounded-lg">
+          <CardHeader className="p-[clamp(1.5rem,4vw,2rem)] text-center space-y-[clamp(1rem,3vw,1.5rem)]">
             <div className="flex justify-center">
-              <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="p-[clamp(1rem,3vw,1.25rem)] bg-gradient-to-br from-green-50 to-green-100 rounded-2xl">
+                <CheckCircle className="h-[clamp(2rem,5vw,2.5rem)] w-[clamp(2rem,5vw,2.5rem)] text-green-600" />
               </div>
             </div>
-            
-            <div className="spacing-sm">
-              <Badge className="badge-success badge-md">
+
+            <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <Badge className="bg-green-100 text-green-800 border-green-200">
                 Email Sent
               </Badge>
-              <CardTitle className="text-display-sm">
+              <CardTitle className="text-[clamp(1.5rem,4vw,2rem)] font-bold">
                 Check Your Email
               </CardTitle>
-              <CardDescription className="text-body-md text-secondary">
+              <CardDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">
                 If an account exists with this email, you will receive a password reset link.
               </CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent className="card-padding-lg">
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-muted-foreground">
+          <CardContent className="p-[clamp(1.5rem,4vw,2rem)]">
+            <div className="space-y-[clamp(1rem,3vw,1.5rem)] text-center">
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">
                 Didn't receive the email? Check your spam folder or try again in a few minutes.
               </p>
-              
-              <div className="flex flex-col gap-2">
-                <Button 
-                  variant="outline" 
+
+              <div className="flex flex-col gap-[clamp(0.75rem,2vw,1rem)]">
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setSuccess(false)
                     setEmail('')
                   }}
-                  className="w-full"
+                  className="w-full h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                 >
                   Try Different Email
                 </Button>
-                
-                <Button 
-                  variant="link" 
+
+                <Button
+                  variant="link"
                   onClick={() => navigate('/login')}
-                  className="text-body-sm text-secondary hover:text-primary"
+                  className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 hover:text-gray-800 h-auto p-0"
                 >
                   ← Back to Login
                 </Button>
@@ -105,82 +105,80 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 padding-md">
-      <Card className="w-full max-w-md card-elevated card-rounded-lg animate-fade-in">
-        <CardHeader className="card-padding-lg text-center spacing-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-[clamp(1rem,3vw,1.5rem)]">
+      <Card className="w-full max-w-md shadow-xl rounded-lg">
+        <CardHeader className="p-[clamp(1.5rem,4vw,2rem)] text-center space-y-[clamp(1rem,3vw,1.5rem)]">
           <div className="flex justify-center">
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
-              <Mail className="h-8 w-8 text-blue-600" />
+            <div className="p-[clamp(1rem,3vw,1.25rem)] bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
+              <Mail className="h-[clamp(2rem,5vw,2.5rem)] w-[clamp(2rem,5vw,2.5rem)] text-blue-600" />
             </div>
           </div>
-          
-          <div className="spacing-sm">
-            <Badge className="badge-primary badge-md">
+
+          <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
               Password Reset
             </Badge>
-            <CardTitle className="text-display-sm">
+            <CardTitle className="text-[clamp(1.5rem,4vw,2rem)] font-bold">
               Forgot Your Password?
             </CardTitle>
-            <CardDescription className="text-body-md text-secondary">
+            <CardDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">
               Enter your email address and we'll send you a link to reset your password.
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="card-padding-lg">
-          <form onSubmit={handleSubmit} className="spacing-sm">
+        <CardContent className="p-[clamp(1.5rem,4vw,2rem)]">
+          <form onSubmit={handleSubmit} className="space-y-[clamp(1rem,3vw,1.5rem)]">
             {error && (
-              <Alert variant="destructive" className="bg-error border-error animate-slide-down">
-                <AlertDescription className="text-error">
+              <Alert variant="destructive" className="p-[clamp(0.75rem,2vw,1rem)]">
+                <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
                   {error}
                 </AlertDescription>
               </Alert>
             )}
-            
-            <div className="form-group">
-              <Label htmlFor="email" className="form-label">
+
+            <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <MobileLabel htmlFor="email" required>
                 Email Address
-              </Label>
-              <Input
+              </MobileLabel>
+              <MobileInput
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
-                className="form-input-base form-input-md focus-ring"
                 disabled={loading}
-                autoComplete="email"
-                autoFocus
+                mobileKeyboard="email"
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full btn-primary btn-md"
+            <Button
+              type="submit"
+              className="w-full h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] font-semibold flex items-center justify-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
               disabled={loading || !email.trim()}
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] animate-spin" />
                   Sending Reset Link...
                 </>
               ) : (
                 <>
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Mail className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
                   Send Reset Link
                 </>
               )}
             </Button>
           </form>
-          
-          <div className="text-center pt-4">
-            <Button 
-              variant="link" 
+
+          <div className="text-center pt-[clamp(1rem,3vw,1.5rem)]">
+            <Button
+              variant="link"
               onClick={() => navigate('/login')}
-              className="text-body-sm text-secondary hover:text-primary smooth-transition"
+              className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 hover:text-gray-800 h-auto p-0 flex items-center justify-center gap-[clamp(0.25rem,1vw,0.5rem)]"
               disabled={loading}
             >
-              <ArrowLeft className="mr-1 h-3 w-3" />
+              <ArrowLeft className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)]" />
               Back to Login
             </Button>
           </div>

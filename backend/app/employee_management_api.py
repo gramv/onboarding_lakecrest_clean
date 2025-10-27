@@ -15,7 +15,8 @@ from .supabase_service_enhanced import EnhancedSupabaseService
 from .response_utils import success_response, error_response
 
 def get_supabase_service():
-    return EnhancedSupabaseService()
+    from .supabase_service_enhanced import get_enhanced_supabase_service
+    return get_enhanced_supabase_service()
 
 router = APIRouter(prefix="/api/employee-management", tags=["Employee Management"])
 

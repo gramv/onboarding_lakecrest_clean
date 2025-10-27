@@ -68,28 +68,51 @@ async def get_training_video_settings(
     """
     try:
         supabase_service = get_supabase_service()
-        # Use admin_client to bypass RLS for HR settings operations
-        supabase = supabase_service.admin_client
-        
-        result = supabase.table("hr_settings")\
-            .select("setting_value")\
-            .eq("setting_key", "human_trafficking_training_videos")\
-            .single()\
-            .execute()
-        
-        if not result.data:
-            logger.warning("Training video settings not found in database, returning defaults")
+
+        # Use direct PostgreSQL query if available
+        if supabase_service.use_direct_postgres and supabase_service.db_pool:
+            async with supabase_service.db_pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT setting_value FROM hr_settings WHERE setting_key = $1",
+                    "human_trafficking_training_videos"
+                )
+
+                if not row:
+                    logger.warning("Training video settings not found in database, returning defaults")
+                    return SettingsResponse(
+                        success=True,
+                        data={"video_id_en": "XhbfGo7voB8", "video_id_es": "XhbfGo7voB8"},
+                        message="Using default video settings"
+                    )
+
+                return SettingsResponse(
+                    success=True,
+                    data=row["setting_value"]  # asyncpg returns JSONB as dict
+                )
+        else:
+            # Fallback to Supabase client
+            # Use admin_client to bypass RLS for HR settings operations
+            supabase = supabase_service.admin_client
+
+            result = supabase.table("hr_settings")\
+                .select("setting_value")\
+                .eq("setting_key", "human_trafficking_training_videos")\
+                .single()\
+                .execute()
+
+            if not result.data:
+                logger.warning("Training video settings not found in database, returning defaults")
+                return SettingsResponse(
+                    success=True,
+                    data={"video_id_en": "XhbfGo7voB8", "video_id_es": "XhbfGo7voB8"},
+                    message="Using default video settings"
+                )
+
             return SettingsResponse(
                 success=True,
-                data={"video_id_en": "XhbfGo7voB8", "video_id_es": "XhbfGo7voB8"},
-                message="Using default video settings"
+                data=result.data["setting_value"]
             )
-        
-        return SettingsResponse(
-            success=True,
-            data=result.data["setting_value"]
-        )
-        
+
     except Exception as e:
         logger.error(f"Error fetching training video settings: {str(e)}")
         raise HTTPException(
@@ -177,27 +200,49 @@ async def get_training_video_settings_public():
     """
     try:
         supabase_service = get_supabase_service()
-        # Use admin_client to bypass RLS for HR settings operations
-        supabase = supabase_service.admin_client
-        
-        result = supabase.table("hr_settings")\
-            .select("setting_value")\
-            .eq("setting_key", "human_trafficking_training_videos")\
-            .single()\
-            .execute()
-        
-        if not result.data:
-            logger.info("Training video settings not found, returning defaults")
+
+        # Use direct PostgreSQL query if available
+        if supabase_service.use_direct_postgres and supabase_service.db_pool:
+            async with supabase_service.db_pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT setting_value FROM hr_settings WHERE setting_key = $1",
+                    "human_trafficking_training_videos"
+                )
+
+                if not row:
+                    logger.info("Training video settings not found, returning defaults")
+                    return SettingsResponse(
+                        success=True,
+                        data={"video_id_en": "XhbfGo7voB8", "video_id_es": "XhbfGo7voB8"}
+                    )
+
+                return SettingsResponse(
+                    success=True,
+                    data=row["setting_value"]  # asyncpg returns JSONB as dict
+                )
+        else:
+            # Fallback to Supabase client
+            # Use admin_client to bypass RLS for HR settings operations
+            supabase = supabase_service.admin_client
+
+            result = supabase.table("hr_settings")\
+                .select("setting_value")\
+                .eq("setting_key", "human_trafficking_training_videos")\
+                .single()\
+                .execute()
+
+            if not result.data:
+                logger.info("Training video settings not found, returning defaults")
+                return SettingsResponse(
+                    success=True,
+                    data={"video_id_en": "XhbfGo7voB8", "video_id_es": "XhbfGo7voB8"}
+                )
+
             return SettingsResponse(
                 success=True,
-                data={"video_id_en": "XhbfGo7voB8", "video_id_es": "XhbfGo7voB8"}
+                data=result.data["setting_value"]
             )
-        
-        return SettingsResponse(
-            success=True,
-            data=result.data["setting_value"]
-        )
-        
+
     except Exception as e:
         logger.error(f"Error fetching training video settings (public): {str(e)}")
         # Return defaults on error to avoid breaking onboarding

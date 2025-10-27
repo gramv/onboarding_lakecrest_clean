@@ -95,7 +95,7 @@ export function NavigationButtons({
           "flex flex-col gap-3",
           "sticky bottom-0 left-0 right-0 z-20",
           "bg-white border-t shadow-2xl",
-          "p-4 -mx-6 sm:mx-0",
+          "p-4 -mx-4 sm:mx-0",
           "sm:relative sm:flex-row sm:items-center sm:bg-transparent sm:border-0 sm:shadow-none sm:p-0 sm:pt-6"
         ]
       : [
@@ -228,26 +228,6 @@ export function NavigationButtons({
       {showStepReminder && (
         <div className="text-xs text-amber-600 sm:text-sm">
           Finish this section to unlock the next step.
-        </div>
-      )}
-
-      {/* Mobile Progress Indicator (only when sticky) */}
-      {sticky && currentStep !== undefined && totalSteps !== undefined && (
-        <div className="sm:hidden mt-3 px-4 -mx-4 pb-2">
-          <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
-            <span className="font-medium">Step {currentStep + 1} of {totalSteps}</span>
-            {progress !== undefined && (
-              <span className="font-medium text-blue-600">{Math.round(progress)}% Complete</span>
-            )}
-          </div>
-          {progress !== undefined && (
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
         </div>
       )}
     </div>

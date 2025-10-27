@@ -118,6 +118,23 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
 import uuid
 
 class EnhancedSupabaseService:
+    """Enhanced Supabase service with singleton pattern"""
+    _instance = None
+    _lock = None
+
+    def __new__(cls):
+        """Singleton pattern - ensure only one instance exists"""
+        if cls._instance is None:
+            # Import threading here to avoid circular imports
+            import threading
+            if cls._lock is None:
+                cls._lock = threading.Lock()
+
+            with cls._lock:
+                # Double-check locking pattern
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
     """
     Enhanced Supabase service with production-ready features
     """
@@ -131,22 +148,32 @@ class EnhancedSupabaseService:
             or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
             or os.getenv("SUPABASE_SERVICE_ROLE")
         )  # For admin operations
-        
-        if not self.supabase_url or not self.supabase_anon_key:
-            raise SupabaseConnectionError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment")
-        
-        # Initialize clients
-        self.client: Client = create_client(self.supabase_url, self.supabase_anon_key)
-        
-        # Admin client for privileged operations
-        if self.supabase_service_key:
-            self.admin_client: Client = create_client(self.supabase_url, self.supabase_service_key)
+
+        # Check if using placeholder Supabase URL (AWS RDS mode)
+        self.use_direct_postgres = (
+            not self.supabase_url
+            or not self.supabase_anon_key
+            or "placeholder" in (self.supabase_url or "").lower()
+        )
+
+        if self.use_direct_postgres:
+            logger.info("🔄 Using direct PostgreSQL connection (AWS RDS mode)")
+            # Create mock clients for compatibility
+            self.client = None
+            self.admin_client = None
         else:
-            self.admin_client = self.client
-            logger.warning(
-                "SUPABASE_SERVICE_KEY not set, using anon key for admin operations — manager-specific "
-                "queries may be blocked by RLS. Ensure the service role key is configured in the .env file."
-            )
+            # Initialize Supabase clients
+            self.client: Client = create_client(self.supabase_url, self.supabase_anon_key)
+
+            # Admin client for privileged operations
+            if self.supabase_service_key:
+                self.admin_client: Client = create_client(self.supabase_url, self.supabase_service_key)
+            else:
+                self.admin_client = self.client
+                logger.warning(
+                    "SUPABASE_SERVICE_KEY not set, using anon key for admin operations — manager-specific "
+                    "queries may be blocked by RLS. Ensure the service role key is configured in the .env file."
+                )
         
         # Initialize encryption
         self.encryption_key = os.getenv("ENCRYPTION_KEY")
@@ -224,17 +251,42 @@ class EnhancedSupabaseService:
         if not asyncpg:
             logger.info("⏭️ Skipping DB pool initialization - asyncpg not installed")
             return
-            
+
         try:
             database_url = os.getenv("DATABASE_URL")
             if database_url:
+                # Parse and reconstruct URL to handle special characters in password
+                from urllib.parse import urlparse, quote_plus, urlunparse
+
+                parsed = urlparse(database_url)
+
+                # If password contains special characters, URL-encode it
+                if parsed.password and any(c in parsed.password for c in [':', '@', '/', '?', '#', '[', ']', '&', '=', '{', '}']):
+                    # Reconstruct the netloc with encoded password
+                    encoded_password = quote_plus(parsed.password)
+                    netloc = f"{parsed.username}:{encoded_password}@{parsed.hostname}"
+                    if parsed.port:
+                        netloc += f":{parsed.port}"
+
+                    # Reconstruct the full URL
+                    database_url = urlunparse((
+                        parsed.scheme,
+                        netloc,
+                        parsed.path,
+                        parsed.params,
+                        parsed.query,
+                        parsed.fragment
+                    ))
+
+                # Use small pool size for db.t3.micro (max 87 connections total)
+                # With multiple ECS tasks, we need to be conservative
                 self.db_pool = await asyncpg.create_pool(
                     database_url,
-                    min_size=5,
-                    max_size=20,
+                    min_size=2,
+                    max_size=5,
                     command_timeout=30
                 )
-                logger.info("✅ PostgreSQL connection pool initialized")
+                logger.info(f"✅ PostgreSQL connection pool initialized - pool_id={id(self.db_pool)}, instance_id={id(self)}")
         except Exception as e:
             logger.error(f"Failed to initialize DB pool: {e}")
     
@@ -243,6 +295,47 @@ class EnhancedSupabaseService:
         if self.db_pool:
             await self.db_pool.close()
             logger.info("Database connection pool closed")
+
+    async def insert_user_direct(self, user_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Insert user directly via PostgreSQL (for RDS mode)"""
+        if not self.use_direct_postgres:
+            logger.error("Direct PostgreSQL mode not enabled")
+            return None
+
+        # Initialize pool if not already done
+        if not self.db_pool:
+            await self.initialize_db_pool()
+
+        if not self.db_pool:
+            logger.error("Failed to initialize database pool")
+            return None
+
+        try:
+            async with self.db_pool.acquire() as conn:
+                # Insert user
+                row = await conn.fetchrow("""
+                    INSERT INTO public.users (id, email, password_hash, role, first_name, last_name, is_active, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    RETURNING *
+                """,
+                    user_data.get("id"),
+                    user_data.get("email"),
+                    user_data.get("password_hash"),
+                    user_data.get("role"),
+                    user_data.get("first_name"),
+                    user_data.get("last_name"),
+                    user_data.get("is_active", True),
+                    user_data.get("created_at", datetime.now(timezone.utc))
+                )
+
+                if row:
+                    logger.info(f"✅ User created via direct PostgreSQL: {user_data.get('email')}")
+                    return dict(row)
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to insert user via direct PostgreSQL: {e}")
+            return None
     
     async def health_check(self) -> Dict[str, Any]:
         """Check Supabase connection health"""
@@ -1343,6 +1436,42 @@ class EnhancedSupabaseService:
             return 0
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email address"""
+        # Use direct PostgreSQL if in RDS mode
+        if self.use_direct_postgres:
+            logger.info(f"🔍 get_user_by_email({email}): use_direct_postgres={self.use_direct_postgres}, db_pool={self.db_pool is not None}, pool_id={id(self.db_pool) if self.db_pool else 'None'}")
+            if not self.db_pool:
+                logger.error(f"❌ Database pool not initialized - cannot get user by email. Pool state: {self.db_pool}")
+                return None
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "SELECT * FROM public.users WHERE LOWER(email) = LOWER($1)",
+                        email
+                    )
+                    if row:
+                        # Convert row to dict and convert UUIDs to strings
+                        row_dict = dict(row)
+
+                        return User(
+                            id=str(row_dict["id"]),  # Convert UUID to string
+                            email=row_dict["email"],
+                            first_name=row_dict["first_name"],
+                            last_name=row_dict["last_name"],
+                            role=UserRole(row_dict["role"]),
+                            property_id=str(row_dict["property_id"]) if row_dict.get("property_id") else None,  # Convert UUID to string
+                            password_hash=row_dict.get("password_hash"),
+                            is_active=row_dict.get("is_active", True),
+                            created_at=row_dict["created_at"]
+                        )
+                    return None
+            except Exception as e:
+                logger.error(f"Failed to get user by email {email} via PostgreSQL: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                return None
+
+        # Use Supabase client
         try:
             result = self.client.table("users").select("*").eq("email", email.lower()).execute()
 
@@ -1362,12 +1491,39 @@ class EnhancedSupabaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get user by email {email}: {e}")
+            logger.error(f"Failed to get user by email {email} via Supabase: {e}")
             return None
     
     async def get_user_by_id(self, user_id: str) -> Optional[User]:
         """Get user by ID"""
         try:
+            # Use direct PostgreSQL if in RDS mode
+            if self.use_direct_postgres:
+                if not self.db_pool:
+                    logger.error("Database pool not initialized - cannot get user by ID")
+                    return None
+
+                async with self.db_pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "SELECT * FROM public.users WHERE id = $1",
+                        user_id
+                    )
+                    if row:
+                        row_dict = dict(row)
+                        return User(
+                            id=str(row_dict["id"]),  # Convert UUID to string
+                            email=row_dict["email"],
+                            first_name=row_dict["first_name"],
+                            last_name=row_dict["last_name"],
+                            role=UserRole(row_dict["role"]),
+                            property_id=str(row_dict["property_id"]) if row_dict.get("property_id") else None,  # Convert UUID to string
+                            password_hash=row_dict.get("password_hash"),
+                            is_active=row_dict.get("is_active", True),
+                            created_at=row_dict["created_at"]
+                        )
+                    return None
+
+            # Use Supabase client
             result = self.client.table("users").select("*").eq("id", user_id).execute()
 
             if result.data:
@@ -1597,22 +1753,108 @@ class EnhancedSupabaseService:
             )
             return []
     
+    async def check_password_reset_rate_limit(self, user_id: str) -> bool:
+        """Check if user is within rate limit for password reset requests (async version)"""
+        # Use direct PostgreSQL if in RDS mode
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot check rate limit")
+                return True  # Fail open
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    # Get user's last password reset request info
+                    row = await conn.fetchrow(
+                        """
+                        SELECT last_password_reset_request, password_reset_request_count
+                        FROM public.users
+                        WHERE id = $1
+                        """,
+                        user_id
+                    )
+
+                    if not row:
+                        return True  # User not found, allow request
+
+                    last_request = row['last_password_reset_request']
+                    count = row['password_reset_request_count'] or 0
+
+                    now = datetime.now(timezone.utc)
+
+                    if not last_request:
+                        # No previous request, allow it and update
+                        await conn.execute(
+                            """
+                            UPDATE public.users
+                            SET last_password_reset_request = $1,
+                                password_reset_request_count = 1
+                            WHERE id = $2
+                            """,
+                            now,
+                            user_id
+                        )
+                        return True
+
+                    # Check if last request was more than an hour ago
+                    if last_request < now - timedelta(hours=1):
+                        # Reset count
+                        await conn.execute(
+                            """
+                            UPDATE public.users
+                            SET last_password_reset_request = $1,
+                                password_reset_request_count = 1
+                            WHERE id = $2
+                            """,
+                            now,
+                            user_id
+                        )
+                        return True
+
+                    # Check count (max 3 per hour)
+                    if count < 3:
+                        await conn.execute(
+                            """
+                            UPDATE public.users
+                            SET password_reset_request_count = $1,
+                                last_password_reset_request = $2
+                            WHERE id = $3
+                            """,
+                            count + 1,
+                            now,
+                            user_id
+                        )
+                        return True
+
+                    return False  # Rate limit exceeded
+
+            except Exception as e:
+                logger.error(f"Error checking password reset rate limit via PostgreSQL: {e}")
+                return True  # Fail open on error
+
+        # Fallback to Supabase client (legacy)
+        try:
+            result = self.client.rpc('check_password_reset_rate_limit', {'p_user_id': user_id}).execute()
+            return result.data if result.data is not None else True
+        except Exception as e:
+            logger.error(f"Error checking password reset rate limit: {e}")
+            return True
+
     # Synchronous wrapper methods for compatibility
     def get_user_by_email_sync(self, email: str) -> Optional[User]:
         """Synchronous wrapper for get_user_by_email"""
         import asyncio
         import concurrent.futures
-        
+
         # Use thread pool to run async function
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, self.get_user_by_email(email))
             return future.result()
-    
+
     def get_user_by_id_sync(self, user_id: str) -> Optional[User]:
         """Synchronous wrapper for get_user_by_id"""
         import asyncio
         import concurrent.futures
-        
+
         # Use thread pool to run async function
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, self.get_user_by_id(user_id))
@@ -2069,24 +2311,75 @@ class EnhancedSupabaseService:
     # Dashboard Statistics Methods
     async def get_properties_count(self) -> int:
         """Get count of active properties"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get properties count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM properties WHERE is_active = $1",
+                        True
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting properties count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('properties').select('id', count='exact').eq('is_active', True).execute()
             return response.count or 0
         except Exception as e:
             logger.error(f"Error getting properties count: {e}")
             return 0
-    
+
     async def get_managers_count(self) -> int:
         """Get count of active managers"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get managers count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM users WHERE role = $1 AND is_active = $2",
+                        'manager', True
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting managers count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('users').select('id', count='exact').eq('role', 'manager').eq('is_active', True).execute()
             return response.count or 0
         except Exception as e:
             logger.error(f"Error getting managers count: {e}")
             return 0
-    
+
     async def get_employees_count(self) -> int:
         """Get count of active employees"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get employees count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM employees WHERE employment_status = $1",
+                        'active'
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting employees count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('employees').select('id', count='exact').eq('employment_status', 'active').execute()
             return response.count or 0
@@ -2096,33 +2389,98 @@ class EnhancedSupabaseService:
     
     async def get_pending_applications_count(self) -> int:
         """Get count of pending applications"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get pending applications count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM job_applications WHERE status = $1",
+                        'pending'
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting pending applications count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('job_applications').select('id', count='exact').eq('status', 'pending').execute()
             return response.count or 0
         except Exception as e:
             logger.error(f"Error getting pending applications count: {e}")
             return 0
-    
+
     async def get_approved_applications_count(self) -> int:
         """Get count of approved applications"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get approved applications count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM job_applications WHERE status = $1",
+                        'approved'
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting approved applications count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('job_applications').select('id', count='exact').eq('status', 'approved').execute()
             return response.count or 0
         except Exception as e:
             logger.error(f"Error getting approved applications count: {e}")
             return 0
-    
+
     async def get_total_applications_count(self) -> int:
         """Get total count of all applications"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get total applications count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval("SELECT COUNT(*) FROM job_applications")
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting total applications count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('job_applications').select('id', count='exact').execute()
             return response.count or 0
         except Exception as e:
             logger.error(f"Error getting total applications count: {e}")
             return 0
-    
+
     async def get_active_employees_count(self) -> int:
         """Get count of active employees"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get active employees count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM employees WHERE employment_status = $1",
+                        'active'
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting active employees count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('employees').select('id', count='exact').eq('employment_status', 'active').execute()
             return response.count or 0
@@ -2132,6 +2490,23 @@ class EnhancedSupabaseService:
     
     async def get_onboarding_in_progress_count(self) -> int:
         """Get count of employees in onboarding process"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get onboarding in progress count")
+                return 0
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM employees WHERE onboarding_status = ANY($1::text[])",
+                        ['in_progress', 'employee_completed', 'manager_review']
+                    )
+                    return count or 0
+            except Exception as e:
+                logger.error(f"Error getting onboarding in progress count (PostgreSQL): {e}")
+                return 0
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('employees').select('id', count='exact').in_('onboarding_status', ['in_progress', 'employee_completed', 'manager_review']).execute()
             return response.count or 0
@@ -2141,10 +2516,50 @@ class EnhancedSupabaseService:
 
     async def get_all_properties(self) -> List[Property]:
         """Get all properties"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get all properties")
+                return []
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    rows = await conn.fetch("SELECT * FROM properties ORDER BY created_at DESC")
+                    logger.info(f"Raw properties from DB: {len(rows)} properties found")
+
+                    properties = []
+                    for row in rows:
+                        try:
+                            prop = Property(
+                                id=str(row['id']),  # Convert UUID to string
+                                name=row['name'],
+                                address=row['address'],
+                                city=row.get('city', ''),
+                                state=row.get('state', ''),
+                                zip_code=row.get('zip_code', ''),
+                                phone=row.get('phone', ''),
+                                qr_code_url=row.get('qr_code_url'),
+                                is_active=row.get('is_active', True),
+                                created_at=row.get('created_at')  # asyncpg returns datetime objects directly
+                            )
+                            properties.append(prop)
+                            logger.debug(f"Added property: {prop.name} ({prop.id})")
+                        except Exception as prop_error:
+                            logger.error(f"Error parsing property {row.get('id', 'unknown')}: {prop_error}")
+                            logger.error(f"Property data: {dict(row)}")
+
+                    logger.info(f"Returning {len(properties)} properties")
+                    return properties
+            except Exception as e:
+                logger.error(f"Error getting all properties (PostgreSQL): {e}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                return []
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('properties').select('*').execute()
             logger.info(f"Raw properties from DB: {len(response.data)} properties found")
-            
+
             properties = []
             for row in response.data:
                 try:
@@ -2157,8 +2572,27 @@ class EnhancedSupabaseService:
                             created_at_str = created_at_str.replace('Z', '+00:00')
                             if '+' not in created_at_str and '-' not in created_at_str[-6:]:
                                 created_at_str += '+00:00'
+
+                            # FIX: Normalize microseconds to 6 digits (handle 5-digit microseconds)
+                            # Some timestamps have 5 digits: '2025-10-13T18:13:10.27935+00:00'
+                            # Python expects 6 digits: '2025-10-13T18:13:10.279350+00:00'
+                            if '.' in created_at_str and ('+' in created_at_str or '-' in created_at_str[-6:]):
+                                parts = created_at_str.split('.')
+                                if len(parts) == 2:
+                                    # Split microseconds and timezone
+                                    if '+' in parts[1]:
+                                        microseconds, timezone = parts[1].split('+')
+                                        timezone_prefix = '+'
+                                    else:
+                                        microseconds, timezone = parts[1].rsplit('-', 1)
+                                        timezone_prefix = '-'
+
+                                    # Pad microseconds to 6 digits
+                                    microseconds = microseconds.ljust(6, '0')
+                                    created_at_str = f"{parts[0]}.{microseconds}{timezone_prefix}{timezone}"
+
                         created_at = datetime.fromisoformat(created_at_str)
-                    
+
                     prop = Property(
                         id=row['id'],
                         name=row['name'],
@@ -2176,7 +2610,7 @@ class EnhancedSupabaseService:
                 except Exception as prop_error:
                     logger.error(f"Error parsing property {row.get('id', 'unknown')}: {prop_error}")
                     logger.error(f"Property data: {row}")
-                    
+
             logger.info(f"Returning {len(properties)} properties")
             return properties
         except Exception as e:
@@ -2187,6 +2621,31 @@ class EnhancedSupabaseService:
 
     async def get_all_applications(self) -> List[JobApplication]:
         """Get all applications"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get all applications")
+                return []
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    rows = await conn.fetch("SELECT * FROM job_applications ORDER BY applied_at DESC")
+                    applications = []
+                    for row in rows:
+                        applications.append(JobApplication(
+                            id=str(row['id']),  # Convert UUID to string
+                            property_id=str(row['property_id']),  # Convert UUID to string
+                            department=row['department'],
+                            position=row['position'],
+                            applicant_data=row['applicant_data'],  # asyncpg returns JSONB as dict
+                            status=ApplicationStatus(row['status']),
+                            applied_at=row['applied_at']  # asyncpg returns datetime objects directly
+                        ))
+                    return applications
+            except Exception as e:
+                logger.error(f"Error getting all applications (PostgreSQL): {e}")
+                return []
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('job_applications').select('*').execute()
             applications = []
@@ -2420,6 +2879,32 @@ class EnhancedSupabaseService:
 
     async def get_all_managers(self) -> List[User]:
         """Get all users with manager role"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get all managers")
+                return []
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    rows = await conn.fetch("SELECT * FROM users WHERE role = $1 ORDER BY created_at DESC", 'manager')
+                    managers = []
+                    for row in rows:
+                        managers.append(User(
+                            id=str(row['id']),  # Convert UUID to string
+                            email=row['email'],
+                            password_hash=row.get('password_hash', ''),
+                            role=UserRole(row['role']),
+                            first_name=row.get('first_name', ''),
+                            last_name=row.get('last_name', ''),
+                            is_active=row.get('is_active', True),
+                            created_at=row.get('created_at')  # asyncpg returns datetime objects directly
+                        ))
+                    return managers
+            except Exception as e:
+                logger.error(f"Error getting all managers (PostgreSQL): {e}")
+                return []
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('users').select('*').eq('role', 'manager').execute()
             managers = []
@@ -2441,6 +2926,44 @@ class EnhancedSupabaseService:
 
     async def get_all_employees(self) -> List[Employee]:
         """Get all employees"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get all employees")
+                return []
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    rows = await conn.fetch("SELECT * FROM employees ORDER BY created_at DESC")
+                    employees = []
+                    for row in rows:
+                        # Handle hire_date - can be date or datetime
+                        hire_date = row.get('hire_date')
+                        if hire_date and isinstance(hire_date, datetime):
+                            hire_date = hire_date.date()
+                        elif not hire_date:
+                            hire_date = datetime.now(timezone.utc).date()
+
+                        employees.append(Employee(
+                            id=str(row['id']),  # Convert UUID to string
+                            user_id=str(row.get('user_id', row['id'])),  # Convert UUID to string
+                            property_id=str(row['property_id']),  # Convert UUID to string
+                            manager_id=str(row.get('manager_id', '')) if row.get('manager_id') else '',
+                            department=row.get('department', 'General'),
+                            position=row.get('position', 'Staff'),
+                            hire_date=hire_date,
+                            pay_rate=float(row.get('pay_rate', 0.0)),
+                            employment_type=row.get('employment_type', 'full_time'),
+                            employment_status=row.get('employment_status', 'active'),
+                            onboarding_status=OnboardingStatus(row.get('onboarding_status', 'not_started')),
+                            personal_info=row.get('personal_info', {}),  # asyncpg returns JSONB as dict
+                            created_at=row.get('created_at')  # asyncpg returns datetime objects directly
+                        ))
+                    return employees
+            except Exception as e:
+                logger.error(f"Error getting all employees (PostgreSQL): {e}")
+                return []
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('employees').select('*').execute()
             employees = []
@@ -2631,6 +3154,31 @@ class EnhancedSupabaseService:
 
     async def get_users(self) -> List[User]:
         """Get all users"""
+        if self.use_direct_postgres:
+            if not self.db_pool:
+                logger.error("Database pool not initialized - cannot get users")
+                return []
+
+            try:
+                async with self.db_pool.acquire() as conn:
+                    rows = await conn.fetch("SELECT * FROM users ORDER BY created_at DESC")
+                    users = []
+                    for row in rows:
+                        users.append(User(
+                            id=str(row['id']),  # Convert UUID to string
+                            email=row['email'],
+                            first_name=row.get('first_name'),
+                            last_name=row.get('last_name'),
+                            role=UserRole(row['role']),
+                            is_active=row.get('is_active', True),
+                            created_at=row.get('created_at')  # asyncpg returns datetime objects directly
+                        ))
+                    return users
+            except Exception as e:
+                logger.error(f"Error getting users (PostgreSQL): {e}")
+                return []
+
+        # Fallback to Supabase client
         try:
             response = self.client.table('users').select('*').execute()
             users = []

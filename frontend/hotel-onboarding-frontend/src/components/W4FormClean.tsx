@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Checkbox } from '@/components/ui/checkbox'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileRadioGroup,
+  MobileSelect,
+  MobileSelectItem,
+  MobileCheckbox
+} from '@/components/job-application/mobile-optimized'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ChevronRight, ChevronLeft, Eye, Calculator, DollarSign, Users } from 'lucide-react'
 
@@ -237,180 +240,189 @@ export default function W4FormClean({
   const progress = ((currentStep + 1) / steps.length) * 100
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="sr-only">Form W-4</CardTitle>
-          <p className="sr-only text-sm text-gray-600">Employee's Withholding Certificate</p>
-          
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span className="flex items-center gap-2">
-                {steps[currentStep].icon}
-                {steps[currentStep].title}
-              </span>
-              <span>Step {currentStep + 1} of {steps.length}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
+    <div className="space-y-6">
+      {/* Progress bar */}
+      <div>
+        <div className="flex flex-wrap justify-between text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 mb-[clamp(0.5rem,1.5vw,0.75rem)] gap-2">
+          <span className="flex items-center gap-[clamp(0.25rem,1vw,0.5rem)]">
+            {steps[currentStep].icon}
+            <span className="truncate">{steps[currentStep].title}</span>
+          </span>
+          <span className="whitespace-nowrap">Step {currentStep + 1} of {steps.length}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-[clamp(0.5rem,1.5vw,0.625rem)]">
+          <div
+            className="bg-blue-600 h-full rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
           {/* Step 1: Personal Information */}
           {currentStep === 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Personal Information</h3>
-              <p className="text-sm text-gray-600">Enter your personal details as they appear on your Social Security card</p>
+              <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Personal Information</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Enter your personal details as they appear on your Social Security card</p>
               {isLocked && (
                 <Alert className="bg-blue-50 border-blue-200">
-                  <AlertDescription className="text-blue-800 text-sm">
+                  <AlertDescription className="text-blue-800 text-[clamp(0.875rem,2.5vw,1rem)]">
                     This form has been signed. Editing is disabled to maintain compliance.
                   </AlertDescription>
                 </Alert>
               )}
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,2vw,1rem)]">
                 <div>
-                  <Label htmlFor="first_name">First Name *</Label>
-                  <Input
+                  <MobileLabel htmlFor="first_name" required>First Name</MobileLabel>
+                  <MobileInput
                     id="first_name"
                     value={formData.first_name}
                     onChange={(e) => handleInputChange('first_name', e.target.value)}
-                    className={errors.first_name ? 'border-red-500' : ''}
+                    error={!!errors.first_name}
                     disabled={isLocked}
+                    type="text"
+                    inputMode="text"
                   />
                   {errors.first_name && (
-                    <p className="text-sm text-red-500 mt-1">{errors.first_name}</p>
+                    <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.first_name}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="middle_initial">Middle Initial</Label>
-                  <Input
+                  <MobileLabel htmlFor="middle_initial">Middle Initial</MobileLabel>
+                  <MobileInput
                     id="middle_initial"
                     value={formData.middle_initial}
                     onChange={(e) => handleInputChange('middle_initial', e.target.value.slice(0, 1).toUpperCase())}
                     maxLength={1}
-                    className="w-20"
+                    className="w-24 sm:w-20"
                     disabled={isLocked}
+                    type="text"
+                    inputMode="text"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="last_name">Last Name *</Label>
-                <Input
+                <MobileLabel htmlFor="last_name" required>Last Name</MobileLabel>
+                <MobileInput
                   id="last_name"
                   value={formData.last_name}
                   onChange={(e) => handleInputChange('last_name', e.target.value)}
-                  className={errors.last_name ? 'border-red-500' : ''}
+                  error={!!errors.last_name}
                   disabled={isLocked}
+                  type="text"
+                  inputMode="text"
                 />
                 {errors.last_name && (
-                  <p className="text-sm text-red-500 mt-1">{errors.last_name}</p>
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.last_name}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="address">Street Address *</Label>
-                <Input
+                <MobileLabel htmlFor="address" required>Street Address</MobileLabel>
+                <MobileInput
                   id="address"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className={errors.address ? 'border-red-500' : ''}
+                  error={!!errors.address}
                   placeholder="123 Main Street"
                   disabled={isLocked}
+                  type="text"
+                  inputMode="text"
                 />
                 {errors.address && (
-                  <p className="text-sm text-red-500 mt-1">{errors.address}</p>
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.address}</p>
                 )}
               </div>
 
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-[clamp(0.75rem,2vw,1rem)]">
                 <div>
-                  <Label htmlFor="apt_number">Apt #</Label>
-                  <Input
+                  <MobileLabel htmlFor="apt_number">Apt #</MobileLabel>
+                  <MobileInput
                     id="apt_number"
                     value={formData.apt_number}
                     onChange={(e) => handleInputChange('apt_number', e.target.value)}
                     placeholder="Optional"
                     disabled={isLocked}
+                    type="text"
+                    inputMode="text"
                   />
                 </div>
-                
-                <div className="col-span-3">
-                  <Label htmlFor="city">City *</Label>
-                  <Input
+
+                <div className="col-span-1 sm:col-span-3">
+                  <MobileLabel htmlFor="city" required>City</MobileLabel>
+                  <MobileInput
                     id="city"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
-                    className={errors.city ? 'border-red-500' : ''}
+                    error={!!errors.city}
                     disabled={isLocked}
+                    type="text"
+                    inputMode="text"
                   />
                   {errors.city && (
-                    <p className="text-sm text-red-500 mt-1">{errors.city}</p>
+                    <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.city}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,2vw,1rem)]">
                 <div>
-                  <Label htmlFor="state">State *</Label>
-                  <select
-                    id="state"
+                  <MobileLabel htmlFor="state" required>State</MobileLabel>
+                  <MobileSelect
                     value={formData.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                    className={`w-full h-10 px-3 rounded-md border ${errors.state ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    onValueChange={(value) => handleInputChange('state', value)}
+                    placeholder="Select State"
+                    error={!!errors.state}
                     disabled={isLocked}
                   >
-                    <option value="">Select State</option>
                     {STATES.map(state => (
-                      <option key={state} value={state}>{state}</option>
+                      <MobileSelectItem key={state} value={state}>
+                        {state}
+                      </MobileSelectItem>
                     ))}
-                  </select>
+                  </MobileSelect>
                   {errors.state && (
-                    <p className="text-sm text-red-500 mt-1">{errors.state}</p>
+                    <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.state}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="zip_code">ZIP Code *</Label>
-                  <Input
+                  <MobileLabel htmlFor="zip_code" required>ZIP Code</MobileLabel>
+                  <MobileInput
                     id="zip_code"
                     value={formData.zip_code}
                     onChange={(e) => handleInputChange('zip_code', e.target.value)}
-                    className={errors.zip_code ? 'border-red-500' : ''}
+                    error={!!errors.zip_code}
                     placeholder="12345"
                     disabled={isLocked}
+                    type="text"
+                    mobileKeyboard="numeric"
                   />
                   {errors.zip_code && (
-                    <p className="text-sm text-red-500 mt-1">{errors.zip_code}</p>
+                    <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.zip_code}</p>
                   )}
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="ssn">Social Security Number *</Label>
-                <Input
+                <MobileLabel htmlFor="ssn" required>Social Security Number</MobileLabel>
+                <MobileInput
                   id="ssn"
                   value={formData.ssn}
                   onChange={(e) => {
                     const formatted = formatSSN(e.target.value)
                     handleInputChange('ssn', formatted)
                   }}
-                  className={errors.ssn ? 'border-red-500' : ''}
+                  error={!!errors.ssn}
                   placeholder="123-45-6789"
                   maxLength={11}
                   disabled={isLocked}
+                  type="text"
+                  mobileKeyboard="numeric"
                 />
                 {errors.ssn && (
-                  <p className="text-sm text-red-500 mt-1">{errors.ssn}</p>
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-500 mt-1">{errors.ssn}</p>
                 )}
               </div>
             </div>
@@ -419,58 +431,48 @@ export default function W4FormClean({
           {/* Step 2: Filing Status */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Filing Status</h3>
-              <p className="text-sm text-gray-600">Select your tax filing status</p>
-              
+              <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Filing Status</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Select your tax filing status</p>
+
               <div>
-                <Label>Check the box that describes your filing status *</Label>
-                <RadioGroup
-                  value={formData.filing_status}
-                  onValueChange={(value: any) => handleInputChange('filing_status', value)}
-                  className="mt-3 space-y-3"
-                  disabled={isLocked}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="single" id="single" disabled={isLocked} />
-                    <Label htmlFor="single" className={`font-normal ${isLocked ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer'}`}>
-                      Single or Married filing separately
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="married_filing_jointly" id="married" disabled={isLocked} />
-                    <Label htmlFor="married" className={`font-normal ${isLocked ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer'}`}>
-                      Married filing jointly (or Qualifying surviving spouse)
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="head_of_household" id="head" disabled={isLocked} />
-                    <Label htmlFor="head" className={`font-normal ${isLocked ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer'}`}>
-                      Head of household (Check only if you're unmarried and pay more than half the costs of keeping up a home for yourself and a qualifying individual)
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <MobileLabel required>Check the box that describes your filing status</MobileLabel>
+                <div className="mt-[clamp(0.5rem,1.5vw,0.75rem)]">
+                  <MobileRadioGroup
+                    value={formData.filing_status}
+                    onValueChange={(value) => handleInputChange('filing_status', value)}
+                    columns={1}
+                    options={[
+                      {
+                        value: 'single',
+                        label: 'Single or Married filing separately'
+                      },
+                      {
+                        value: 'married_filing_jointly',
+                        label: 'Married filing jointly (or Qualifying surviving spouse)'
+                      },
+                      {
+                        value: 'head_of_household',
+                        label: 'Head of household (Check only if you\'re unmarried and pay more than half the costs of keeping up a home for yourself and a qualifying individual)'
+                      }
+                    ]}
+                  />
+                </div>
               </div>
 
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <Label className={`flex items-center space-x-2 ${isLocked ? 'cursor-not-allowed text-gray-500' : ''}`}>
-                  <Checkbox
-                    checked={formData.multiple_jobs}
-                    onCheckedChange={(checked) => handleInputChange('multiple_jobs', checked)}
-                    disabled={isLocked}
-                  />
-                  <span className="font-normal">
-                    Complete this step if you (1) hold more than one job at a time, or (2) are married filing jointly and your spouse also works
-                  </span>
-                </Label>
-                <p className="text-sm text-gray-600 mt-2 ml-6">
+              <div className="mt-[clamp(1rem,3vw,1.5rem)] p-[clamp(0.75rem,2vw,1rem)] bg-gray-50 rounded-lg">
+                <MobileCheckbox
+                  id="multiple_jobs"
+                  checked={formData.multiple_jobs}
+                  onCheckedChange={(checked) => handleInputChange('multiple_jobs', checked)}
+                  label="Complete this step if you (1) hold more than one job at a time, or (2) are married filing jointly and your spouse also works"
+                />
+                <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 mt-[clamp(0.5rem,1.5vw,0.75rem)] ml-[clamp(1.5rem,4vw,2rem)]">
                   The correct amount of withholding depends on income earned from all of these jobs.
                 </p>
               </div>
 
-              <Alert className="mt-4">
-                <AlertDescription>
+              <Alert className="mt-[clamp(0.75rem,2vw,1rem)]">
+                <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
                   <strong>Note:</strong> If you have multiple jobs or your spouse works, you should complete the Multiple Jobs Worksheet or use the IRS Tax Withholding Estimator for most accurate withholding.
                 </AlertDescription>
               </Alert>
@@ -480,60 +482,62 @@ export default function W4FormClean({
           {/* Step 3: Dependents */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Claim Dependents</h3>
-              <p className="text-sm text-gray-600">If your income will be $200,000 or less ($400,000 or less if married filing jointly)</p>
-              
+              <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Claim Dependents</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">If your income will be $200,000 or less ($400,000 or less if married filing jointly)</p>
+
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="qualifying_children">
+                  <MobileLabel htmlFor="qualifying_children">
                     Number of qualifying children under age 17
-                  </Label>
-                  <div className="flex items-center gap-4 mt-2">
-                    <Input
+                  </MobileLabel>
+                  <div className="flex items-center gap-[clamp(0.75rem,2vw,1rem)] mt-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <MobileInput
                       id="qualifying_children"
                       type="number"
+                      mobileKeyboard="numeric"
                       min="0"
                       value={formData.qualifying_children}
                       onChange={(e) => handleInputChange('qualifying_children', parseInt(e.target.value) || 0)}
-                      className={`w-20 ${isLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className="w-24 sm:w-20"
                       disabled={isLocked}
                     />
-                    <span className="text-sm text-gray-600">× $2,000 = ${formData.qualifying_children * 2000}</span>
+                    <span className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">× $2,000 = ${formData.qualifying_children * 2000}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">
                     Multiply the number of qualifying children by $2,000
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="other_dependents">
+                  <MobileLabel htmlFor="other_dependents">
                     Number of other dependents
-                  </Label>
-                  <div className="flex items-center gap-4 mt-2">
-                    <Input
+                  </MobileLabel>
+                  <div className="flex items-center gap-[clamp(0.75rem,2vw,1rem)] mt-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <MobileInput
                       id="other_dependents"
                       type="number"
+                      mobileKeyboard="numeric"
                       min="0"
                       value={formData.other_dependents}
                       onChange={(e) => handleInputChange('other_dependents', parseInt(e.target.value) || 0)}
-                      className={`w-20 ${isLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className="w-24 sm:w-20"
                       disabled={isLocked}
                     />
-                    <span className="text-sm text-gray-600">× $500 = ${formData.other_dependents * 500}</span>
+                    <span className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">× $500 = ${formData.other_dependents * 500}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">
                     Multiply the number of other dependents by $500
                   </p>
                 </div>
 
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <p className="font-semibold">Total amount for dependents:</p>
-                  <p className="text-2xl font-bold text-blue-600">${calculateDependentAmount()}</p>
+                <div className="mt-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] bg-blue-50 rounded-lg">
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] font-semibold">Total amount for dependents:</p>
+                  <p className="text-[clamp(1.5rem,5vw,2rem)] font-bold text-blue-600">${calculateDependentAmount()}</p>
                 </div>
               </div>
 
               <Alert>
-                <AlertDescription>
+                <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
                   <strong>Qualifying children:</strong> Must be under age 17, have a valid SSN, and meet other IRS requirements.
                   <br />
                   <strong>Other dependents:</strong> Include children 17 or older and other qualifying relatives.
@@ -545,79 +549,82 @@ export default function W4FormClean({
           {/* Step 4: Other Adjustments */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Other Adjustments (Optional)</h3>
-              <p className="text-sm text-gray-600">Use this step if you want tax withheld for other income or want to reduce your withholding</p>
-              
+              <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold">Other Adjustments (Optional)</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Use this step if you want tax withheld for other income or want to reduce your withholding</p>
+
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="other_income">
+                  <MobileLabel htmlFor="other_income">
                     (a) Other income (not from jobs)
-                  </Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-gray-600">$</span>
-                    <Input
+                  </MobileLabel>
+                  <div className="flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] mt-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <span className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">$</span>
+                    <MobileInput
                       id="other_income"
                       type="number"
+                      mobileKeyboard="decimal"
                       min="0"
                       value={formData.other_income}
                       onChange={(e) => handleInputChange('other_income', formatCurrency(e.target.value))}
                       placeholder="0"
-                      className={`w-full ${isLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className="w-full"
                       disabled={isLocked}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">
                     If you want tax withheld on other income you expect this year (interest, dividends, retirement income, etc.)
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="deductions">
+                  <MobileLabel htmlFor="deductions">
                     (b) Deductions
-                  </Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-gray-600">$</span>
-                    <Input
+                  </MobileLabel>
+                  <div className="flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] mt-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <span className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">$</span>
+                    <MobileInput
                       id="deductions"
                       type="number"
+                      mobileKeyboard="decimal"
                       min="0"
                       value={formData.deductions}
                       onChange={(e) => handleInputChange('deductions', formatCurrency(e.target.value))}
                       placeholder="0"
-                      className={`w-full ${isLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className="w-full"
                       disabled={isLocked}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">
                     If you expect to claim deductions other than the standard deduction and want to reduce your withholding
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="extra_withholding">
+                  <MobileLabel htmlFor="extra_withholding">
                     (c) Extra withholding
-                  </Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-gray-600">$</span>
-                    <Input
+                  </MobileLabel>
+                  <div className="flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] mt-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <span className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">$</span>
+                    <MobileInput
                       id="extra_withholding"
                       type="number"
+                      mobileKeyboard="decimal"
                       min="0"
                       value={formData.extra_withholding}
                       onChange={(e) => handleInputChange('extra_withholding', formatCurrency(e.target.value))}
                       placeholder="0"
-                      className={`w-full ${isLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className="w-full"
                       disabled={isLocked}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">
                     Enter any additional tax you want withheld each pay period
                   </p>
                 </div>
               </div>
 
               <Alert>
-                <AlertDescription>
+                <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
                   <strong>Note:</strong> You can use the IRS Tax Withholding Estimator at www.irs.gov/W4App to determine a more accurate withholding amount.
                 </AlertDescription>
               </Alert>
@@ -625,24 +632,31 @@ export default function W4FormClean({
           )}
 
           {/* Navigation buttons */}
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 0 || isLocked}>
-              <ChevronLeft className="h-4 w-4 mr-2" /> Previous
+          <div className="mt-[clamp(1rem,3vw,1.5rem)] flex flex-wrap justify-between gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 0 || isLocked}
+              className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+            >
+              <ChevronLeft className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] mr-[clamp(0.25rem,1vw,0.5rem)]" /> Previous
             </Button>
-            <Button onClick={handleNext} disabled={isLocked}>
+            <Button
+              onClick={handleNext}
+              disabled={isLocked}
+              className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
+            >
               {currentStep < steps.length - 1 ? (
                 <>
-                  Next <ChevronRight className="h-4 w-4 ml-2" />
+                  Next <ChevronRight className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] ml-[clamp(0.25rem,1vw,0.5rem)]" />
                 </>
               ) : (
                 <>
-                  Review & Sign <Eye className="h-4 w-4 ml-2" />
+                  Review & Sign <Eye className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] ml-[clamp(0.25rem,1vw,0.5rem)]" />
                 </>
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

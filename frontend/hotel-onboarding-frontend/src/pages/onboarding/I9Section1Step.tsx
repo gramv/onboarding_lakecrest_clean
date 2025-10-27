@@ -401,16 +401,16 @@ export default function I9Section1Step({
           required={true}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="form" className="flex items-center space-x-2">
-                <FileText className="h-4 w-4" />
+            <TabsList className="grid w-full grid-cols-2 mb-[clamp(1rem,3vw,1.5rem)] gap-[clamp(0.25rem,1vw,0.5rem)]">
+              <TabsTrigger value="form" className="flex items-center space-x-[clamp(0.25rem,1vw,0.5rem)] h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)]">
+                <FileText className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
                 <span>{t.fillFormTab}</span>
-                {formValid && <CheckCircle className="h-3 w-3 text-green-600" />}
+                {formValid && <CheckCircle className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)] text-green-600" />}
               </TabsTrigger>
-              <TabsTrigger value="review" disabled={!formValid} className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4" />
+              <TabsTrigger value="review" disabled={!formValid} className="flex items-center space-x-[clamp(0.25rem,1vw,0.5rem)] h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)]">
+                <CheckCircle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
                 <span>{t.reviewTab}</span>
-                {isSigned && <CheckCircle className="h-3 w-3 text-green-600" />}
+                {isSigned && <CheckCircle className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)] text-green-600" />}
               </TabsTrigger>
             </TabsList>
 

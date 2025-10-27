@@ -85,44 +85,51 @@ export default function WelcomeStep({
   return (
     <StepContainer saveStatus={saveStatus} canProceed={formData.welcomeAcknowledged}>
       <StepContentWrapper>
-        <div className="space-y-6">
-        {/* Clean Header */}
-        <div className="text-center space-y-2 px-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">{t.greeting}</h1>
-          <p className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-600">{t.propertyInfo}</p>
-          <p className="text-base sm:text-lg text-gray-600">{t.title}</p>
+        {/* Mobile Optimized: Fluid spacing that scales with viewport */}
+        <div className="space-y-[clamp(1.5rem,4vw,2rem)]">
+        {/* Clean Header - Mobile Optimized with Fluid Typography */}
+        <div className="text-center space-y-[clamp(0.5rem,2vw,1rem)] px-[clamp(1rem,3vw,1.5rem)]">
+          <h1 className="text-[clamp(1.75rem,5vw,3rem)] font-bold text-gray-900 leading-tight">
+            {t.greeting}
+          </h1>
+          <p className="text-[clamp(1.25rem,4vw,2rem)] font-semibold text-blue-600 leading-snug">
+            {t.propertyInfo}
+          </p>
+          <p className="text-[clamp(1rem,3vw,1.25rem)] text-gray-600 leading-relaxed">
+            {t.title}
+          </p>
         </div>
 
-        {/* Completion Alert */}
+        {/* Completion Alert - Mobile Optimized */}
         {formData.welcomeAcknowledged && (
           <Alert className="bg-green-50 border-green-200">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-body-default text-green-800">
+            <CheckCircle className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-green-600 flex-shrink-0" />
+            <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-green-800 leading-relaxed">
               {t.completedMessage}
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Main Content Card */}
+        {/* Main Content Card - Mobile Optimized */}
         <Card className="card-transition">
-          <CardContent className="pt-6 space-y-4">
-            {/* Time Estimate */}
-            <div className="flex items-center justify-center space-x-2 text-blue-600 bg-blue-50 rounded-lg p-3 sm:p-4">
-              <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              <span className="text-sm sm:text-base font-medium">{t.estimatedTime}</span>
+          <CardContent className="pt-[clamp(1rem,3vw,1.5rem)] space-y-[clamp(1rem,3vw,1.5rem)]">
+            {/* Time Estimate - Larger touch target on mobile */}
+            <div className="flex items-center justify-center gap-[clamp(0.5rem,2vw,1rem)] text-blue-600 bg-blue-50 rounded-lg p-[clamp(0.75rem,3vw,1.25rem)]">
+              <Clock className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] flex-shrink-0" />
+              <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium">{t.estimatedTime}</span>
             </div>
 
-            {/* Requirements List */}
+            {/* Requirements List - Better spacing and readability on mobile */}
             <div>
-              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center">
-                <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
+              <h3 className="text-[clamp(0.875rem,2.5vw,1rem)] font-semibold text-gray-900 mb-[clamp(0.75rem,2vw,1rem)] flex items-center">
+                <FileText className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] mr-[clamp(0.5rem,2vw,0.75rem)] flex-shrink-0" />
                 {t.whatYouNeed}
               </h3>
-              <ul className="space-y-2 sm:space-y-3">
+              <ul className="space-y-[clamp(0.75rem,2vw,1rem)]">
                 {t.requirements.map((req, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="text-green-500 mr-2 text-lg sm:text-xl flex-shrink-0">✓</span>
-                    <span className="text-sm sm:text-base text-gray-700">{req}</span>
+                  <li key={index} className="flex items-start gap-[clamp(0.5rem,2vw,0.75rem)]">
+                    <span className="text-green-500 text-[clamp(1.25rem,3vw,1.5rem)] flex-shrink-0 leading-none mt-[clamp(0.125rem,0.5vw,0.25rem)]">✓</span>
+                    <span className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-700 leading-relaxed">{req}</span>
                   </li>
                 ))}
               </ul>
@@ -130,24 +137,25 @@ export default function WelcomeStep({
           </CardContent>
         </Card>
 
-        {/* Acknowledgement Section */}
-        <div className="mt-6 sm:mt-8 px-4">
+        {/* Acknowledgement Section - Mobile Optimized with Larger Touch Targets */}
+        <div className="mt-[clamp(1.5rem,4vw,2rem)] px-[clamp(1rem,3vw,1.5rem)]">
           <div className="max-w-2xl mx-auto">
             <div className={cn(
-              "relative rounded-xl border-2 p-4 sm:p-6 transition-all duration-300",
+              "relative rounded-xl border-2 p-[clamp(1rem,4vw,1.5rem)] transition-all duration-300",
               formData.welcomeAcknowledged
                 ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg"
                 : "border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300 hover:shadow-md"
             )}>
-              {/* Decorative corner accent */}
+              {/* Decorative corner accent - Scales with viewport */}
               <div className={cn(
-                "absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 rounded-bl-3xl transition-colors duration-300",
+                "absolute top-0 right-0 w-[clamp(3rem,8vw,4rem)] h-[clamp(3rem,8vw,4rem)] rounded-bl-3xl transition-colors duration-300",
                 formData.welcomeAcknowledged ? "bg-green-100" : "bg-blue-100"
               )} />
 
               <div className="relative">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="flex-shrink-0 mt-0.5 sm:mt-1">
+                <div className="flex items-start gap-[clamp(0.75rem,3vw,1rem)]">
+                  {/* Checkbox with larger touch target on mobile */}
+                  <div className="flex-shrink-0 mt-[clamp(0.125rem,0.5vw,0.25rem)]">
                     <Checkbox
                       id="welcome-acknowledgement"
                       checked={formData.welcomeAcknowledged}
@@ -158,7 +166,9 @@ export default function WelcomeStep({
                         }))
                       }
                       className={cn(
-                        "transition-all duration-200 h-6 w-6 sm:h-5 sm:w-5",
+                        "transition-all duration-200",
+                        // Larger on mobile (24px), smaller on desktop (20px) - always ≥ 20px for accessibility
+                        "h-[clamp(1.5rem,4vw,1.75rem)] w-[clamp(1.5rem,4vw,1.75rem)]",
                         formData.welcomeAcknowledged
                           ? "border-green-500 data-[state=checked]:bg-green-600"
                           : "border-blue-400 hover:border-blue-500"
@@ -170,7 +180,8 @@ export default function WelcomeStep({
                     <Label
                       htmlFor="welcome-acknowledgement"
                       className={cn(
-                        "text-sm sm:text-base font-medium leading-relaxed cursor-pointer transition-colors duration-200",
+                        // Fluid font size - always ≥ 14px for readability
+                        "text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-relaxed cursor-pointer transition-colors duration-200",
                         formData.welcomeAcknowledged ? "text-green-800" : "text-blue-800 hover:text-blue-900"
                       )}
                     >
@@ -180,9 +191,9 @@ export default function WelcomeStep({
                     </Label>
 
                     {formData.welcomeAcknowledged && (
-                      <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-green-700">
-                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                        <span className="font-medium">
+                      <div className="mt-[clamp(0.5rem,2vw,0.75rem)] flex items-center gap-[clamp(0.5rem,2vw,0.75rem)] text-green-700">
+                        <CheckCircle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] flex-shrink-0" />
+                        <span className="text-[clamp(0.75rem,2vw,0.875rem)] font-medium">
                           {language === 'es'
                             ? '¡Listo para continuar! Haga clic en Siguiente para continuar.'
                             : 'Ready to proceed! Click Next to continue.'}
@@ -195,9 +206,9 @@ export default function WelcomeStep({
             </div>
 
             {!formData.welcomeAcknowledged && (
-              <div className="mt-3 sm:mt-4 text-center px-2">
-                <p className="text-xs sm:text-sm text-gray-600 flex items-center justify-center gap-2">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse flex-shrink-0"></span>
+              <div className="mt-[clamp(0.75rem,2vw,1rem)] text-center px-[clamp(0.5rem,2vw,1rem)]">
+                <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-600 flex items-center justify-center gap-[clamp(0.5rem,2vw,0.75rem)]">
+                  <span className="w-[clamp(0.5rem,1.5vw,0.625rem)] h-[clamp(0.5rem,1.5vw,0.625rem)] bg-blue-400 rounded-full animate-pulse flex-shrink-0"></span>
                   <span>
                     {language === 'es'
                       ? 'Marque la casilla de arriba para habilitar el botón Siguiente'

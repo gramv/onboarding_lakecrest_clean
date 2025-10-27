@@ -4,14 +4,16 @@ import { getApiUrl } from '@/config/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileCheckbox
+} from '@/components/job-application/mobile-optimized'
 import DigitalSignatureCapture from '@/components/DigitalSignatureCapture'
 import ReviewAndSign from '@/components/ReviewAndSign'
 import { CheckCircle, Building, FileText, ScrollText, PenTool, Check, Shield, Briefcase, Lock, Heart, AlertCircle } from 'lucide-react'
 import { StepProps } from '../../controllers/OnboardingFlowController'
-import PDFViewer from '@/components/PDFViewer'
+import MobilePDFViewer from '@/components/MobilePDFViewer'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -1038,13 +1040,13 @@ export default function CompanyPoliciesStep({
     >
       <StepContentWrapper>
         <div className="space-y-6">
-        {/* Header */}
-        <div className="text-center px-4">
-          <div className="flex items-center justify-center space-x-2 mb-3 sm:mb-4">
-            <Building className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{t.title}</h1>
+        {/* Header - Mobile Optimized */}
+        <div className="text-center px-[clamp(1rem,3vw,1.5rem)]">
+          <div className="flex items-center justify-center space-x-[clamp(0.5rem,2vw,0.75rem)] mb-[clamp(0.75rem,2vw,1rem)]">
+            <Building className="h-[clamp(1.25rem,4vw,1.5rem)] w-[clamp(1.25rem,4vw,1.5rem)] text-blue-600 flex-shrink-0" />
+            <h1 className="text-[clamp(1.25rem,5vw,2rem)] font-bold text-gray-900 leading-tight">{t.title}</h1>
           </div>
-          <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">{t.description}</p>
+          <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 max-w-3xl mx-auto leading-relaxed">{t.description}</p>
         </div>
 
         {isSingleStepMode && (
@@ -1055,17 +1057,17 @@ export default function CompanyPoliciesStep({
           </Alert>
         )}
 
-        <div className="space-y-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-[clamp(0.75rem,2vw,1rem)] rounded-2xl border border-blue-100 bg-blue-50 p-[clamp(1rem,3vw,1.5rem)]">
+          <div className="flex flex-col gap-[clamp(0.5rem,2vw,0.75rem)] md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-800">
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium text-blue-800">
                 {language === 'es' ? `Sección ${currentSection} de ${sectionNavigatorConfig.length}` : `Section ${currentSection} of ${sectionNavigatorConfig.length}`}
               </p>
-              <p className="text-xs text-blue-600">
+              <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-blue-600">
                 {sectionNavigatorConfig[currentSection - 1]?.title}
               </p>
             </div>
-            <div className="text-xs text-blue-700">
+            <div className="text-[clamp(0.75rem,2vw,0.875rem)] text-blue-700">
               {isStepComplete
                 ? (language === 'es' ? 'Listo para continuar a W-4.' : 'All sections complete. Ready to continue.')
                 : (language === 'es'
@@ -1079,7 +1081,7 @@ export default function CompanyPoliciesStep({
               style={{ width: `${(currentSection / sectionNavigatorConfig.length) * 100}%` }}
             />
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
+          <div className="flex gap-[clamp(0.5rem,2vw,0.75rem)] overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
             {sectionNavigatorConfig.map((section, index) => {
               const isCurrent = index + 1 === currentSection
               const isComplete = section.status === 'complete'
@@ -1095,7 +1097,7 @@ export default function CompanyPoliciesStep({
                     }
                   }}
                   className={cn(
-                    'flex flex-col items-center rounded-xl border px-2 py-2 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex-shrink-0 min-w-[80px] sm:min-w-[100px] min-h-[72px] sm:min-h-[80px]',
+                    'flex flex-col items-center rounded-xl border px-[clamp(0.5rem,2vw,0.75rem)] py-[clamp(0.5rem,2vw,0.75rem)] text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex-shrink-0 min-w-[clamp(80px,20vw,100px)] min-h-[clamp(72px,18vw,80px)]',
                     isCurrent ? 'border-blue-500 bg-white shadow-md' : 'border-transparent bg-blue-100/60 hover:bg-white',
                     (index + 1 > currentSection && !isSectionComplete(index)) && 'cursor-not-allowed opacity-60'
                   )}
@@ -1103,12 +1105,12 @@ export default function CompanyPoliciesStep({
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   <div className={cn(
-                    'flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-xs font-semibold flex-shrink-0',
+                    'flex h-[clamp(1.75rem,4vw,2rem)] w-[clamp(1.75rem,4vw,2rem)] items-center justify-center rounded-full text-[clamp(0.75rem,2vw,0.875rem)] font-semibold flex-shrink-0',
                     isComplete ? 'bg-green-100 text-green-700 border border-green-300' : isCurrent ? 'bg-blue-600 text-white' : 'bg-white text-blue-500'
                   )}>
-                    {isComplete ? <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" /> : index + 1}
+                    {isComplete ? <CheckCircle className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)]" /> : index + 1}
                   </div>
-                  <span className="mt-1 text-[10px] sm:text-[11px] font-medium text-blue-800 line-clamp-2 leading-tight">
+                  <span className="mt-1 text-[clamp(0.625rem,2vw,0.6875rem)] font-medium text-blue-800 line-clamp-2 leading-tight">
                     {section.title.replace(/Section \d+:\s?/, '')}
                   </span>
                 </button>
@@ -1134,11 +1136,11 @@ export default function CompanyPoliciesStep({
           {currentSection === 1 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+                <CardTitle className="flex items-center space-x-[clamp(0.5rem,2vw,0.75rem)] text-[clamp(1rem,3vw,1.25rem)]">
                   {getSectionIcon(1)}
                   <span>{t.section1Title}</span>
                 </CardTitle>
-                <p className="text-sm text-gray-600">{t.section1Desc}</p>
+                <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">{t.section1Desc}</p>
               </CardHeader>
               <CardContent>
                 {/* All Company Policies in One Section */}
@@ -1163,15 +1165,15 @@ export default function CompanyPoliciesStep({
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center space-x-4">
-                      <Label htmlFor="company-initials" className="text-sm">
+                      <MobileLabel htmlFor="company-initials" className="text-[clamp(0.875rem,2.5vw,1rem)]">
                         {t.initialsLabel}
-                      </Label>
-                      <Input
+                      </MobileLabel>
+                      <MobileInput
                         id="company-initials"
                         value={companyPoliciesInitials}
                         onChange={(e) => setCompanyPoliciesInitials(e.target.value.toUpperCase())}
                         placeholder={expectedInitials || "XX"}
-                        className="w-24 text-center font-mono text-lg"
+                        className="w-24 text-center font-mono text-[clamp(1rem,3vw,1.125rem)]"
                         maxLength={4}
                       />
                       {validateInitials(companyPoliciesInitials, 'Company Policies') === true && (
@@ -1186,7 +1188,7 @@ export default function CompanyPoliciesStep({
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-[clamp(0.5rem,2vw,0.75rem)] flex-wrap">
                   <Button
                     onClick={() => {
                       if (validateInitials(companyPoliciesInitials, 'Company Policies') === true) {
@@ -1196,6 +1198,7 @@ export default function CompanyPoliciesStep({
                       }
                     }}
                     disabled={validateInitials(companyPoliciesInitials, 'Company Policies') !== true}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Continuar a Sección 2' : 'Continue to Section 2'}
                   </Button>
@@ -1233,15 +1236,15 @@ export default function CompanyPoliciesStep({
                     </div>
                     
                     <div className="flex items-center space-x-4">
-                      <Label htmlFor="eeo-initials" className="text-sm">
+                      <MobileLabel htmlFor="eeo-initials" className="text-[clamp(0.875rem,2.5vw,1rem)]">
                         {t.initialsLabel}
-                      </Label>
-                      <Input
+                      </MobileLabel>
+                      <MobileInput
                         id="eeo-initials"
                         value={eeoInitials}
                         onChange={(e) => setEeoInitials(e.target.value.toUpperCase())}
                         placeholder={expectedInitials || "XX"}
-                        className="w-24 text-center font-mono text-lg"
+                        className="w-24 text-center font-mono text-[clamp(1rem,3vw,1.125rem)]"
                         maxLength={4}
                       />
                       {validateInitials(eeoInitials, 'EEO') === true && (
@@ -1256,13 +1259,14 @@ export default function CompanyPoliciesStep({
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-[clamp(0.5rem,2vw,0.75rem)] flex-wrap">
                   <Button
                     variant="ghost"
                     onClick={() => {
                       setCurrentSection(1)
                       scrollToTop()
                     }}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Regresar a Sección 1' : 'Back to Section 1'}
                   </Button>
@@ -1275,6 +1279,7 @@ export default function CompanyPoliciesStep({
                       }
                     }}
                     disabled={validateInitials(eeoInitials, 'EEO') !== true}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Continuar a Sección 3' : 'Continue to Section 3'}
                   </Button>
@@ -1312,15 +1317,15 @@ export default function CompanyPoliciesStep({
                     </div>
 
                     <div className="flex items-center space-x-4">
-                      <Label htmlFor="sexual-harassment-initials" className="text-sm">
+                      <MobileLabel htmlFor="sexual-harassment-initials" className="text-[clamp(0.875rem,2.5vw,1rem)]">
                         {t.initialsLabel}
-                      </Label>
-                      <Input
+                      </MobileLabel>
+                      <MobileInput
                         id="sexual-harassment-initials"
                         value={sexualHarassmentInitials}
                         onChange={(e) => setSexualHarassmentInitials(e.target.value.toUpperCase())}
                         placeholder={expectedInitials || "XX"}
-                        className="w-24 text-center font-mono text-lg"
+                        className="w-24 text-center font-mono text-[clamp(1rem,3vw,1.125rem)]"
                         maxLength={4}
                       />
                       {validateInitials(sexualHarassmentInitials, 'Sexual Harassment') === true && (
@@ -1335,13 +1340,14 @@ export default function CompanyPoliciesStep({
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-[clamp(0.5rem,2vw,0.75rem)] flex-wrap">
                   <Button
                     variant="ghost"
                     onClick={() => {
                       setCurrentSection(2)
                       scrollToTop()
                     }}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Regresar a Sección 2' : 'Back to Section 2'}
                   </Button>
@@ -1354,6 +1360,7 @@ export default function CompanyPoliciesStep({
                       }
                     }}
                     disabled={validateInitials(sexualHarassmentInitials, 'Sexual Harassment') !== true}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Continuar a Sección 4' : 'Continue to Section 4'}
                   </Button>
@@ -1376,13 +1383,14 @@ export default function CompanyPoliciesStep({
                 <div className="p-4 bg-gray-50 rounded-lg mb-6">
                   <FormattedPolicyText text={CONFIDENTIAL_HOTLINE_TEXT} />
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-[clamp(0.5rem,2vw,0.75rem)] flex-wrap">
                   <Button
                     variant="ghost"
                     onClick={() => {
                       setCurrentSection(3)
                       scrollToTop()
                     }}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Regresar a Sección 3' : 'Back to Section 3'}
                   </Button>
@@ -1392,6 +1400,7 @@ export default function CompanyPoliciesStep({
                       setCurrentSection(5)
                       scrollToTop()
                     }}
+                    className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
                   >
                     {language === 'es' ? 'Continuar a Sección 5' : 'Continue to Section 5'}
                   </Button>
@@ -1421,22 +1430,18 @@ export default function CompanyPoliciesStep({
                       </div>
                     </div>
                     
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="acknowledgment"
-                        checked={acknowledgmentChecked}
-                        onCheckedChange={(checked) => {
-                          setAcknowledgmentChecked(checked as boolean)
-                          if (checked) {
-                            handleSection5Complete()
-                          }
-                        }}
-                        className="mt-1"
-                      />
-                      <Label htmlFor="acknowledgment" className="text-sm leading-relaxed cursor-pointer">
-                        {t.acknowledgmentText}
-                      </Label>
-                    </div>
+                    <MobileCheckbox
+                      id="acknowledgment"
+                      checked={acknowledgmentChecked}
+                      onCheckedChange={(checked) => {
+                        setAcknowledgmentChecked(checked as boolean)
+                        if (checked) {
+                          handleSection5Complete()
+                        }
+                      }}
+                      label={t.acknowledgmentText}
+                      className="items-start"
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -1533,7 +1538,7 @@ export default function CompanyPoliciesStep({
                     </AlertDescription>
                   </Alert>
 
-                  <PDFViewer
+                  <MobilePDFViewer
                     pdfData={inlinePdfData ?? undefined}
                     pdfUrl={!inlinePdfData ? (remotePdfUrl || documentMetadata?.signed_url || undefined) : undefined}
                     height="600px"

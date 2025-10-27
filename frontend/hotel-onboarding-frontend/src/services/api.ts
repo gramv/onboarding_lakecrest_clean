@@ -88,6 +88,8 @@ export const api = {
       apiClient.post('/auth/change-password', data),
     requestPasswordReset: (email: string) =>
       apiClient.post('/auth/request-password-reset', { email }),
+    verifyResetToken: (token: string) =>
+      apiClient.get('/auth/verify-reset-token', { params: { token } }),
     resetPassword: (token: string, newPassword: string) =>
       apiClient.post('/auth/reset-password', { token, new_password: newPassword }),
   },
@@ -122,7 +124,8 @@ export const api = {
     },
     deleteProperty: (id: string) => apiClient.delete(`/hr/properties/${id}`),
     getPropertyStats: (propertyId: string) => apiClient.get(`/hr/properties/${propertyId}/stats`),
-    getManagers: (params?: { include_inactive?: boolean }) => 
+    getAllPropertyStats: () => apiClient.get('/hr/properties/stats/batch'),
+    getManagers: (params?: { include_inactive?: boolean }) =>
       apiClient.get('/hr/managers', { params }),
     createManager: (data: any) => {
       // Convert to form data for backend

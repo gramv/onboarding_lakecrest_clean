@@ -266,28 +266,28 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
   };
 
   const renderSection = (section: any, index: number) => (
-    <div className="max-w-4xl mx-auto p-3 sm:p-6">
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+    <div className="max-w-4xl mx-auto p-[clamp(0.75rem,2vw,1.5rem)]">
+      <div className="flex items-center gap-[clamp(0.75rem,2vw,1rem)] mb-[clamp(1rem,3vw,1.5rem)]">
         <div className="flex-shrink-0">{section.icon}</div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">{section.title}</h2>
+        <h2 className="text-[clamp(1.25rem,3.5vw,1.5rem)] font-bold text-gray-800">{section.title}</h2>
       </div>
 
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
         {section.content.map((paragraph: string, idx: number) => (
-          <p key={idx} className="text-gray-700 leading-relaxed text-sm sm:text-base md:text-lg">
+          <p key={idx} className="text-gray-700 leading-relaxed text-[clamp(0.875rem,2.5vw,1.125rem)]">
             {paragraph}
           </p>
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mt-6 sm:mt-8">
-        <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-[clamp(0.75rem,2vw,1rem)] mt-[clamp(1.5rem,4vw,2rem)]">
+        <div className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 text-center sm:text-left">
           {language === 'es' ? 'Sección' : 'Section'} {index + 1} {language === 'es' ? 'de' : 'of'}{' '}
           {sections.length}
         </div>
         <button
           onClick={handleNext}
-          className="w-full sm:w-auto bg-blue-600 text-white px-4 py-3 sm:px-6 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] font-semibold text-sm sm:text-base"
+          className="w-full sm:w-auto bg-blue-600 text-white px-[clamp(1rem,3vw,1.5rem)] rounded-lg hover:bg-blue-700 transition-colors h-[clamp(2.75rem,6vw,3rem)] font-semibold text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
         >
           {language === 'es' ? 'Continuar' : 'Continue'}
         </button>
@@ -296,13 +296,13 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
   );
 
   const renderVideo = () => (
-    <div className="max-w-4xl mx-auto p-3 sm:p-6">
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <PlayCircle className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 flex-shrink-0" />
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">{currentContent.video.title}</h2>
+    <div className="max-w-4xl mx-auto p-[clamp(0.75rem,2vw,1.5rem)]">
+      <div className="flex items-center gap-[clamp(0.75rem,2vw,1rem)] mb-[clamp(1rem,3vw,1.5rem)]">
+        <PlayCircle className="w-[clamp(1.5rem,4vw,2rem)] h-[clamp(1.5rem,4vw,2rem)] text-purple-500 flex-shrink-0" />
+        <h2 className="text-[clamp(1.25rem,3.5vw,1.5rem)] font-bold text-gray-800">{currentContent.video.title}</h2>
       </div>
 
-      <p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6">{currentContent.video.description}</p>
+      <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-700 mb-[clamp(1rem,3vw,1.5rem)]">{currentContent.video.description}</p>
 
       <YouTubeVideoPlayer
         videoId={currentContent.video.videoId}
@@ -312,13 +312,13 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
 
       {/* DEV/TESTING ONLY: Skip Video Button */}
       {!hasWatchedVideo && (
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+        <div className="mt-[clamp(1rem,3vw,1.5rem)] p-[clamp(0.75rem,2vw,1rem)] bg-yellow-50 border border-yellow-300 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-xs font-semibold text-yellow-800 uppercase tracking-wide">
+              <p className="text-[clamp(0.75rem,2vw,0.875rem)] font-semibold text-yellow-800 uppercase tracking-wide">
                 ⚠️ Testing Mode Only
               </p>
-              <p className="text-xs text-yellow-700 mt-1">
+              <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-yellow-700 mt-[clamp(0.25rem,1vw,0.5rem)]">
                 Skip video for testing purposes (not available in production)
               </p>
             </div>
@@ -327,7 +327,7 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
                 console.log('🧪 [TEST MODE] Skipping video - marking as complete');
                 handleVideoComplete();
               }}
-              className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 transition-colors shadow-sm hover:shadow-md"
+              className="px-[clamp(1rem,3vw,1.5rem)] py-[clamp(0.5rem,1.5vw,0.75rem)] bg-yellow-600 text-white text-[clamp(0.875rem,2.5vw,1rem)] font-medium rounded-md hover:bg-yellow-700 transition-colors shadow-sm hover:shadow-md h-[clamp(2rem,4vw,2.5rem)]"
             >
               Skip Video (Test)
             </button>
@@ -337,14 +337,14 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
 
       {/* Completion Alert - Shows when video is finished */}
       {hasWatchedVideo && (
-        <div className="mt-4 bg-green-50 border-2 border-green-500 rounded-lg p-3 sm:p-4 animate-pulse-once">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 flex-shrink-0" />
+        <div className="mt-[clamp(1rem,3vw,1.5rem)] bg-green-50 border-2 border-green-500 rounded-lg p-[clamp(0.75rem,2vw,1rem)] animate-pulse-once">
+          <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <CheckCircle className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-green-600 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-green-800 text-sm sm:text-base">
+              <p className="font-semibold text-green-800 text-[clamp(0.875rem,2.5vw,1rem)]">
                 ✓ {language === 'es' ? '¡Video Completado!' : 'Video Complete!'}
               </p>
-              <p className="text-green-700 text-xs sm:text-sm">
+              <p className="text-green-700 text-[clamp(0.75rem,2vw,0.875rem)]">
                 {language === 'es'
                   ? 'Ahora puede continuar con el reconocimiento.'
                   : 'You may now continue to the acknowledgment.'}
@@ -354,8 +354,8 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mt-6 sm:mt-8">
-        <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-[clamp(0.75rem,2vw,1rem)] mt-[clamp(1.5rem,4vw,2rem)]">
+        <div className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 text-center sm:text-left">
           {language === 'es' ? 'Video de Capacitación' : 'Training Video'}
         </div>
         <button
@@ -364,17 +364,24 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
             handleNext();
           }}
           disabled={!hasWatchedVideo}
-          className={`w-full sm:w-auto px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-300 min-h-[44px] text-sm sm:text-base ${
+          className={`w-full sm:w-auto px-[clamp(1rem,3vw,2rem)] rounded-lg font-semibold transition-all duration-300 min-h-[2.75rem] h-auto py-[clamp(0.75rem,2vw,1rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center ${
             hasWatchedVideo
               ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:scale-105'
               : 'bg-gray-400 text-gray-200 cursor-not-allowed'
           }`}
         >
-          {hasWatchedVideo && '✓ '}
-          {language === 'es' ? 'Continuar al Reconocimiento' : 'Continue to Acknowledgment'}
+          <span className="text-center leading-tight">
+            {hasWatchedVideo && '✓ '}
+            <span className="hidden sm:inline">
+              {language === 'es' ? 'Continuar al Reconocimiento' : 'Continue to Acknowledgment'}
+            </span>
+            <span className="sm:hidden">
+              {language === 'es' ? 'Continuar' : 'Continue'}
+            </span>
+          </span>
           {/* Debug indicator in dev mode */}
           {process.env.NODE_ENV === 'development' && (
-            <span className="ml-2 text-xs opacity-50">
+            <span className="ml-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.75rem,2vw,0.875rem)] opacity-50">
               [{hasWatchedVideo ? 'ENABLED' : 'DISABLED'}]
             </span>
           )}
@@ -384,19 +391,19 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
   );
 
   const renderAcknowledgment = () => (
-    <div className="max-w-4xl mx-auto p-3 sm:p-6">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">
+    <div className="max-w-4xl mx-auto p-[clamp(0.75rem,2vw,1.5rem)]">
+      <h2 className="text-[clamp(1.25rem,3.5vw,1.5rem)] font-bold text-gray-800 mb-[clamp(1rem,3vw,1.5rem)]">
         {currentContent.acknowledgment.title}
       </h2>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-6 mb-4 sm:mb-6">
-        <div className="flex items-start gap-2 sm:gap-3">
-          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 mt-1 flex-shrink-0" />
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-[clamp(0.75rem,2vw,1.5rem)] mb-[clamp(1rem,3vw,1.5rem)]">
+        <div className="flex items-start gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+          <AlertTriangle className="w-[clamp(1.25rem,3vw,1.5rem)] h-[clamp(1.25rem,3vw,1.5rem)] text-yellow-600 mt-1 flex-shrink-0" />
           <div>
-            <h3 className="font-semibold text-yellow-800 mb-2 text-sm sm:text-base">
+            <h3 className="font-semibold text-yellow-800 mb-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.875rem,2.5vw,1rem)]">
               {language === 'es' ? 'Requisito Legal Importante' : 'Important Legal Requirement'}
             </h3>
-            <p className="text-yellow-700 text-xs sm:text-sm">
+            <p className="text-yellow-700 text-[clamp(0.75rem,2vw,0.875rem)]">
               {language === 'es'
                 ? 'Esta capacitación es requerida por ley federal. Su finalización será registrada y puede ser auditada por autoridades reguladoras.'
                 : 'This training is required by federal law. Your completion will be recorded and may be audited by regulatory authorities.'}
@@ -405,20 +412,20 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
         </div>
       </div>
 
-      <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+      <div className="space-y-[clamp(0.75rem,2vw,1rem)] mb-[clamp(1.5rem,4vw,2rem)]">
         {currentContent.acknowledgment.statements.map((statement: string, index: number) => (
-          <div key={index} className="flex items-start gap-2 sm:gap-3">
-            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-1 flex-shrink-0" />
-            <span className="text-gray-700 text-sm sm:text-base">{statement}</span>
+          <div key={index} className="flex items-start gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+            <CheckCircle className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)] text-green-500 mt-1 flex-shrink-0" />
+            <span className="text-gray-700 text-[clamp(0.875rem,2.5vw,1rem)]">{statement}</span>
           </div>
         ))}
       </div>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-6 mb-4 sm:mb-6">
-        <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-[clamp(0.75rem,2vw,1.5rem)] mb-[clamp(1rem,3vw,1.5rem)]">
+        <h3 className="font-semibold text-gray-800 mb-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.875rem,2.5vw,1rem)]">
           {language === 'es' ? 'Información de Contacto de Emergencia' : 'Emergency Contact Information'}
         </h3>
-        <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
+        <div className="space-y-[clamp(0.25rem,1vw,0.5rem)] text-[clamp(0.75rem,2vw,0.875rem)]">
           <p>
             <strong>
               {language === 'es'
@@ -442,19 +449,19 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
       {!hasCompletedTraining ? (
         <button
           onClick={handleComplete}
-          className="w-full bg-green-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-green-700 transition-all duration-300 font-semibold min-h-[44px] shadow-lg hover:shadow-xl transform hover:scale-[1.02] text-sm sm:text-base"
+          className="w-full bg-green-600 text-white px-[clamp(1rem,3vw,1.5rem)] rounded-lg hover:bg-green-700 transition-all duration-300 font-semibold h-[clamp(2.75rem,6vw,3rem)] shadow-lg hover:shadow-xl transform hover:scale-[1.02] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
         >
           {language === 'es'
             ? 'Reconozco la Finalización de Esta Capacitación'
             : 'I Acknowledge Completion of This Training'}
         </button>
       ) : (
-        <div className="text-center py-4 sm:py-6">
-          <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-500 mx-auto mb-3 sm:mb-4" />
-          <h3 className="text-lg sm:text-xl font-semibold text-green-800 mb-2">
+        <div className="text-center py-[clamp(1rem,3vw,1.5rem)]">
+          <CheckCircle className="w-[clamp(3rem,8vw,4rem)] h-[clamp(3rem,8vw,4rem)] text-green-500 mx-auto mb-[clamp(0.75rem,2vw,1rem)]" />
+          <h3 className="text-[clamp(1.125rem,3vw,1.25rem)] font-semibold text-green-800 mb-[clamp(0.5rem,1.5vw,0.75rem)]">
             {language === 'es' ? 'Capacitación Completada Exitosamente' : 'Training Completed Successfully'}
           </h3>
-          <p className="text-gray-600 text-sm sm:text-base">
+          <p className="text-gray-600 text-[clamp(0.875rem,2.5vw,1rem)]">
             {language === 'es' ? 'Su finalización ha sido registrada.' : 'Your completion has been recorded.'}
           </p>
         </div>
@@ -465,13 +472,13 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto p-4 sm:p-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{currentContent.title}</h1>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">{currentContent.subtitle}</p>
+        <div className="max-w-4xl mx-auto p-[clamp(1rem,3vw,1.5rem)]">
+          <h1 className="text-[clamp(1.5rem,4vw,2rem)] font-bold text-gray-800">{currentContent.title}</h1>
+          <p className="text-gray-600 mt-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.875rem,2.5vw,1rem)]">{currentContent.subtitle}</p>
 
           {/* Enhanced Progress bar with step indicators */}
-          <div className="mt-4 sm:mt-6">
-            <div className="flex justify-between text-xs sm:text-sm text-gray-500 mb-2">
+          <div className="mt-[clamp(1rem,3vw,1.5rem)]">
+            <div className="flex justify-between text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mb-[clamp(0.5rem,1.5vw,0.75rem)]">
               <span>{language === 'es' ? 'Progreso' : 'Progress'}</span>
               <span className="font-semibold">
                 {Math.round(((currentSection + 1) / (sections.length + 2)) * 100)}%{' '}
@@ -480,16 +487,16 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
             </div>
 
             {/* Step indicators */}
-            <div className="flex justify-between mb-2 text-xs gap-2">
+            <div className="flex justify-between mb-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.75rem,2vw,0.875rem)] gap-[clamp(0.5rem,1.5vw,0.75rem)]">
               <div
-                className={`flex items-center gap-1 ${
+                className={`flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] ${
                   currentSection < sections.length ? 'text-blue-600 font-semibold' : 'text-green-600'
                 }`}
               >
                 {currentSection >= sections.length ? (
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <CheckCircle className="w-[clamp(0.75rem,2vw,1rem)] h-[clamp(0.75rem,2vw,1rem)]" />
                 ) : (
-                  <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-current flex items-center justify-center text-[8px] sm:text-[10px]">
+                  <span className="w-[clamp(0.75rem,2vw,1rem)] h-[clamp(0.75rem,2vw,1rem)] rounded-full border-2 border-current flex items-center justify-center text-[clamp(0.5rem,1.5vw,0.625rem)]">
                     {currentSection + 1}
                   </span>
                 )}
@@ -500,7 +507,7 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
               </div>
 
               <div
-                className={`flex items-center gap-1 ${
+                className={`flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] ${
                   currentSection === sections.length
                     ? 'text-blue-600 font-semibold'
                     : currentSection > sections.length
@@ -509,15 +516,15 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
                 }`}
               >
                 {hasWatchedVideo ? (
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <CheckCircle className="w-[clamp(0.75rem,2vw,1rem)] h-[clamp(0.75rem,2vw,1rem)]" />
                 ) : (
-                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <PlayCircle className="w-[clamp(0.75rem,2vw,1rem)] h-[clamp(0.75rem,2vw,1rem)]" />
                 )}
                 <span>{language === 'es' ? 'Video' : 'Video'}</span>
               </div>
 
               <div
-                className={`flex items-center gap-1 ${
+                className={`flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] ${
                   currentSection === sections.length + 1
                     ? 'text-blue-600 font-semibold'
                     : hasCompletedTraining
@@ -526,9 +533,9 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
                 }`}
               >
                 {hasCompletedTraining ? (
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <CheckCircle className="w-[clamp(0.75rem,2vw,1rem)] h-[clamp(0.75rem,2vw,1rem)]" />
                 ) : (
-                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Shield className="w-[clamp(0.75rem,2vw,1rem)] h-[clamp(0.75rem,2vw,1rem)]" />
                 )}
                 <span className="hidden sm:inline">
                   {language === 'es' ? 'Firmar' : 'Sign'}
@@ -537,9 +544,9 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
               </div>
             </div>
 
-            <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
+            <div className="w-full bg-gray-200 rounded-full h-[clamp(0.5rem,1.5vw,0.75rem)]">
               <div
-                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 sm:h-3 rounded-full transition-all duration-500 ease-out"
+                className="bg-gradient-to-r from-blue-500 to-blue-600 h-[clamp(0.5rem,1.5vw,0.75rem)] rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${((currentSection + 1) / (sections.length + 2)) * 100}%` }}
               />
             </div>
@@ -547,7 +554,7 @@ const HumanTraffickingAwareness: React.FC<HumanTraffickingAwarenessProps> = ({
         </div>
       </div>
 
-      <div className="py-6 sm:py-8">
+      <div className="py-[clamp(1.5rem,4vw,2rem)]">
         {currentSection < sections.length && renderSection(sections[currentSection], currentSection)}
         {currentSection === sections.length && renderVideo()}
         {currentSection === sections.length + 1 && renderAcknowledgment()}

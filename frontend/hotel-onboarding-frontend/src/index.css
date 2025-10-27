@@ -420,11 +420,19 @@
     margin-left: -4px;
   }
 
-  /* Enterprise Input Fields - Fully Responsive */
+  /* Enterprise Input Fields - Fully Responsive with Dynamic Fluid Sizing */
   .form-input-enhanced {
-    @apply h-10 sm:h-12 lg:h-14 px-3 sm:px-4 py-2 sm:py-3 lg:py-4 
-           border-2 border-gray-200 rounded-lg sm:rounded-xl bg-white 
-           text-gray-900 placeholder-gray-400 text-sm sm:text-base
+    /* Dynamic height: 44px (mobile) to 48px (desktop) - always ≥ 44px for touch */
+    height: clamp(2.75rem, 5vw, 3rem);
+    /* Dynamic padding that scales with viewport */
+    padding-left: clamp(0.75rem, 2vw, 1rem);
+    padding-right: clamp(0.75rem, 2vw, 1rem);
+    padding-top: clamp(0.5rem, 2vw, 0.75rem);
+    padding-bottom: clamp(0.5rem, 2vw, 0.75rem);
+    /* Dynamic font size: 16px (mobile) to 16px (desktop) - always ≥ 16px to prevent iOS zoom */
+    font-size: clamp(1rem, 2.5vw, 1rem);
+    @apply border-2 border-gray-200 rounded-lg sm:rounded-xl bg-white
+           text-gray-900 placeholder-gray-400
            focus:border-hotel-primary focus:ring-2 sm:focus:ring-4 focus:ring-hotel-primary/10 focus:outline-none
            hover:border-gray-300 hover:shadow-sm
            transition-all duration-200 ease-in-out relative;

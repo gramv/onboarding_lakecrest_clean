@@ -3,6 +3,12 @@ backend/.env
 backend/.env*
 venv
 backend/venv
+env/
+
+# Docker artifacts
+*.tar.gz
+hotel-onboarding/
+hotel-onboarding.tar.gz
 
 # Log files with sensitive data
 *.log

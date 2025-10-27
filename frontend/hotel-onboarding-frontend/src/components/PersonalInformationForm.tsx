@@ -374,12 +374,15 @@ export default function PersonalInformationForm({
               <Label htmlFor="ssn" className="text-responsive-sm font-medium block mb-1">{t('ssn')} <span className="text-red-500">*</span></Label>
               <Input
                 id="ssn"
+                type="text"
+                inputMode="numeric"
                 value={formData.ssn}
                 onChange={(e) => handleInputChange('ssn', e.target.value)}
                 onBlur={() => handleFieldBlur('ssn')}
                 className={`form-input-enhanced w-full ${shouldShowError('ssn') && errors.ssn ? 'border-red-500' : ''}`}
                 placeholder=""
                 maxLength={11}
+                autoComplete="off"
               />
               {shouldShowError('ssn') && errors.ssn && (
                 <p className="text-red-500 text-xs mt-1">{errors.ssn}</p>
@@ -389,27 +392,32 @@ export default function PersonalInformationForm({
               <Label htmlFor="phone" className="text-responsive-sm font-medium block mb-1">{t('phone')} <span className="text-red-500">*</span></Label>
               <Input
                 id="phone"
+                type="tel"
+                inputMode="tel"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 onBlur={() => handleFieldBlur('phone')}
                 className={`form-input-enhanced w-full ${shouldShowError('phone') && errors.phone ? 'border-red-500' : ''}`}
                 placeholder=""
+                autoComplete="tel"
               />
               {shouldShowError('phone') && errors.phone && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.phone}</p>}
             </div>
           </div>
 
-          {/* Email - full width */}
+          {/* Email - full width with mobile keyboard */}
           <div className="input-group">
             <Label htmlFor="email" className="text-responsive-sm font-medium block mb-1">{t('email')} <span className="text-red-500">*</span></Label>
             <Input
               id="email"
               type="email"
+              inputMode="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               onBlur={() => handleFieldBlur('email')}
               className={`form-input-enhanced w-full ${shouldShowError('email') && errors.email ? 'border-red-500' : ''}`}
               placeholder=""
+              autoComplete="email"
             />
             {shouldShowError('email') && errors.email && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.email}</p>}
           </div>
@@ -496,53 +504,71 @@ export default function PersonalInformationForm({
             </div>
           </div>
 
-          {/* Demographics - Horizontal layout */}
-          <div className="border-t pt-4 mt-4 sm:mt-6">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('demographics')} <span className="text-xs text-gray-500">(Optional)</span></h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {/* Demographics - Clean, Organized Layout */}
+          <div className="border-t pt-4 sm:pt-6 mt-4 sm:mt-6">
+            <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-4 sm:mb-5">
+              {t('demographics')}
+            </h4>
+
+            <div className="space-y-5 sm:space-y-6">
+              {/* Gender */}
               <div>
-                <Label className="text-sm font-medium block mb-2">{t('gender')}</Label>
-                <RadioGroup value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)} className="flex flex-col gap-3">
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="male" id="male" className="h-5 w-5" />
-                    <Label htmlFor="male" className="text-sm font-normal cursor-pointer">{t('male')}</Label>
+                <Label className="text-sm font-medium text-gray-900 block mb-3">
+                  {t('gender')}
+                </Label>
+                <RadioGroup
+                  value={formData.gender}
+                  onValueChange={(value) => handleInputChange('gender', value)}
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+                >
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="male" id="male" />
+                    <Label htmlFor="male" className="text-sm font-normal cursor-pointer flex-1">{t('male')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="female" id="female" className="h-5 w-5" />
-                    <Label htmlFor="female" className="text-sm font-normal cursor-pointer">{t('female')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="female" id="female" />
+                    <Label htmlFor="female" className="text-sm font-normal cursor-pointer flex-1">{t('female')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="other" id="other" className="h-5 w-5" />
-                    <Label htmlFor="other" className="text-sm font-normal cursor-pointer">{t('other')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="other" id="other" />
+                    <Label htmlFor="other" className="text-sm font-normal cursor-pointer flex-1">{t('other')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="prefer_not_say" id="prefer_not_say" className="h-5 w-5" />
-                    <Label htmlFor="prefer_not_say" className="text-sm font-normal cursor-pointer">{t('prefer_not_say')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="prefer_not_say" id="prefer_not_say" />
+                    <Label htmlFor="prefer_not_say" className="text-sm font-normal cursor-pointer flex-1">{t('prefer_not_say')}</Label>
                   </div>
                 </RadioGroup>
               </div>
+
+              {/* Marital Status */}
               <div>
-                <Label className="text-sm font-medium block mb-2">{t('marital_status')}</Label>
-                <RadioGroup value={formData.maritalStatus} onValueChange={(value) => handleInputChange('maritalStatus', value)} className="flex flex-col gap-3">
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="single" id="single" className="h-5 w-5" />
-                    <Label htmlFor="single" className="text-sm font-normal cursor-pointer">{t('single')}</Label>
+                <Label className="text-sm font-medium text-gray-900 block mb-3">
+                  {t('marital_status')}
+                </Label>
+                <RadioGroup
+                  value={formData.maritalStatus}
+                  onValueChange={(value) => handleInputChange('maritalStatus', value)}
+                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+                >
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="single" id="single" />
+                    <Label htmlFor="single" className="text-sm font-normal cursor-pointer flex-1">{t('single')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="married" id="married" className="h-5 w-5" />
-                    <Label htmlFor="married" className="text-sm font-normal cursor-pointer">{t('married')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="married" id="married" />
+                    <Label htmlFor="married" className="text-sm font-normal cursor-pointer flex-1">{t('married')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="divorced" id="divorced" className="h-5 w-5" />
-                    <Label htmlFor="divorced" className="text-sm font-normal cursor-pointer">{t('divorced')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="divorced" id="divorced" />
+                    <Label htmlFor="divorced" className="text-sm font-normal cursor-pointer flex-1">{t('divorced')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="widowed" id="widowed" className="h-5 w-5" />
-                    <Label htmlFor="widowed" className="text-sm font-normal cursor-pointer">{t('widowed')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="widowed" id="widowed" />
+                    <Label htmlFor="widowed" className="text-sm font-normal cursor-pointer flex-1">{t('widowed')}</Label>
                   </div>
-                  <div className="flex items-center space-x-2 min-h-[44px]">
-                    <RadioGroupItem value="separated" id="separated" className="h-5 w-5" />
-                    <Label htmlFor="separated" className="text-sm font-normal cursor-pointer">{t('separated')}</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px] p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <RadioGroupItem value="separated" id="separated" />
+                    <Label htmlFor="separated" className="text-sm font-normal cursor-pointer flex-1">{t('separated')}</Label>
                   </div>
                 </RadioGroup>
               </div>

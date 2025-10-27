@@ -6,7 +6,6 @@ import W4FormClean from '@/components/W4FormClean'
 import ReviewAndSign from '@/components/ReviewAndSign'
 import PDFViewer from '@/components/PDFViewer'
 import { CheckCircle, CreditCard, FileText, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react'
-import { FormSection } from '@/components/ui/form-section'
 import { StepProps } from '../../controllers/OnboardingFlowController'
 import { StepContainer } from '@/components/onboarding/StepContainer'
 import { StepContentWrapper } from '@/components/onboarding/StepContentWrapper'
@@ -896,31 +895,23 @@ export default function W4FormStep({
             </Card>
           </div>
         ) : !showReview ? (
-          <FormSection
-            title={t.title || 'W-4 Tax Withholding'}
-            description={t.description || ''}
-            icon={<FileText />}
-            completed={isSigned}
-            required={true}
-          >
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
-                  <span>{t.formTitle}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                <W4FormClean
-                  initialData={formData}
-                  language={language}
-                  employeeId={employee?.id}
-                  onComplete={handleFormComplete}
-                  isLocked={isSigned || !!documentMetadata?.signed_url}
-                />
-              </CardContent>
-            </Card>
-          </FormSection>
+          <Card>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                <span>{t.formTitle}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              <W4FormClean
+                initialData={formData}
+                language={language}
+                employeeId={employee?.id}
+                onComplete={handleFormComplete}
+                isLocked={isSigned || !!documentMetadata?.signed_url}
+              />
+            </CardContent>
+          </Card>
         ) : (
           <ReviewAndSign
             formType="w4-form"

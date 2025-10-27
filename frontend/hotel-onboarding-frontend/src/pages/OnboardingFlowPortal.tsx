@@ -967,13 +967,6 @@ export default function OnboardingFlowPortal({ testMode = false }: OnboardingFlo
             canNavigateToStep={canNavigateToStep}
             stepStates={stepStates}
           />
-          {/* Enhanced Progress Info for Mobile */}
-          <div className="md:hidden px-4 py-2 border-t border-gray-200 bg-gray-50">
-            <div className="flex justify-between items-center text-xs text-gray-600">
-              <span>Step {progress.currentStepIndex + 1} of {flowController.steps.length}</span>
-              <span>{progress.percentComplete}% Complete</span>
-            </div>
-          </div>
         </div>
       )}
 

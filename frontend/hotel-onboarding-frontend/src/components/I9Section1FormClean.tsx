@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileRadioGroup,
+  MobileSelect
+} from '@/components/job-application/mobile-optimized'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ChevronRight, ChevronLeft, FileText, Eye, Check, Pen } from 'lucide-react'
 import { format } from 'date-fns'
@@ -585,14 +588,14 @@ export default function I9Section1FormClean({
           <p className="sr-only text-sm text-gray-600">Employment Eligibility Verification</p>
           
           {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>{steps[currentStep].title}</span>
-              <span>Step {currentStep + 1} of {steps.length}</span>
+          <div className="mt-[clamp(1rem,3vw,1.5rem)]">
+            <div className="flex justify-between text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 mb-[clamp(0.5rem,2vw,0.75rem)] gap-2 flex-wrap">
+              <span className="font-medium">{steps[currentStep].title}</span>
+              <span className="text-gray-500">Step {currentStep + 1} of {steps.length}</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            <div className="w-full bg-gray-200 rounded-full h-[clamp(0.5rem,1.5vw,0.625rem)]">
+              <div
+                className="bg-blue-600 h-full rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -602,56 +605,64 @@ export default function I9Section1FormClean({
         <CardContent className="space-y-6">
           {/* Step 1: Personal Information */}
           {currentStep === 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Personal Information</h3>
-              <p className="text-sm text-gray-600">Enter your legal name as it appears on your identification documents</p>
-              
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
+              <h3 className="text-[clamp(1rem,3vw,1.125rem)] font-semibold">Personal Information</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Enter your legal name as it appears on your identification documents</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)]">
                 <div>
-                  <Label htmlFor="last_name">Last Name *</Label>
-                  <Input
+                  <MobileLabel htmlFor="last_name">Last Name *</MobileLabel>
+                  <MobileInput
                     id="last_name"
                     value={formData.last_name}
                     onChange={(e) => handleInputChange('last_name', e.target.value)}
                     className={errors.last_name ? 'border-red-500' : ''}
+                    type="text"
+                    inputMode="text"
                   />
                   {errors.last_name && (
-                    <p className="text-sm text-red-500 mt-1">{errors.last_name}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.last_name}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="first_name">First Name *</Label>
-                  <Input
+                  <MobileLabel htmlFor="first_name">First Name *</MobileLabel>
+                  <MobileInput
                     id="first_name"
                     value={formData.first_name}
                     onChange={(e) => handleInputChange('first_name', e.target.value)}
                     className={errors.first_name ? 'border-red-500' : ''}
+                    type="text"
+                    inputMode="text"
                   />
                   {errors.first_name && (
-                    <p className="text-sm text-red-500 mt-1">{errors.first_name}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.first_name}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)]">
                 <div>
-                  <Label htmlFor="middle_initial">Middle Initial</Label>
-                  <Input
+                  <MobileLabel htmlFor="middle_initial">Middle Initial</MobileLabel>
+                  <MobileInput
                     id="middle_initial"
                     value={formData.middle_initial}
                     onChange={(e) => handleInputChange('middle_initial', e.target.value.slice(0, 1).toUpperCase())}
                     maxLength={1}
+                    type="text"
+                    inputMode="text"
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="other_names">Other Last Names Used</Label>
-                  <Input
+                  <MobileLabel htmlFor="other_names">Other Last Names Used</MobileLabel>
+                  <MobileInput
                     id="other_names"
                     value={formData.other_names}
                     onChange={(e) => handleInputChange('other_names', e.target.value)}
                     placeholder="Maiden name, aliases, etc."
+                    type="text"
+                    inputMode="text"
                   />
                 </div>
               </div>
@@ -660,79 +671,83 @@ export default function I9Section1FormClean({
 
           {/* Step 2: Address */}
           {currentStep === 1 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Address Information</h3>
-              <p className="text-sm text-gray-600">Provide your current residential address</p>
-              
+            <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
+              <h3 className="text-[clamp(1rem,3vw,1.125rem)] font-semibold">Address Information</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Provide your current residential address</p>
+
               <div>
-                <Label htmlFor="address">Street Address *</Label>
-                <Input
+                <MobileLabel htmlFor="address">Street Address *</MobileLabel>
+                <MobileInput
                   id="address"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   className={errors.address ? 'border-red-500' : ''}
                   placeholder="123 Main Street"
+                  type="text"
+                  inputMode="text"
                 />
                 {errors.address && (
-                  <p className="text-sm text-red-500 mt-1">{errors.address}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.address}</p>
                 )}
               </div>
 
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="apt_number">Apt #</Label>
-                  <Input
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-[clamp(1rem,3vw,1.5rem)]">
+                <div className="sm:col-span-1">
+                  <MobileLabel htmlFor="apt_number">Apt #</MobileLabel>
+                  <MobileInput
                     id="apt_number"
                     value={formData.apt_number}
                     onChange={(e) => handleInputChange('apt_number', e.target.value)}
                     placeholder="Optional"
+                    type="text"
+                    inputMode="text"
                   />
                 </div>
-                
-                <div className="col-span-3">
-                  <Label htmlFor="city">City *</Label>
-                  <Input
+
+                <div className="sm:col-span-3">
+                  <MobileLabel htmlFor="city">City *</MobileLabel>
+                  <MobileInput
                     id="city"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
                     className={errors.city ? 'border-red-500' : ''}
+                    type="text"
+                    inputMode="text"
                   />
                   {errors.city && (
-                    <p className="text-sm text-red-500 mt-1">{errors.city}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.city}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)]">
                 <div>
-                  <Label htmlFor="state">State *</Label>
-                  <select
-                    id="state"
+                  <MobileLabel htmlFor="state">State *</MobileLabel>
+                  <MobileSelect
                     value={formData.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                    className={`w-full h-10 px-3 rounded-md border ${errors.state ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  >
-                    <option value="">Select State</option>
-                    {STATES.map(state => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </select>
+                    onValueChange={(value) => handleInputChange('state', value)}
+                    options={STATES.map(state => ({ value: state, label: state }))}
+                    placeholder="Select State"
+                    className={errors.state ? 'border-red-500' : ''}
+                  />
                   {errors.state && (
-                    <p className="text-sm text-red-500 mt-1">{errors.state}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.state}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="zip_code">ZIP Code *</Label>
-                  <Input
+                  <MobileLabel htmlFor="zip_code">ZIP Code *</MobileLabel>
+                  <MobileInput
                     id="zip_code"
                     value={formData.zip_code}
                     onChange={(e) => handleInputChange('zip_code', e.target.value)}
                     className={errors.zip_code ? 'border-red-500' : ''}
                     placeholder="12345"
+                    type="text"
+                    inputMode="numeric"
                   />
                   {errors.zip_code && (
-                    <p className="text-sm text-red-500 mt-1">{errors.zip_code}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.zip_code}</p>
                   )}
                 </div>
               </div>
@@ -741,14 +756,14 @@ export default function I9Section1FormClean({
 
           {/* Step 3: Contact & Details */}
           {currentStep === 2 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Contact Information & Personal Details</h3>
-              <p className="text-sm text-gray-600">Provide your contact information and personal details</p>
-              
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
+              <h3 className="text-[clamp(1rem,3vw,1.125rem)] font-semibold">Contact Information & Personal Details</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Provide your contact information and personal details</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)]">
                 <div>
-                  <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                  <Input
+                  <MobileLabel htmlFor="date_of_birth">Date of Birth *</MobileLabel>
+                  <MobileInput
                     id="date_of_birth"
                     type="date"
                     value={formData.date_of_birth}
@@ -756,13 +771,13 @@ export default function I9Section1FormClean({
                     className={errors.date_of_birth ? 'border-red-500' : ''}
                   />
                   {errors.date_of_birth && (
-                    <p className="text-sm text-red-500 mt-1">{errors.date_of_birth}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.date_of_birth}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="ssn">Social Security Number *</Label>
-                  <Input
+                  <MobileLabel htmlFor="ssn">Social Security Number *</MobileLabel>
+                  <MobileInput
                     id="ssn"
                     value={formData.ssn}
                     onChange={(e) => {
@@ -772,31 +787,34 @@ export default function I9Section1FormClean({
                     className={errors.ssn ? 'border-red-500' : ''}
                     placeholder="123-45-6789"
                     maxLength={11}
+                    type="text"
+                    inputMode="numeric"
                   />
                   {errors.ssn && (
-                    <p className="text-sm text-red-500 mt-1">{errors.ssn}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.ssn}</p>
                   )}
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="email">Email Address *</Label>
-                <Input
+                <MobileLabel htmlFor="email">Email Address *</MobileLabel>
+                <MobileInput
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   className={errors.email ? 'border-red-500' : ''}
                   placeholder="your.email@example.com"
+                  inputMode="email"
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.email}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
+                <MobileLabel htmlFor="phone">Phone Number *</MobileLabel>
+                <MobileInput
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => {
@@ -806,9 +824,11 @@ export default function I9Section1FormClean({
                   className={errors.phone ? 'border-red-500' : ''}
                   placeholder="(555) 123-4567"
                   maxLength={14}
+                  type="tel"
+                  inputMode="tel"
                 />
                 {errors.phone && (
-                  <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.phone}</p>
                 )}
               </div>
             </div>
@@ -816,63 +836,41 @@ export default function I9Section1FormClean({
 
           {/* Step 4: Citizenship Status */}
           {currentStep === 3 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Citizenship Status</h3>
-              <p className="text-sm text-gray-600">Select your citizenship or immigration status</p>
-              
+            <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
+              <h3 className="text-[clamp(1rem,3vw,1.125rem)] font-semibold">Citizenship Status</h3>
+              <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">Select your citizenship or immigration status</p>
+
               <div>
-                <Label>I attest, under penalty of perjury, that I am: *</Label>
-                <RadioGroup
+                <MobileLabel>I attest, under penalty of perjury, that I am: *</MobileLabel>
+                <MobileRadioGroup
                   value={formData.citizenship_status}
                   onValueChange={(value) => {
                     console.log('RadioGroup citizenship_status onValueChange:', value)
                     handleInputChange('citizenship_status', value)
                   }}
-                  className="mt-3 space-y-3"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="citizen" id="citizen" />
-                    <Label htmlFor="citizen" className="font-normal cursor-pointer">
-                      A citizen of the United States
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="national" id="national" />
-                    <Label htmlFor="national" className="font-normal cursor-pointer">
-                      A noncitizen national of the United States
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="permanent_resident" id="permanent_resident" />
-                    <Label htmlFor="permanent_resident" className="font-normal cursor-pointer">
-                      A lawful permanent resident
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="authorized_alien" id="authorized_alien" />
-                    <Label htmlFor="authorized_alien" className="font-normal cursor-pointer">
-                      An alien authorized to work
-                    </Label>
-                  </div>
-                </RadioGroup>
+                  options={[
+                    { value: 'citizen', label: 'A citizen of the United States' },
+                    { value: 'national', label: 'A noncitizen national of the United States' },
+                    { value: 'permanent_resident', label: 'A lawful permanent resident' },
+                    { value: 'authorized_alien', label: 'An alien authorized to work' }
+                  ]}
+                  className="mt-[clamp(0.75rem,2vw,1rem)]"
+                />
                 {errors.citizenship_status && (
-                  <p className="text-sm text-red-500 mt-1">{errors.citizenship_status}</p>
+                  <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.citizenship_status}</p>
                 )}
               </div>
 
               {/* Additional fields for permanent residents */}
               {formData.citizenship_status === 'permanent_resident' && (
-                <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700">Additional Information Required</p>
+                <div className="space-y-[clamp(1rem,3vw,1.5rem)] mt-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)] bg-gray-50 rounded-lg">
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium text-gray-700">Additional Information Required</p>
 
                   <div>
-                    <Label htmlFor="alien_registration_number">
+                    <MobileLabel htmlFor="alien_registration_number">
                       USCIS Number *
-                    </Label>
-                    <Input
+                    </MobileLabel>
+                    <MobileInput
                       id="alien_registration_number"
                       value={formData.alien_registration_number}
                       onChange={(e) => {
@@ -882,17 +880,19 @@ export default function I9Section1FormClean({
                       className={errors.alien_registration_number ? 'border-red-500' : ''}
                       placeholder="A-123456789"
                       maxLength={11}
+                      type="text"
+                      inputMode="text"
                     />
                     {errors.alien_registration_number && (
-                      <p className="text-sm text-red-500 mt-1">{errors.alien_registration_number}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.alien_registration_number}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="expiration_date">
+                    <MobileLabel htmlFor="expiration_date">
                       Card Expiration Date *
-                    </Label>
-                    <Input
+                    </MobileLabel>
+                    <MobileInput
                       id="expiration_date"
                       type="date"
                       value={formData.expiration_date}
@@ -901,7 +901,7 @@ export default function I9Section1FormClean({
                       min={new Date().toISOString().split('T')[0]}
                     />
                     {errors.expiration_date && (
-                      <p className="text-sm text-red-500 mt-1">{errors.expiration_date}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.expiration_date}</p>
                     )}
                   </div>
                 </div>
@@ -909,21 +909,21 @@ export default function I9Section1FormClean({
 
               {/* Additional fields for authorized aliens */}
               {formData.citizenship_status === 'authorized_alien' && (
-                <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700">Additional Information Required</p>
+                <div className="space-y-[clamp(1rem,3vw,1.5rem)] mt-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)] bg-gray-50 rounded-lg">
+                  <p className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium text-gray-700">Additional Information Required</p>
 
-                  <Alert className="mb-4">
-                    <AlertDescription className="text-sm">
+                  <Alert className="mb-[clamp(1rem,3vw,1.5rem)]">
+                    <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)]">
                       Please provide <strong>ONE</strong> of the following: USCIS Number, Form I-94 Admission Number, or Foreign Passport Number with Country of Issuance.
                     </AlertDescription>
                   </Alert>
 
                   {/* USCIS Number (A-Number) */}
                   <div>
-                    <Label htmlFor="alien_registration_number">
+                    <MobileLabel htmlFor="alien_registration_number">
                       USCIS Number (A-Number)
-                    </Label>
-                    <Input
+                    </MobileLabel>
+                    <MobileInput
                       id="alien_registration_number"
                       value={formData.alien_registration_number}
                       onChange={(e) => {
@@ -933,61 +933,69 @@ export default function I9Section1FormClean({
                       className={errors.alien_registration_number ? 'border-red-500' : ''}
                       placeholder="A-123456789"
                       maxLength={11}
+                      type="text"
+                      inputMode="text"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Format: A-123456789</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">Format: A-123456789</p>
                   </div>
 
                   {/* Form I-94 Admission Number */}
                   <div>
-                    <Label htmlFor="i94_admission_number">
+                    <MobileLabel htmlFor="i94_admission_number">
                       Form I-94 Admission Number
-                    </Label>
-                    <Input
+                    </MobileLabel>
+                    <MobileInput
                       id="i94_admission_number"
                       value={formData.i94_admission_number || ''}
                       onChange={(e) => handleInputChange('i94_admission_number', e.target.value)}
                       placeholder="12345678901"
                       maxLength={11}
+                      type="text"
+                      inputMode="numeric"
                     />
-                    <p className="text-xs text-gray-500 mt-1">11-digit number from your I-94 arrival/departure record</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 mt-1">11-digit number from your I-94 arrival/departure record</p>
                   </div>
 
                   {/* Foreign Passport Number and Country */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)]">
                     <div>
-                      <Label htmlFor="foreign_passport_number">
+                      <MobileLabel htmlFor="foreign_passport_number">
                         Foreign Passport Number
-                      </Label>
-                      <Input
+                      </MobileLabel>
+                      <MobileInput
                         id="foreign_passport_number"
                         value={formData.foreign_passport_number}
                         onChange={(e) => handleInputChange('foreign_passport_number', e.target.value)}
                         placeholder="Passport number"
+                        type="text"
+                        inputMode="text"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="country_of_issuance">
+                      <MobileLabel htmlFor="country_of_issuance">
                         Country of Issuance
-                      </Label>
-                      <Input
+                      </MobileLabel>
+                      <MobileInput
                         id="country_of_issuance"
                         value={formData.country_of_issuance}
                         onChange={(e) => handleInputChange('country_of_issuance', e.target.value)}
                         placeholder="Country"
+                        type="text"
+                        inputMode="text"
                       />
                     </div>
                   </div>
 
                   {errors.authorized_alien_docs && (
-                    <p className="text-sm text-red-500 mt-1">{errors.authorized_alien_docs}</p>
+                    <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.authorized_alien_docs}</p>
                   )}
 
                   {/* Work Authorization Expiration Date */}
                   <div>
-                    <Label htmlFor="expiration_date">
+                    <MobileLabel htmlFor="expiration_date">
                       Work Authorization Expiration Date *
-                    </Label>
-                    <Input
+                    </MobileLabel>
+                    <MobileInput
                       id="expiration_date"
                       type="date"
                       value={formData.expiration_date}
@@ -996,7 +1004,7 @@ export default function I9Section1FormClean({
                       min={new Date().toISOString().split('T')[0]}
                     />
                     {errors.expiration_date && (
-                      <p className="text-sm text-red-500 mt-1">{errors.expiration_date}</p>
+                      <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-red-500 mt-1">{errors.expiration_date}</p>
                     )}
                   </div>
                 </div>
@@ -1013,21 +1021,23 @@ export default function I9Section1FormClean({
           )}
 
           {/* Navigation buttons */}
-          <div className="flex justify-between pt-6">
+          <div className="flex justify-between gap-[clamp(0.5rem,2vw,0.75rem)] pt-[clamp(1rem,3vw,1.5rem)] flex-wrap">
             <Button
               type="button"
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 0}
+              className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
             >
-              <ChevronLeft className="mr-2 h-4 w-4" />
+              <ChevronLeft className="mr-2 h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
               Previous
             </Button>
-            
+
             <Button
               type="button"
               onClick={handleNext}
               disabled={isGeneratingPdf}
+              className="h-[clamp(2.75rem,6vw,3rem)] px-[clamp(1rem,3vw,1.5rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
             >
               {currentStep === steps.length - 1 ? (
                 showPreview ? (
@@ -1035,20 +1045,20 @@ export default function I9Section1FormClean({
                     <>Generating Preview...</>
                   ) : (
                     <>
-                      <Eye className="mr-2 h-4 w-4" />
+                      <Eye className="mr-2 h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
                       Preview & Sign
                     </>
                   )
                 ) : (
                   <>
                     Continue
-                    <ChevronRight className="ml-2 h-4 w-4" />
+                    <ChevronRight className="ml-2 h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
                   </>
                 )
               ) : (
                 <>
                   Next
-                  <ChevronRight className="ml-2 h-4 w-4" />
+                  <ChevronRight className="ml-2 h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
                 </>
               )}
             </Button>

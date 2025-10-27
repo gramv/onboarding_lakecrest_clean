@@ -43,7 +43,8 @@ class ExportRequest(BaseModel):
     parameters: Dict[str, Any]
 
 # Initialize services
-supabase_service = EnhancedSupabaseService()
+from .supabase_service_enhanced import get_enhanced_supabase_service
+supabase_service = get_enhanced_supabase_service()
 analytics_service = AnalyticsService(supabase_service)
 
 @router.get("/dashboard")

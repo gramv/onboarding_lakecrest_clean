@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileTextarea,
+  MobileRadioGroup,
+  MobileCheckbox,
+  MobileErrorMessage,
+  MobileFormField,
+  MobileFormGrid
+} from './mobile-optimized'
 // Icons removed for cleaner professional look
 
 interface AdditionalInformationStepProps {
@@ -181,44 +186,35 @@ export default function AdditionalInformationStep({
             </AlertDescription>
           </Alert>
 
-          <div className="space-y-2">
-            <Label className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.convictionQuestion')} *</Label>
-            <RadioGroup
+          <MobileFormField>
+            <MobileLabel required>{t('jobApplication.steps.additionalInfo.conviction.convictionQuestion')}</MobileLabel>
+            <MobileRadioGroup
               value={formData.has_conviction || ''}
               onValueChange={(value) => handleInputChange('has_conviction', value)}
-              className="space-y-2 sm:space-y-1"
-            >
-              <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
-                <RadioGroupItem value="yes" id="conviction_yes" />
-                <Label htmlFor="conviction_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.yes')}</Label>
-              </div>
-              <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
-                <RadioGroupItem value="no" id="conviction_no" />
-                <Label htmlFor="conviction_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.no')}</Label>
-              </div>
-            </RadioGroup>
-            {getError('has_conviction') && (
-              <p className="text-sm text-red-600">{getError('has_conviction')}</p>
-            )}
-          </div>
+              columns={2}
+              options={[
+                { value: 'yes', label: t('common.yes'), id: 'conviction_yes' },
+                { value: 'no', label: t('common.no'), id: 'conviction_no' }
+              ]}
+            />
+            <MobileErrorMessage>{getError('has_conviction')}</MobileErrorMessage>
+          </MobileFormField>
 
           {formData.has_conviction === 'yes' && (
-            <div className="space-y-2">
-              <Label htmlFor="conviction_explanation" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.additionalInfo.conviction.convictionExplain')} *
-              </Label>
-              <Textarea
+            <MobileFormField>
+              <MobileLabel htmlFor="conviction_explanation" required>
+                {t('jobApplication.steps.additionalInfo.conviction.convictionExplain')}
+              </MobileLabel>
+              <MobileTextarea
                 id="conviction_explanation"
                 value={formData.conviction_explanation || ''}
                 onChange={(e) => handleInputChange('conviction_explanation', e.target.value)}
-                className={getError('conviction_explanation') ? 'border-red-500' : ''}
+                error={!!getError('conviction_explanation')}
                 placeholder=""
                 rows={4}
               />
-              {getError('conviction_explanation') && (
-                <p className="text-sm text-red-600">{getError('conviction_explanation')}</p>
-              )}
-            </div>
+              <MobileErrorMessage>{getError('conviction_explanation')}</MobileErrorMessage>
+            </MobileFormField>
           )}
 
           <div className="border-t pt-4 mt-4">
@@ -226,78 +222,61 @@ export default function AdditionalInformationStep({
               {t('jobApplication.steps.additionalInfo.conviction.driverSection')}
             </h4>
             
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.licenseDenied')} *</Label>
-                <RadioGroup
+            <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
+              <MobileFormField>
+                <MobileLabel required>{t('jobApplication.steps.additionalInfo.conviction.licenseDenied')}</MobileLabel>
+                <MobileRadioGroup
                   value={formData.has_driving_denied || ''}
                   onValueChange={(value) => handleInputChange('has_driving_denied', value)}
-                  className="space-y-2 sm:space-y-1"
-                >
-                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
-                    <RadioGroupItem value="yes" id="driving_denied_yes" />
-                    <Label htmlFor="driving_denied_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.yes')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
-                    <RadioGroupItem value="no" id="driving_denied_no" />
-                    <Label htmlFor="driving_denied_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.no')}</Label>
-                  </div>
-                </RadioGroup>
-                {getError('has_driving_denied') && (
-                  <p className="text-sm text-red-600">{getError('has_driving_denied')}</p>
-                )}
-              </div>
+                  columns={2}
+                  options={[
+                    { value: 'yes', label: t('common.yes'), id: 'driving_denied_yes' },
+                    { value: 'no', label: t('common.no'), id: 'driving_denied_no' }
+                  ]}
+                />
+                <MobileErrorMessage>{getError('has_driving_denied')}</MobileErrorMessage>
+              </MobileFormField>
 
-              <div className="space-y-2">
-                <Label className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.licenseSuspended')} *</Label>
-                <RadioGroup
+              <MobileFormField>
+                <MobileLabel required>{t('jobApplication.steps.additionalInfo.conviction.licenseSuspended')}</MobileLabel>
+                <MobileRadioGroup
                   value={formData.has_driving_issues || ''}
                   onValueChange={(value) => handleInputChange('has_driving_issues', value)}
-                  className="space-y-2 sm:space-y-1"
-                >
-                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
-                    <RadioGroupItem value="yes" id="driving_yes" />
-                    <Label htmlFor="driving_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.yes')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 sm:space-x-2 py-2 px-2 sm:py-0.5 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[52px] sm:min-h-[auto]">
-                    <RadioGroupItem value="no" id="driving_no" />
-                    <Label htmlFor="driving_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">{t('common.no')}</Label>
-                  </div>
-                </RadioGroup>
-                {getError('has_driving_issues') && (
-                  <p className="text-sm text-red-600">{getError('has_driving_issues')}</p>
-                )}
-              </div>
+                  columns={2}
+                  options={[
+                    { value: 'yes', label: t('common.yes'), id: 'driving_yes' },
+                    { value: 'no', label: t('common.no'), id: 'driving_no' }
+                  ]}
+                />
+                <MobileErrorMessage>{getError('has_driving_issues')}</MobileErrorMessage>
+              </MobileFormField>
 
               {(formData.has_driving_denied === 'yes' || formData.has_driving_issues === 'yes') && (
-                <div className="space-y-2">
-                  <Label htmlFor="driving_explanation" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.conviction.explainBelow')} *</Label>
-                  <Textarea
+                <MobileFormField>
+                  <MobileLabel htmlFor="driving_explanation" required>
+                    {t('jobApplication.steps.additionalInfo.conviction.explainBelow')}
+                  </MobileLabel>
+                  <MobileTextarea
                     id="driving_explanation"
                     value={formData.driving_explanation || ''}
                     onChange={(e) => handleInputChange('driving_explanation', e.target.value)}
-                    className={getError('driving_explanation') ? 'border-red-500' : ''}
+                    error={!!getError('driving_explanation')}
                     placeholder=""
                     rows={3}
                   />
-                  {getError('driving_explanation') && (
-                    <p className="text-sm text-red-600">{getError('driving_explanation')}</p>
-                  )}
-                </div>
+                  <MobileErrorMessage>{getError('driving_explanation')}</MobileErrorMessage>
+                </MobileFormField>
               )}
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 mt-4">
-            <Checkbox
-              id="additional_info"
-              checked={formData.has_additional_info || false}
-              onCheckedChange={(checked) => handleInputChange('has_additional_info', checked)}
-            />
-            <Label htmlFor="additional_info" className="text-sm font-normal cursor-pointer">
-              {t('jobApplication.steps.additionalInfo.conviction.additionalPages')}
-            </Label>
-          </div>
+          <MobileCheckbox
+            id="additional_info"
+            checked={formData.has_additional_info || false}
+            onCheckedChange={(checked) => handleInputChange('has_additional_info', checked)}
+            label={t('jobApplication.steps.additionalInfo.conviction.additionalPages')}
+            className="mt-4"
+          />
         </CardContent>
       </Card>
 
@@ -309,99 +288,86 @@ export default function AdditionalInformationStep({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <Checkbox
-                id="no_reference"
-                checked={hasNoReference}
-                onCheckedChange={(checked) => {
-                  setHasNoReference(checked as boolean)
-                  handleInputChange('has_no_reference', checked)
-                  if (checked) {
-                    // Clear reference fields when checked
-                    updateFormData({
-                      has_no_reference: true,
-                      reference_name: '',
-                      reference_years_known: '',
-                      reference_phone: '',
-                      reference_relationship: ''
-                    })
-                  }
-                }}
-                className="h-5 w-5"
-              />
-              <Label htmlFor="no_reference" className="text-base font-medium cursor-pointer">
-                {t('jobApplication.steps.additionalInfo.personalReference.noReference')}
-              </Label>
-            </div>
-          </div>
-          
+          <MobileCheckbox
+            id="no_reference"
+            checked={hasNoReference}
+            onCheckedChange={(checked) => {
+              setHasNoReference(checked as boolean)
+              handleInputChange('has_no_reference', checked)
+              if (checked) {
+                updateFormData({
+                  has_no_reference: true,
+                  reference_name: '',
+                  reference_years_known: '',
+                  reference_phone: '',
+                  reference_relationship: ''
+                })
+              }
+            }}
+            label={t('jobApplication.steps.additionalInfo.personalReference.noReference')}
+            className="mb-4 bg-gray-50 rounded-lg border border-gray-200 p-3"
+          />
+
           {!hasNoReference && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="reference_name" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.personalReference.name')}</Label>
-              <Input
-                id="reference_name"
-                value={formData.reference_name || ''}
-                onChange={(e) => handleInputChange('reference_name', e.target.value)}
-                className={getError('reference_name') ? 'border-red-500' : ''}
-                placeholder=""
-              />
-              {getError('reference_name') && (
-                <p className="text-sm text-red-600">{getError('reference_name')}</p>
-              )}
-            </div>
+            <MobileFormGrid columns={2}>
+              <MobileFormField>
+                <MobileLabel htmlFor="reference_name">{t('jobApplication.steps.additionalInfo.personalReference.name')}</MobileLabel>
+                <MobileInput
+                  id="reference_name"
+                  value={formData.reference_name || ''}
+                  onChange={(e) => handleInputChange('reference_name', e.target.value)}
+                  error={!!getError('reference_name')}
+                  placeholder=""
+                />
+                <MobileErrorMessage>{getError('reference_name')}</MobileErrorMessage>
+              </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="reference_years_known" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.personalReference.yearsKnown')}</Label>
-              <Input
-                id="reference_years_known"
-                type="number"
-                value={formData.reference_years_known || ''}
-                onChange={(e) => handleInputChange('reference_years_known', e.target.value)}
-                className={getError('reference_years_known') ? 'border-red-500' : ''}
-                placeholder="5"
-                min="0"
-                max="99"
-              />
-              {getError('reference_years_known') && (
-                <p className="text-sm text-red-600">{getError('reference_years_known')}</p>
-              )}
-            </div>
+              <MobileFormField>
+                <MobileLabel htmlFor="reference_years_known">{t('jobApplication.steps.additionalInfo.personalReference.yearsKnown')}</MobileLabel>
+                <MobileInput
+                  id="reference_years_known"
+                  type="number"
+                  mobileKeyboard="numeric"
+                  value={formData.reference_years_known || ''}
+                  onChange={(e) => handleInputChange('reference_years_known', e.target.value)}
+                  error={!!getError('reference_years_known')}
+                  placeholder="5"
+                  min="0"
+                  max="99"
+                />
+                <MobileErrorMessage>{getError('reference_years_known')}</MobileErrorMessage>
+              </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="reference_phone" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.personalReference.phone')}</Label>
-              <Input
-                id="reference_phone"
-                type="tel"
-                value={formData.reference_phone || ''}
-                onChange={(e) => {
-                  const formatted = formatPhoneNumber(e.target.value)
-                  handleInputChange('reference_phone', formatted)
-                }}
-                className={getError('reference_phone') ? 'border-red-500' : ''}
-                placeholder="(555) 123-4567"
-                maxLength={14}
-              />
-              {getError('reference_phone') && (
-                <p className="text-sm text-red-600">{getError('reference_phone')}</p>
-              )}
-            </div>
+              <MobileFormField>
+                <MobileLabel htmlFor="reference_phone">{t('jobApplication.steps.additionalInfo.personalReference.phone')}</MobileLabel>
+                <MobileInput
+                  id="reference_phone"
+                  type="tel"
+                  mobileKeyboard="tel"
+                  value={formData.reference_phone || ''}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value)
+                    handleInputChange('reference_phone', formatted)
+                  }}
+                  error={!!getError('reference_phone')}
+                  placeholder="(555) 123-4567"
+                  maxLength={14}
+                />
+                <MobileErrorMessage>{getError('reference_phone')}</MobileErrorMessage>
+              </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="reference_relationship" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.personalReference.relationship')}</Label>
-              <Input
-                id="reference_relationship"
-                value={formData.reference_relationship || ''}
-                onChange={(e) => handleInputChange('reference_relationship', e.target.value)}
-                className={getError('reference_relationship') ? 'border-red-500' : ''}
-                placeholder=""
-              />
-              {getError('reference_relationship') && (
-                <p className="text-sm text-red-600">{getError('reference_relationship')}</p>
-              )}
-            </div>
-          </div>
+              <MobileFormField>
+                <MobileLabel htmlFor="reference_relationship">{t('jobApplication.steps.additionalInfo.personalReference.relationship')}</MobileLabel>
+                <MobileInput
+                  id="reference_relationship"
+                  value={formData.reference_relationship || ''}
+                  onChange={(e) => handleInputChange('reference_relationship', e.target.value)}
+                  error={!!getError('reference_relationship')}
+                  placeholder=""
+                />
+                <MobileErrorMessage>{getError('reference_relationship')}</MobileErrorMessage>
+              </MobileFormField>
+            </MobileFormGrid>
           )}
         </CardContent>
       </Card>
@@ -413,94 +379,79 @@ export default function AdditionalInformationStep({
             {t('jobApplication.steps.additionalInfo.military.title')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="mb-4">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <Checkbox
-                id="no_military"
-                checked={hasNoMilitaryService}
-                onCheckedChange={(checked) => {
-                  setHasNoMilitaryService(checked as boolean)
-                  handleInputChange('has_no_military_service', checked)
-                  if (checked) {
-                    // Clear military fields when checked
-                    updateFormData({
-                      has_no_military_service: true,
-                      military_branch: '',
-                      military_from_to: '',
-                      military_rank_duties: '',
-                      military_discharge_date: ''
-                    })
-                  }
-                }}
-                className="h-5 w-5"
-              />
-              <Label htmlFor="no_military" className="text-base font-medium cursor-pointer">
-                {t('jobApplication.steps.additionalInfo.military.noService')}
-              </Label>
-            </div>
-          </div>
-          
+        <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileCheckbox
+            id="no_military"
+            checked={hasNoMilitaryService}
+            onCheckedChange={(checked) => {
+              setHasNoMilitaryService(checked as boolean)
+              handleInputChange('has_no_military_service', checked)
+              if (checked) {
+                updateFormData({
+                  has_no_military_service: true,
+                  military_branch: '',
+                  military_from_to: '',
+                  military_rank_duties: '',
+                  military_discharge_date: ''
+                })
+              }
+            }}
+            label={t('jobApplication.steps.additionalInfo.military.noService')}
+            className="mb-4 bg-gray-50 rounded-lg border border-gray-200 p-3"
+          />
+
           {!hasNoMilitaryService && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="military_branch" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.military.branch')} *</Label>
-              <Input
-                id="military_branch"
-                value={formData.military_branch || ''}
-                onChange={(e) => handleInputChange('military_branch', e.target.value)}
-                className={getError('military_branch') ? 'border-red-500' : ''}
-                placeholder=""
-              />
-              {getError('military_branch') && (
-                <p className="text-sm text-red-600">{getError('military_branch')}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="military_from_to" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.military.fromTo')} *</Label>
-              <Input
-                id="military_from_to"
-                value={formData.military_from_to || ''}
-                onChange={(e) => handleInputChange('military_from_to', e.target.value)}
-                className={getError('military_from_to') ? 'border-red-500' : ''}
-                placeholder="MM/YYYY - MM/YYYY"
-              />
-              {getError('military_from_to') && (
-                <p className="text-sm text-red-600">{getError('military_from_to')}</p>
-              )}
-            </div>
-            
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="military_rank_duties" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.military.rankDuties')} *</Label>
-              <Textarea
-                id="military_rank_duties"
-                value={formData.military_rank_duties || ''}
-                onChange={(e) => handleInputChange('military_rank_duties', e.target.value)}
-                className={getError('military_rank_duties') ? 'border-red-500' : ''}
-                placeholder=""
-                rows={2}
-              />
-              {getError('military_rank_duties') && (
-                <p className="text-sm text-red-600">{getError('military_rank_duties')}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="military_discharge_date" className="font-semibold text-gray-900">{t('jobApplication.steps.additionalInfo.military.dischargeDate')} *</Label>
-              <Input
-                id="military_discharge_date"
-                type="date"
-                value={formData.military_discharge_date || ''}
-                onChange={(e) => handleInputChange('military_discharge_date', e.target.value)}
-                className={getError('military_discharge_date') ? 'border-red-500' : ''}
-                max={new Date().toISOString().split('T')[0]}
-              />
-              {getError('military_discharge_date') && (
-                <p className="text-sm text-red-600">{getError('military_discharge_date')}</p>
-              )}
-            </div>
-          </div>
+            <MobileFormGrid columns={2}>
+              <MobileFormField>
+                <MobileLabel htmlFor="military_branch" required>{t('jobApplication.steps.additionalInfo.military.branch')}</MobileLabel>
+                <MobileInput
+                  id="military_branch"
+                  value={formData.military_branch || ''}
+                  onChange={(e) => handleInputChange('military_branch', e.target.value)}
+                  error={!!getError('military_branch')}
+                  placeholder=""
+                />
+                <MobileErrorMessage>{getError('military_branch')}</MobileErrorMessage>
+              </MobileFormField>
+
+              <MobileFormField>
+                <MobileLabel htmlFor="military_from_to" required>{t('jobApplication.steps.additionalInfo.military.fromTo')}</MobileLabel>
+                <MobileInput
+                  id="military_from_to"
+                  value={formData.military_from_to || ''}
+                  onChange={(e) => handleInputChange('military_from_to', e.target.value)}
+                  error={!!getError('military_from_to')}
+                  placeholder="MM/YYYY - MM/YYYY"
+                />
+                <MobileErrorMessage>{getError('military_from_to')}</MobileErrorMessage>
+              </MobileFormField>
+
+              <MobileFormField className="md:col-span-2">
+                <MobileLabel htmlFor="military_rank_duties" required>{t('jobApplication.steps.additionalInfo.military.rankDuties')}</MobileLabel>
+                <MobileTextarea
+                  id="military_rank_duties"
+                  value={formData.military_rank_duties || ''}
+                  onChange={(e) => handleInputChange('military_rank_duties', e.target.value)}
+                  error={!!getError('military_rank_duties')}
+                  placeholder=""
+                  rows={2}
+                />
+                <MobileErrorMessage>{getError('military_rank_duties')}</MobileErrorMessage>
+              </MobileFormField>
+
+              <MobileFormField>
+                <MobileLabel htmlFor="military_discharge_date" required>{t('jobApplication.steps.additionalInfo.military.dischargeDate')}</MobileLabel>
+                <MobileInput
+                  id="military_discharge_date"
+                  type="date"
+                  value={formData.military_discharge_date || ''}
+                  onChange={(e) => handleInputChange('military_discharge_date', e.target.value)}
+                  error={!!getError('military_discharge_date')}
+                  max={new Date().toISOString().split('T')[0]}
+                />
+                <MobileErrorMessage>{getError('military_discharge_date')}</MobileErrorMessage>
+              </MobileFormField>
+            </MobileFormGrid>
           )}
         </CardContent>
       </Card>

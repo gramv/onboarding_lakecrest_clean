@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -19,6 +15,17 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { formValidator, ValidationRule } from '@/utils/formValidation'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileSelect,
+  MobileSelectItem,
+  MobileRadioGroup,
+  MobileTextarea,
+  MobileErrorMessage,
+  MobileFormField,
+  MobileFormGrid
+} from './mobile-optimized'
 
 interface PositionAvailabilityStepProps {
   formData: any
@@ -181,106 +188,85 @@ export default function PositionAvailabilityStep({
             {t('jobApplication.steps.positionAvailability.positionDetails')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="department" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.department')} *
-              </Label>
-              <Select
+        <CardContent className="pt-6 space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormGrid columns={2}>
+            <MobileFormField>
+              <MobileLabel htmlFor="department" required>
+                {t('jobApplication.steps.positionAvailability.fields.department')}
+              </MobileLabel>
+              <MobileSelect
                 value={formData.department || ''}
                 onValueChange={(value) => {
                   handleInputChange('department', value)
                   handleInputChange('position', '') // Reset position when department changes
                 }}
+                placeholder={t('jobApplication.steps.positionAvailability.placeholders.selectDepartment')}
+                error={!!getError('department')}
               >
-                <SelectTrigger
-                  className={`min-h-[44px] ${getError('department') ? 'border-red-500' : ''}`}
-                >
-                  <SelectValue placeholder={t('jobApplication.steps.positionAvailability.placeholders.selectDepartment')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept: string) => (
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getError('department') && (
-                <p className="text-sm text-red-600">{getError('department')}</p>
-              )}
-            </div>
+                {departments.map((dept: string) => (
+                  <MobileSelectItem key={dept} value={dept}>{dept}</MobileSelectItem>
+                ))}
+              </MobileSelect>
+              <MobileErrorMessage>{getError('department')}</MobileErrorMessage>
+            </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="position" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.position')} *
-              </Label>
-              <Select
+            <MobileFormField>
+              <MobileLabel htmlFor="position" required>
+                {t('jobApplication.steps.positionAvailability.fields.position')}
+              </MobileLabel>
+              <MobileSelect
                 value={formData.position || ''}
                 onValueChange={(value) => handleInputChange('position', value)}
                 disabled={!formData.department}
+                placeholder={formData.department ?
+                  t('jobApplication.steps.positionAvailability.placeholders.selectPosition') :
+                  t('jobApplication.steps.positionAvailability.placeholders.selectDepartmentFirst')
+                }
+                error={!!getError('position')}
               >
-                <SelectTrigger
-                  className={`min-h-[44px] ${getError('position') ? 'border-red-500' : ''}`}
-                >
-                  <SelectValue
-                    placeholder={formData.department ?
-                      t('jobApplication.steps.positionAvailability.placeholders.selectPosition') :
-                      t('jobApplication.steps.positionAvailability.placeholders.selectDepartmentFirst')
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {positions && positions.map((pos: string) => (
-                    <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getError('position') && (
-                <p className="text-sm text-red-600">{getError('position')}</p>
-              )}
-            </div>
+                {positions && positions.map((pos: string) => (
+                  <MobileSelectItem key={pos} value={pos}>{pos}</MobileSelectItem>
+                ))}
+              </MobileSelect>
+              <MobileErrorMessage>{getError('position')}</MobileErrorMessage>
+            </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="employment_type" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.employmentType')} *
-              </Label>
-              <Select
+            <MobileFormField>
+              <MobileLabel htmlFor="employment_type" required>
+                {t('jobApplication.steps.positionAvailability.fields.employmentType')}
+              </MobileLabel>
+              <MobileSelect
                 value={formData.employment_type || ''}
                 onValueChange={(value) => handleInputChange('employment_type', value)}
+                placeholder={t('jobApplication.steps.positionAvailability.placeholders.selectEmploymentType')}
+                error={!!getError('employment_type')}
               >
-                <SelectTrigger
-                  className={`min-h-[44px] ${getError('employment_type') ? 'border-red-500' : ''}`}
-                >
-                  <SelectValue placeholder={t('jobApplication.steps.positionAvailability.placeholders.selectEmploymentType')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full_time">{t('jobApplication.steps.positionAvailability.employmentTypes.fullTime')}</SelectItem>
-                  <SelectItem value="part_time">{t('jobApplication.steps.positionAvailability.employmentTypes.partTime')}</SelectItem>
-                  <SelectItem value="temporary">{t('jobApplication.steps.positionAvailability.employmentTypes.temporary')}</SelectItem>
-                  <SelectItem value="contract">{t('jobApplication.steps.positionAvailability.employmentTypes.contract')}</SelectItem>
-                </SelectContent>
-              </Select>
-              {getError('employment_type') && (
-                <p className="text-sm text-red-600">{getError('employment_type')}</p>
-              )}
-            </div>
+                <MobileSelectItem value="full_time">{t('jobApplication.steps.positionAvailability.employmentTypes.fullTime')}</MobileSelectItem>
+                <MobileSelectItem value="part_time">{t('jobApplication.steps.positionAvailability.employmentTypes.partTime')}</MobileSelectItem>
+                <MobileSelectItem value="temporary">{t('jobApplication.steps.positionAvailability.employmentTypes.temporary')}</MobileSelectItem>
+                <MobileSelectItem value="contract">{t('jobApplication.steps.positionAvailability.employmentTypes.contract')}</MobileSelectItem>
+              </MobileSelect>
+              <MobileErrorMessage>{getError('employment_type')}</MobileErrorMessage>
+            </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="desired_salary" className="font-semibold text-gray-900">
+            <MobileFormField>
+              <MobileLabel htmlFor="desired_salary">
                 {t('jobApplication.steps.positionAvailability.fields.hourlyRate')}
-              </Label>
+              </MobileLabel>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-gray-400" />
+                <MobileInput
                   id="desired_salary"
+                  type="text"
+                  mobileKeyboard="decimal"
                   value={formData.desired_salary || ''}
                   onChange={(e) => handleInputChange('desired_salary', e.target.value)}
-                  className="pl-10 h-12 text-base"
+                  className="pl-10"
                   placeholder="15.00"
                 />
               </div>
-            </div>
-          </div>
+            </MobileFormField>
+          </MobileFormGrid>
         </CardContent>
       </Card>
 
@@ -292,110 +278,84 @@ export default function PositionAvailabilityStep({
             {t('jobApplication.steps.positionAvailability.availability')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.startDate')} *
-              </Label>
+        <CardContent className="pt-6 space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormGrid columns={2}>
+            <MobileFormField>
+              <MobileLabel htmlFor="start_date" required>
+                {t('jobApplication.steps.positionAvailability.fields.startDate')}
+              </MobileLabel>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-gray-400" />
+                <MobileInput
                   id="start_date"
                   type="date"
                   value={formData.start_date || ''}
                   onChange={(e) => handleInputChange('start_date', e.target.value)}
-                  className={`pl-10 min-h-[44px] ${getError('start_date') ? 'border-red-500' : ''}`}
+                  className="pl-10"
                   min={new Date().toISOString().split('T')[0]}
+                  error={!!getError('start_date')}
                   required
                 />
               </div>
-              {getError('start_date') && (
-                <p className="text-sm text-red-600">{getError('start_date')}</p>
-              )}
-            </div>
+              <MobileErrorMessage>{getError('start_date')}</MobileErrorMessage>
+            </MobileFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="shift_preference" className="font-semibold text-gray-900">
+            <MobileFormField>
+              <MobileLabel htmlFor="shift_preference">
                 {t('jobApplication.steps.positionAvailability.fields.shiftPreference')}
-              </Label>
+              </MobileLabel>
               <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Select
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-gray-400 z-10" />
+                <MobileSelect
                   value={formData.shift_preference || ''}
                   onValueChange={(value) => handleInputChange('shift_preference', value)}
+                  placeholder={t('jobApplication.steps.positionAvailability.placeholders.selectShift')}
+                  className="pl-10"
                 >
-                  <SelectTrigger className="pl-10 min-h-[44px]">
-                    <SelectValue placeholder={t('jobApplication.steps.positionAvailability.placeholders.selectShift')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="morning">{t('jobApplication.steps.positionAvailability.shiftOptions.morning')}</SelectItem>
-                    <SelectItem value="afternoon">{t('jobApplication.steps.positionAvailability.shiftOptions.afternoon')}</SelectItem>
-                    <SelectItem value="evening">{t('jobApplication.steps.positionAvailability.shiftOptions.evening')}</SelectItem>
-                    <SelectItem value="night">{t('jobApplication.steps.positionAvailability.shiftOptions.night')}</SelectItem>
-                    <SelectItem value="rotating">{t('jobApplication.steps.positionAvailability.shiftOptions.rotating')}</SelectItem>
-                    <SelectItem value="any">{t('jobApplication.steps.positionAvailability.shiftOptions.any')}</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <MobileSelectItem value="morning">{t('jobApplication.steps.positionAvailability.shiftOptions.morning')}</MobileSelectItem>
+                  <MobileSelectItem value="afternoon">{t('jobApplication.steps.positionAvailability.shiftOptions.afternoon')}</MobileSelectItem>
+                  <MobileSelectItem value="evening">{t('jobApplication.steps.positionAvailability.shiftOptions.evening')}</MobileSelectItem>
+                  <MobileSelectItem value="night">{t('jobApplication.steps.positionAvailability.shiftOptions.night')}</MobileSelectItem>
+                  <MobileSelectItem value="rotating">{t('jobApplication.steps.positionAvailability.shiftOptions.rotating')}</MobileSelectItem>
+                  <MobileSelectItem value="any">{t('jobApplication.steps.positionAvailability.shiftOptions.any')}</MobileSelectItem>
+                </MobileSelect>
               </div>
-            </div>
-          </div>
+            </MobileFormField>
+          </MobileFormGrid>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <div className="space-y-3">
-              <Label className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.weekends')} *
-              </Label>
-              <RadioGroup
+          <MobileFormGrid columns={2}>
+            <MobileFormField>
+              <MobileLabel required>
+                {t('jobApplication.steps.positionAvailability.fields.weekends')}
+              </MobileLabel>
+              <MobileRadioGroup
                 value={formData.availability_weekends || ''}
                 onValueChange={(value) => handleInputChange('availability_weekends', value)}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-              >
-                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
-                  <RadioGroupItem value="yes" id="weekends_yes" />
-                  <Label htmlFor="weekends_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
-                    {t('common.yes')}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
-                  <RadioGroupItem value="no" id="weekends_no" />
-                  <Label htmlFor="weekends_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
-                    {t('common.no')}
-                  </Label>
-                </div>
-              </RadioGroup>
-              {getError('availability_weekends') && (
-                <p className="text-sm text-red-600">{getError('availability_weekends')}</p>
-              )}
-            </div>
+                columns={2}
+                options={[
+                  { value: 'yes', label: t('common.yes'), id: 'weekends_yes' },
+                  { value: 'no', label: t('common.no'), id: 'weekends_no' }
+                ]}
+              />
+              <MobileErrorMessage>{getError('availability_weekends')}</MobileErrorMessage>
+            </MobileFormField>
 
-            <div className="space-y-3">
-              <Label className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.holidays')} *
-              </Label>
-              <RadioGroup
+            <MobileFormField>
+              <MobileLabel required>
+                {t('jobApplication.steps.positionAvailability.fields.holidays')}
+              </MobileLabel>
+              <MobileRadioGroup
                 value={formData.availability_holidays || ''}
                 onValueChange={(value) => handleInputChange('availability_holidays', value)}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-              >
-                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
-                  <RadioGroupItem value="yes" id="holidays_yes" />
-                  <Label htmlFor="holidays_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
-                    {t('common.yes')}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
-                  <RadioGroupItem value="no" id="holidays_no" />
-                  <Label htmlFor="holidays_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
-                    {t('common.no')}
-                  </Label>
-                </div>
-              </RadioGroup>
-              {getError('availability_holidays') && (
-                <p className="text-sm text-red-600">{getError('availability_holidays')}</p>
-              )}
-            </div>
-          </div>
+                columns={2}
+                options={[
+                  { value: 'yes', label: t('common.yes'), id: 'holidays_yes' },
+                  { value: 'no', label: t('common.no'), id: 'holidays_no' }
+                ]}
+              />
+              <MobileErrorMessage>{getError('availability_holidays')}</MobileErrorMessage>
+            </MobileFormField>
+          </MobileFormGrid>
         </CardContent>
       </Card>
 
@@ -407,66 +367,54 @@ export default function PositionAvailabilityStep({
             {t('jobApplication.steps.positionAvailability.previousEmployment')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
-          <div className="space-y-3">
-            <Label className="font-semibold text-gray-900">
-              {t('jobApplication.steps.positionAvailability.fields.previouslyEmployed')} *
-            </Label>
-            <RadioGroup
+        <CardContent className="pt-6 space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormField>
+            <MobileLabel required>
+              {t('jobApplication.steps.positionAvailability.fields.previouslyEmployed')}
+            </MobileLabel>
+            <MobileRadioGroup
               value={formData.previously_employed || ''}
               onValueChange={(value) => handleInputChange('previously_employed', value)}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-            >
-              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
-                <RadioGroupItem value="no" id="prev_emp_no" />
-                <Label htmlFor="prev_emp_no" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
-                  {t('common.no')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-3 sm:space-x-2 py-3 px-3 sm:py-0 sm:px-0 rounded-lg hover:bg-gray-50 active:bg-blue-50 transition-colors min-h-[56px] sm:min-h-[auto]">
-                <RadioGroupItem value="yes" id="prev_emp_yes" />
-                <Label htmlFor="prev_emp_yes" className="font-normal cursor-pointer flex-1 text-base sm:text-sm">
-                  {t('common.yes')}
-                </Label>
-              </div>
-            </RadioGroup>
-            {getError('previously_employed') && (
-              <p className="text-sm text-red-600">{getError('previously_employed')}</p>
-            )}
-          </div>
+              columns={2}
+              options={[
+                { value: 'no', label: t('common.no'), id: 'prev_emp_no' },
+                { value: 'yes', label: t('common.yes'), id: 'prev_emp_yes' }
+              ]}
+            />
+            <MobileErrorMessage>{getError('previously_employed')}</MobileErrorMessage>
+          </MobileFormField>
 
           {formData.previously_employed === 'yes' && (
-            <div className="space-y-2 animate-in slide-in-from-top-2">
-              <Label htmlFor="previous_employment_details" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.previousDetails')} *
-              </Label>
-              <Textarea
+            <MobileFormField className="animate-in slide-in-from-top-2">
+              <MobileLabel htmlFor="previous_employment_details" required>
+                {t('jobApplication.steps.positionAvailability.fields.previousDetails')}
+              </MobileLabel>
+              <MobileTextarea
                 id="previous_employment_details"
                 value={formData.previous_employment_details || ''}
                 onChange={(e) => handleInputChange('previous_employment_details', e.target.value)}
-                className={`min-h-[88px] ${getError('previous_employment_details') ? 'border-red-500' : ''}`}
+                error={!!getError('previous_employment_details')}
                 placeholder={t('jobApplication.steps.positionAvailability.placeholders.previousDetails')}
                 rows={3}
               />
-              {getError('previous_employment_details') && (
-                <p className="text-sm text-red-600">{getError('previous_employment_details')}</p>
-              )}
-            </div>
+              <MobileErrorMessage>{getError('previous_employment_details')}</MobileErrorMessage>
+            </MobileFormField>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="relatives_employed" className="font-semibold text-gray-900">
+          <MobileFormField>
+            <MobileLabel htmlFor="relatives_employed">
               {t('jobApplication.steps.positionAvailability.fields.relatives')}
-            </Label>
-            <Input
+            </MobileLabel>
+            <MobileInput
               id="relatives_employed"
               value={formData.relatives_employed || ''}
               onChange={(e) => handleInputChange('relatives_employed', e.target.value)}
-              className="min-h-[44px]"
               placeholder={t('jobApplication.steps.positionAvailability.placeholders.relatives')}
             />
-            <p className="text-xs text-gray-500">{t('jobApplication.steps.positionAvailability.hints.relatives')}</p>
-          </div>
+            <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500">
+              {t('jobApplication.steps.positionAvailability.hints.relatives')}
+            </p>
+          </MobileFormField>
         </CardContent>
       </Card>
 
@@ -478,61 +426,39 @@ export default function PositionAvailabilityStep({
             {t('jobApplication.steps.positionAvailability.currentEmployment')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
-          <div className="space-y-3">
-            <Label className="font-semibold text-gray-900">
-              {t('jobApplication.steps.positionAvailability.fields.currentlyEmployed')} *
-            </Label>
-            <RadioGroup
+        <CardContent className="pt-6 space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormField>
+            <MobileLabel required>
+              {t('jobApplication.steps.positionAvailability.fields.currentlyEmployed')}
+            </MobileLabel>
+            <MobileRadioGroup
               value={formData.currently_employed || ''}
               onValueChange={(value) => handleInputChange('currently_employed', value)}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id="currently_employed_yes" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="currently_employed_yes" className="font-normal cursor-pointer">
-                  {t('common.yes')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="currently_employed_no" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="currently_employed_no" className="font-normal cursor-pointer">
-                  {t('common.no')}
-                </Label>
-              </div>
-            </RadioGroup>
-            {getError('currently_employed') && (
-              <p className="text-sm text-red-600">{getError('currently_employed')}</p>
-            )}
-          </div>
+              columns={2}
+              options={[
+                { value: 'yes', label: t('common.yes'), id: 'currently_employed_yes' },
+                { value: 'no', label: t('common.no'), id: 'currently_employed_no' }
+              ]}
+            />
+            <MobileErrorMessage>{getError('currently_employed')}</MobileErrorMessage>
+          </MobileFormField>
 
           {formData.currently_employed === 'yes' && (
-            <div className="space-y-3 animate-in slide-in-from-top-2">
-              <Label className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.contactEmployer')} *
-              </Label>
-              <RadioGroup
+            <MobileFormField className="animate-in slide-in-from-top-2">
+              <MobileLabel required>
+                {t('jobApplication.steps.positionAvailability.fields.contactEmployer')}
+              </MobileLabel>
+              <MobileRadioGroup
                 value={formData.may_contact_current_employer || ''}
                 onValueChange={(value) => handleInputChange('may_contact_current_employer', value)}
-                className="flex flex-col sm:flex-row gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="contact_employer_yes" className="min-w-[20px] min-h-[20px]" />
-                  <Label htmlFor="contact_employer_yes" className="font-normal cursor-pointer">
-                    {t('common.yes')}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="contact_employer_no" className="min-w-[20px] min-h-[20px]" />
-                  <Label htmlFor="contact_employer_no" className="font-normal cursor-pointer">
-                    {t('common.no')}
-                  </Label>
-                </div>
-              </RadioGroup>
-              {getError('may_contact_current_employer') && (
-                <p className="text-sm text-red-600">{getError('may_contact_current_employer')}</p>
-              )}
-            </div>
+                columns={2}
+                options={[
+                  { value: 'yes', label: t('common.yes'), id: 'contact_employer_yes' },
+                  { value: 'no', label: t('common.no'), id: 'contact_employer_no' }
+                ]}
+              />
+              <MobileErrorMessage>{getError('may_contact_current_employer')}</MobileErrorMessage>
+            </MobileFormField>
           )}
         </CardContent>
       </Card>
@@ -545,95 +471,55 @@ export default function PositionAvailabilityStep({
             {t('jobApplication.steps.positionAvailability.fields.referralSource')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
-          <RadioGroup
-            value={formData.referral_source || ''}
-            onValueChange={(value) => handleInputChange('referral_source', value)}
-            className="space-y-3"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="employee" id="ref_employee" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_employee" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.employee')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="indeed" id="ref_indeed" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_indeed" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.indeed')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="newspaper" id="ref_newspaper" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_newspaper" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.newspaper')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="craigslist" id="ref_craigslist" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_craigslist" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.craigslist')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="walkin" id="ref_walkin" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_walkin" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.walkin')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="dol" id="ref_dol" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_dol" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.dol')}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="other" id="ref_other" className="min-w-[20px] min-h-[20px]" />
-                <Label htmlFor="ref_other" className="font-normal cursor-pointer flex-1">
-                  {t('jobApplication.steps.positionAvailability.fields.referralOptions.other')}
-                </Label>
-              </div>
-            </div>
-          </RadioGroup>
-          {getError('referral_source') && (
-            <p className="text-sm text-red-600">{getError('referral_source')}</p>
-          )}
+        <CardContent className="pt-6 space-y-[clamp(1rem,3vw,1.5rem)]">
+          <MobileFormField>
+            <MobileRadioGroup
+              value={formData.referral_source || ''}
+              onValueChange={(value) => handleInputChange('referral_source', value)}
+              columns={2}
+              options={[
+                { value: 'employee', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.employee'), id: 'ref_employee' },
+                { value: 'indeed', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.indeed'), id: 'ref_indeed' },
+                { value: 'newspaper', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.newspaper'), id: 'ref_newspaper' },
+                { value: 'craigslist', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.craigslist'), id: 'ref_craigslist' },
+                { value: 'walkin', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.walkin'), id: 'ref_walkin' },
+                { value: 'dol', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.dol'), id: 'ref_dol' },
+                { value: 'other', label: t('jobApplication.steps.positionAvailability.fields.referralOptions.other'), id: 'ref_other' }
+              ]}
+            />
+            <MobileErrorMessage>{getError('referral_source')}</MobileErrorMessage>
+          </MobileFormField>
 
           {formData.referral_source === 'employee' && (
-            <div className="space-y-2 animate-in slide-in-from-top-2">
-              <Label htmlFor="employee_referral_name" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.employeeReferralName')} *
-              </Label>
-              <Input
+            <MobileFormField className="animate-in slide-in-from-top-2">
+              <MobileLabel htmlFor="employee_referral_name" required>
+                {t('jobApplication.steps.positionAvailability.fields.employeeReferralName')}
+              </MobileLabel>
+              <MobileInput
                 id="employee_referral_name"
                 value={formData.employee_referral_name || ''}
                 onChange={(e) => handleInputChange('employee_referral_name', e.target.value)}
-                className={`min-h-[44px] ${getError('employee_referral_name') ? 'border-red-500' : ''}`}
+                error={!!getError('employee_referral_name')}
                 placeholder={t('jobApplication.steps.positionAvailability.placeholders.employeeReferralName')}
               />
-              {getError('employee_referral_name') && (
-                <p className="text-sm text-red-600">{getError('employee_referral_name')}</p>
-              )}
-            </div>
+              <MobileErrorMessage>{getError('employee_referral_name')}</MobileErrorMessage>
+            </MobileFormField>
           )}
 
           {formData.referral_source === 'other' && (
-            <div className="space-y-2 animate-in slide-in-from-top-2">
-              <Label htmlFor="referral_source_other" className="font-semibold text-gray-900">
-                {t('jobApplication.steps.positionAvailability.fields.referralSourceOther')} *
-              </Label>
-              <Input
+            <MobileFormField className="animate-in slide-in-from-top-2">
+              <MobileLabel htmlFor="referral_source_other" required>
+                {t('jobApplication.steps.positionAvailability.fields.referralSourceOther')}
+              </MobileLabel>
+              <MobileInput
                 id="referral_source_other"
                 value={formData.referral_source_other || ''}
                 onChange={(e) => handleInputChange('referral_source_other', e.target.value)}
-                className={`min-h-[44px] ${getError('referral_source_other') ? 'border-red-500' : ''}`}
+                error={!!getError('referral_source_other')}
                 placeholder={t('jobApplication.steps.positionAvailability.placeholders.referralSourceOther')}
               />
-              {getError('referral_source_other') && (
-                <p className="text-sm text-red-600">{getError('referral_source_other')}</p>
-              )}
-            </div>
+              <MobileErrorMessage>{getError('referral_source_other')}</MobileErrorMessage>
+            </MobileFormField>
           )}
         </CardContent>
       </Card>

@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Plus, Trash2 } from 'lucide-react'
 import { formValidator, ValidationRule } from '@/utils/formValidation'
+import {
+  MobileInput,
+  MobileLabel,
+  MobileTextarea,
+  MobileCheckbox,
+  MobileErrorMessage,
+  MobileFormField,
+  MobileFormGrid
+} from './mobile-optimized'
 
 interface EmploymentHistoryStepProps {
   formData: any
@@ -195,28 +199,24 @@ export default function EmploymentHistoryStep({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
+    <div className="space-y-[clamp(1.5rem,4vw,2rem)]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h3 className="text-[clamp(1.125rem,3vw,1.5rem)] font-semibold">
           {t('jobApplication.steps.employmentHistory.title')}
         </h3>
-        
-        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <Checkbox
-            id="no_work_history"
-            checked={hasNoWorkHistory}
-            onCheckedChange={handleNoWorkHistoryChange}
-            className="h-5 w-5"
-          />
-          <Label htmlFor="no_work_history" className="text-base font-medium cursor-pointer">
-            {t('jobApplication.steps.employmentHistory.noExperience')}
-          </Label>
-        </div>
+
+        <MobileCheckbox
+          id="no_work_history"
+          checked={hasNoWorkHistory}
+          onCheckedChange={handleNoWorkHistoryChange}
+          label={t('jobApplication.steps.employmentHistory.noExperience')}
+          className="bg-gray-50 rounded-lg border border-gray-200 p-3"
+        />
       </div>
 
       {!hasNoWorkHistory && (
         <>
-          <p className="text-sm text-gray-600">
+          <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600">
             {t('jobApplication.steps.employmentHistory.instruction')}
           </p>
 
@@ -224,9 +224,9 @@ export default function EmploymentHistoryStep({
             <Card key={index}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">
+                  <CardTitle className="text-[clamp(1rem,2.5vw,1.125rem)]">
                     {t('jobApplication.steps.employmentHistory.employment')} #{index + 1}
-                    {entry.is_current && <span className="ml-2 text-sm text-green-600">({t('jobApplication.steps.employmentHistory.current')})</span>}
+                    {entry.is_current && <span className="ml-2 text-[clamp(0.875rem,2vw,1rem)] text-green-600">({t('jobApplication.steps.employmentHistory.current')})</span>}
                   </CardTitle>
                   {employmentHistory.length > 1 && (
                     <Button
@@ -234,219 +234,252 @@ export default function EmploymentHistoryStep({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeEmploymentEntry(index)}
+                      className="h-[clamp(2.75rem,5vw,3rem)]"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" />
                     </Button>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  {/* Company Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`employer_name_${index}`}>{t('jobApplication.steps.employmentHistory.fields.companyName')} *</Label>
-                      <Input
-                        id={`employer_name_${index}`}
-                        value={entry.employer_name}
-                        onChange={(e) => updateEmploymentEntry(index, 'employer_name', e.target.value)}
-                        className={localErrors[`employment_${index}_employer_name`] ? 'border-red-500' : ''}
-                        placeholder=""
-                      />
-                      {hasInteracted && localErrors[`employment_${index}_employer_name`] && (
-                        <p className="text-sm text-red-600">{localErrors[`employment_${index}_employer_name`]}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`employer_phone_${index}`}>{t('jobApplication.steps.employmentHistory.fields.companyPhone')} *</Label>
-                      <Input
-                        id={`employer_phone_${index}`}
-                        type="tel"
-                        value={entry.employer_phone}
-                        onChange={(e) => {
-                          const formatted = formatPhoneNumber(e.target.value)
-                          updateEmploymentEntry(index, 'employer_phone', formatted)
-                        }}
-                        className={localErrors[`employment_${index}_employer_phone`] ? 'border-red-500' : ''}
-                        placeholder="(555) 123-4567"
-                        maxLength={14}
-                      />
-                      {hasInteracted && localErrors[`employment_${index}_employer_phone`] && (
-                        <p className="text-sm text-red-600">{localErrors[`employment_${index}_employer_phone`]}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <div className="space-y-2">
-                    <Label htmlFor={`employer_address_${index}`}>{t('jobApplication.steps.employmentHistory.fields.companyAddress')} *</Label>
-                    <Input
-                      id={`employer_address_${index}`}
-                      value={entry.employer_address}
-                      onChange={(e) => updateEmploymentEntry(index, 'employer_address', e.target.value)}
-                      className={localErrors[`employment_${index}_employer_address`] ? 'border-red-500' : ''}
+              <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)]">
+                {/* Company Information */}
+                <MobileFormGrid columns={2}>
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`employer_name_${index}`} required>
+                      {t('jobApplication.steps.employmentHistory.fields.companyName')}
+                    </MobileLabel>
+                    <MobileInput
+                      id={`employer_name_${index}`}
+                      value={entry.employer_name}
+                      onChange={(e) => updateEmploymentEntry(index, 'employer_name', e.target.value)}
+                      error={!!localErrors[`employment_${index}_employer_name`]}
                       placeholder=""
                     />
-                    {hasInteracted && localErrors[`employment_${index}_employer_address`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_employer_address`]}</p>
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_employer_name`]}</MobileErrorMessage>
                     )}
-                  </div>
+                  </MobileFormField>
 
-                  {/* Job Titles */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`starting_job_title_${index}`}>{t('jobApplication.steps.employmentHistory.fields.startingJobTitle')} *</Label>
-                      <Input
-                        id={`starting_job_title_${index}`}
-                        value={entry.starting_job_title}
-                        onChange={(e) => updateEmploymentEntry(index, 'starting_job_title', e.target.value)}
-                        className={localErrors[`employment_${index}_starting_job_title`] ? 'border-red-500' : ''}
-                        placeholder=""
-                      />
-                      {hasInteracted && localErrors[`employment_${index}_starting_job_title`] && (
-                        <p className="text-sm text-red-600">{localErrors[`employment_${index}_starting_job_title`]}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`ending_job_title_${index}`}>{t('jobApplication.steps.employmentHistory.fields.finalJobTitle')} {!entry.is_current && '*'}</Label>
-                      <Input
-                        id={`ending_job_title_${index}`}
-                        value={entry.ending_job_title}
-                        onChange={(e) => updateEmploymentEntry(index, 'ending_job_title', e.target.value)}
-                        className={localErrors[`employment_${index}_ending_job_title`] ? 'border-red-500' : ''}
-                        placeholder=""
-                        disabled={entry.is_current}
-                      />
-                      {hasInteracted && localErrors[`employment_${index}_ending_job_title`] && (
-                        <p className="text-sm text-red-600">{localErrors[`employment_${index}_ending_job_title`]}</p>
-                      )}
-                    </div>
-                  </div>
-                  {/* Current Employment Checkbox */}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`is_current_${index}`}
-                      checked={entry.is_current}
-                      onCheckedChange={(checked) => updateEmploymentEntry(index, 'is_current', checked)}
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`employer_phone_${index}`} required>
+                      {t('jobApplication.steps.employmentHistory.fields.companyPhone')}
+                    </MobileLabel>
+                    <MobileInput
+                      id={`employer_phone_${index}`}
+                      type="tel"
+                      mobileKeyboard="tel"
+                      value={entry.employer_phone}
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value)
+                        updateEmploymentEntry(index, 'employer_phone', formatted)
+                      }}
+                      error={!!localErrors[`employment_${index}_employer_phone`]}
+                      placeholder="(555) 123-4567"
+                      maxLength={14}
                     />
-                    <Label htmlFor={`is_current_${index}`} className="text-sm font-normal cursor-pointer">
-                      {t('jobApplication.steps.employmentHistory.fields.currentlyWork')}
-                    </Label>
-                  </div>
-                </div>
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_employer_phone`]}</MobileErrorMessage>
+                    )}
+                  </MobileFormField>
+                </MobileFormGrid>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`start_date_${index}`}>{t('jobApplication.steps.employmentHistory.fields.startDate')} *</Label>
-                    <Input
+                {/* Address */}
+                <MobileFormField>
+                  <MobileLabel htmlFor={`employer_address_${index}`} required>
+                    {t('jobApplication.steps.employmentHistory.fields.companyAddress')}
+                  </MobileLabel>
+                  <MobileInput
+                    id={`employer_address_${index}`}
+                    value={entry.employer_address}
+                    onChange={(e) => updateEmploymentEntry(index, 'employer_address', e.target.value)}
+                    error={!!localErrors[`employment_${index}_employer_address`]}
+                    placeholder=""
+                  />
+                  {hasInteracted && (
+                    <MobileErrorMessage>{localErrors[`employment_${index}_employer_address`]}</MobileErrorMessage>
+                  )}
+                </MobileFormField>
+
+                {/* Job Titles */}
+                <MobileFormGrid columns={2}>
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`starting_job_title_${index}`} required>
+                      {t('jobApplication.steps.employmentHistory.fields.startingJobTitle')}
+                    </MobileLabel>
+                    <MobileInput
+                      id={`starting_job_title_${index}`}
+                      value={entry.starting_job_title}
+                      onChange={(e) => updateEmploymentEntry(index, 'starting_job_title', e.target.value)}
+                      error={!!localErrors[`employment_${index}_starting_job_title`]}
+                      placeholder=""
+                    />
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_starting_job_title`]}</MobileErrorMessage>
+                    )}
+                  </MobileFormField>
+
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`ending_job_title_${index}`} required={!entry.is_current}>
+                      {t('jobApplication.steps.employmentHistory.fields.finalJobTitle')}
+                    </MobileLabel>
+                    <MobileInput
+                      id={`ending_job_title_${index}`}
+                      value={entry.ending_job_title}
+                      onChange={(e) => updateEmploymentEntry(index, 'ending_job_title', e.target.value)}
+                      error={!!localErrors[`employment_${index}_ending_job_title`]}
+                      placeholder=""
+                      disabled={entry.is_current}
+                    />
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_ending_job_title`]}</MobileErrorMessage>
+                    )}
+                  </MobileFormField>
+                </MobileFormGrid>
+
+                {/* Current Employment Checkbox */}
+                <MobileCheckbox
+                  id={`is_current_${index}`}
+                  checked={entry.is_current}
+                  onCheckedChange={(checked) => updateEmploymentEntry(index, 'is_current', checked)}
+                  label={t('jobApplication.steps.employmentHistory.fields.currentlyWork')}
+                />
+
+                {/* Dates */}
+                <MobileFormGrid columns={2}>
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`start_date_${index}`} required>
+                      {t('jobApplication.steps.employmentHistory.fields.startDate')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`start_date_${index}`}
                       type="date"
                       value={entry.start_date}
                       onChange={(e) => updateEmploymentEntry(index, 'start_date', e.target.value)}
-                      className={localErrors[`employment_${index}_start_date`] ? 'border-red-500' : ''}
+                      error={!!localErrors[`employment_${index}_start_date`]}
                       max={new Date().toISOString().split('T')[0]}
                     />
-                    {hasInteracted && localErrors[`employment_${index}_start_date`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_start_date`]}</p>
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_start_date`]}</MobileErrorMessage>
                     )}
-                  </div>
+                  </MobileFormField>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`end_date_${index}`}>{t('jobApplication.steps.employmentHistory.fields.endDate')} {!entry.is_current && '*'}</Label>
-                    <Input
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`end_date_${index}`} required={!entry.is_current}>
+                      {t('jobApplication.steps.employmentHistory.fields.endDate')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`end_date_${index}`}
                       type="date"
                       value={entry.end_date}
                       onChange={(e) => updateEmploymentEntry(index, 'end_date', e.target.value)}
-                      className={localErrors[`employment_${index}_end_date`] ? 'border-red-500' : ''}
+                      error={!!localErrors[`employment_${index}_end_date`]}
                       disabled={entry.is_current}
                       max={new Date().toISOString().split('T')[0]}
                     />
-                    {hasInteracted && localErrors[`employment_${index}_end_date`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_end_date`]}</p>
+                    {hasInteracted && (
+                      <>
+                        <MobileErrorMessage>{localErrors[`employment_${index}_end_date`]}</MobileErrorMessage>
+                        <MobileErrorMessage>{localErrors[`employment_${index}_dates`]}</MobileErrorMessage>
+                      </>
                     )}
-                    {hasInteracted && localErrors[`employment_${index}_dates`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_dates`]}</p>
-                    )}
-                  </div>
-                </div>
+                  </MobileFormField>
+                </MobileFormGrid>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`starting_salary_${index}`}>{t('jobApplication.steps.employmentHistory.fields.startingSalary')} *</Label>
-                    <Input
+                {/* Salary */}
+                <MobileFormGrid columns={2}>
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`starting_salary_${index}`} required>
+                      {t('jobApplication.steps.employmentHistory.fields.startingSalary')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`starting_salary_${index}`}
+                      type="text"
+                      mobileKeyboard="decimal"
                       value={entry.starting_salary}
                       onChange={(e) => updateEmploymentEntry(index, 'starting_salary', e.target.value)}
-                      className={localErrors[`employment_${index}_starting_salary`] ? 'border-red-500' : ''}
+                      error={!!localErrors[`employment_${index}_starting_salary`]}
                       placeholder="$12"
                     />
-                    {hasInteracted && localErrors[`employment_${index}_starting_salary`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_starting_salary`]}</p>
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_starting_salary`]}</MobileErrorMessage>
                     )}
-                  </div>
+                  </MobileFormField>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`ending_salary_${index}`}>{t('jobApplication.steps.employmentHistory.fields.endingSalary')} {!entry.is_current && '*'}</Label>
-                    <Input
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`ending_salary_${index}`} required={!entry.is_current}>
+                      {t('jobApplication.steps.employmentHistory.fields.endingSalary')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`ending_salary_${index}`}
+                      type="text"
+                      mobileKeyboard="decimal"
                       value={entry.ending_salary}
                       onChange={(e) => updateEmploymentEntry(index, 'ending_salary', e.target.value)}
-                      className={localErrors[`employment_${index}_ending_salary`] ? 'border-red-500' : ''}
+                      error={!!localErrors[`employment_${index}_ending_salary`]}
                       placeholder="$12"
                       disabled={entry.is_current}
                     />
-                    {hasInteracted && localErrors[`employment_${index}_ending_salary`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_ending_salary`]}</p>
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_ending_salary`]}</MobileErrorMessage>
                     )}
-                  </div>
-                </div>
+                  </MobileFormField>
+                </MobileFormGrid>
 
-                <div className="space-y-2">
-                  <Label htmlFor={`responsibilities_${index}`}>{t('jobApplication.steps.employmentHistory.fields.responsibilities')}</Label>
-                  <Textarea
+                {/* Responsibilities */}
+                <MobileFormField>
+                  <MobileLabel htmlFor={`responsibilities_${index}`}>
+                    {t('jobApplication.steps.employmentHistory.fields.responsibilities')}
+                  </MobileLabel>
+                  <MobileTextarea
                     id={`responsibilities_${index}`}
                     value={entry.responsibilities}
                     onChange={(e) => updateEmploymentEntry(index, 'responsibilities', e.target.value)}
                     placeholder=""
                     rows={3}
                   />
-                </div>
+                </MobileFormField>
 
+                {/* Reason for Leaving */}
                 {!entry.is_current && (
-                  <div className="space-y-2">
-                    <Label htmlFor={`reason_for_leaving_${index}`}>{t('jobApplication.steps.employmentHistory.fields.reasonForLeaving')} *</Label>
-                    <Input
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`reason_for_leaving_${index}`} required>
+                      {t('jobApplication.steps.employmentHistory.fields.reasonForLeaving')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`reason_for_leaving_${index}`}
                       value={entry.reason_for_leaving}
                       onChange={(e) => updateEmploymentEntry(index, 'reason_for_leaving', e.target.value)}
-                      className={localErrors[`employment_${index}_reason_for_leaving`] ? 'border-red-500' : ''}
+                      error={!!localErrors[`employment_${index}_reason_for_leaving`]}
                       placeholder=""
                     />
-                    {hasInteracted && localErrors[`employment_${index}_reason_for_leaving`] && (
-                      <p className="text-sm text-red-600">{localErrors[`employment_${index}_reason_for_leaving`]}</p>
+                    {hasInteracted && (
+                      <MobileErrorMessage>{localErrors[`employment_${index}_reason_for_leaving`]}</MobileErrorMessage>
                     )}
-                  </div>
+                  </MobileFormField>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`supervisor_name_${index}`}>{t('jobApplication.steps.employmentHistory.fields.supervisorName')}</Label>
-                    <Input
+                {/* Supervisor Information */}
+                <MobileFormGrid columns={2}>
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`supervisor_name_${index}`}>
+                      {t('jobApplication.steps.employmentHistory.fields.supervisorName')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`supervisor_name_${index}`}
                       value={entry.supervisor_name}
                       onChange={(e) => updateEmploymentEntry(index, 'supervisor_name', e.target.value)}
                       placeholder=""
                     />
-                  </div>
+                  </MobileFormField>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`supervisor_phone_${index}`}>{t('jobApplication.steps.employmentHistory.fields.supervisorPhone')}</Label>
-                    <Input
+                  <MobileFormField>
+                    <MobileLabel htmlFor={`supervisor_phone_${index}`}>
+                      {t('jobApplication.steps.employmentHistory.fields.supervisorPhone')}
+                    </MobileLabel>
+                    <MobileInput
                       id={`supervisor_phone_${index}`}
                       type="tel"
+                      mobileKeyboard="tel"
                       value={entry.supervisor_phone}
                       onChange={(e) => {
                         const formatted = formatPhoneNumber(e.target.value)
@@ -455,19 +488,16 @@ export default function EmploymentHistoryStep({
                       placeholder="(555) 123-4567"
                       maxLength={14}
                     />
-                  </div>
-                </div>
+                  </MobileFormField>
+                </MobileFormGrid>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`may_contact_${index}`}
-                    checked={entry.may_contact}
-                    onCheckedChange={(checked) => updateEmploymentEntry(index, 'may_contact', checked as boolean)}
-                  />
-                  <Label htmlFor={`may_contact_${index}`} className="text-sm font-normal cursor-pointer">
-                    {t('jobApplication.steps.employmentHistory.fields.mayContact')}
-                  </Label>
-                </div>
+                {/* May Contact Checkbox */}
+                <MobileCheckbox
+                  id={`may_contact_${index}`}
+                  checked={entry.may_contact}
+                  onCheckedChange={(checked) => updateEmploymentEntry(index, 'may_contact', checked as boolean)}
+                  label={t('jobApplication.steps.employmentHistory.fields.mayContact')}
+                />
               </CardContent>
             </Card>
           ))}
@@ -476,26 +506,28 @@ export default function EmploymentHistoryStep({
             type="button"
             variant="outline"
             onClick={addEmploymentEntry}
-            className="w-full"
+            className="w-full h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)]"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)] mr-2" />
             {t('jobApplication.steps.employmentHistory.addAnother')}
           </Button>
 
-          <div className="space-y-4">
-            <h4 className="font-medium">{t('jobApplication.steps.employmentHistory.fields.employmentGaps')}</h4>
-            <div className="space-y-2">
-              <Label htmlFor="employment_gaps">
+          <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
+            <h4 className="text-[clamp(1rem,2.5vw,1.125rem)] font-medium">
+              {t('jobApplication.steps.employmentHistory.fields.employmentGaps')}
+            </h4>
+            <MobileFormField>
+              <MobileLabel htmlFor="employment_gaps">
                 {t('jobApplication.steps.employmentHistory.fields.gapsExplanation')}
-              </Label>
-              <Textarea
+              </MobileLabel>
+              <MobileTextarea
                 id="employment_gaps"
                 value={formData.employment_gaps || ''}
                 onChange={(e) => updateFormData({ employment_gaps: e.target.value })}
                 placeholder=""
                 rows={2}
               />
-            </div>
+            </MobileFormField>
           </div>
         </>
       )}

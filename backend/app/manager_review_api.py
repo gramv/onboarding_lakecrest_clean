@@ -43,7 +43,8 @@ class ApproveReviewRequest(BaseModel):
 
 def get_supabase_service():
     """Dependency to get Supabase service instance"""
-    return EnhancedSupabaseService()
+    from .supabase_service_enhanced import get_enhanced_supabase_service
+    return get_enhanced_supabase_service()
 
 
 @router.get("/pending-reviews")

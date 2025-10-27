@@ -36,6 +36,8 @@ const NotificationCenter = lazy(() => import('@/components/notifications/Notific
 // Lazy load pages
 const HomePage = lazy(() => import('./pages/HomePage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const PasswordResetPage = lazy(() => import('./pages/PasswordResetPage'))
 const JobApplicationFormV2 = lazy(() => import('./pages/JobApplicationFormV2'))
 const OnboardingFlowPortal = lazy(() => import('./pages/OnboardingFlowPortal'))
 const OnboardingComplete = lazy(() => import('./pages/OnboardingComplete'))
@@ -75,7 +77,9 @@ function App() {
               <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
-              
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<PasswordResetPage />} />
+
               {/* HR Dashboard Routes with nested routing */}
               <Route path="/hr" element={
                 <ProtectedRoute requiredRole="hr">

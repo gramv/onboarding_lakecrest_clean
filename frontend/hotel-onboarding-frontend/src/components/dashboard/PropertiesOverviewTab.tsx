@@ -124,46 +124,28 @@ function PropertiesOverviewTab({ onStatsUpdate = () => {} }: PropertiesOverviewT
 
   const fetchAllPropertyStats = async () => {
     try {
-      const response = await api.hr.getProperties()
-      const propertiesList = Array.isArray(response.data) ? response.data : []
-      
-      // Fetch stats for each property
-      const statsPromises = propertiesList.map(async (property: Property) => {
-        try {
-          const statsResponse = await api.hr.getPropertyStats(property.id)
-          return { 
-            propertyId: property.id, 
-            stats: statsResponse.data || {
-              total_applications: 0,
-              pending_applications: 0,
-              approved_applications: 0,
-              total_employees: 0,
-              active_employees: 0
-            }
-          }
-        } catch (error) {
-          console.error(`Error fetching stats for property ${property.id}:`, error)
-          return { 
-            propertyId: property.id, 
-            stats: {
-              total_applications: 0,
-              pending_applications: 0,
-              approved_applications: 0,
-              total_employees: 0,
-              active_employees: 0
-            }
-          }
+      // OPTIMIZED: Use batch endpoint to get all property stats in 1 request
+      const response = await api.hr.getAllPropertyStats()
+      const batchStats = response.data || {}
+
+      // Convert batch response to statsMap format
+      const statsMap: Record<string, PropertyStats> = {}
+      Object.entries(batchStats).forEach(([propertyId, stats]: [string, any]) => {
+        statsMap[propertyId] = {
+          total_applications: stats.total_applications || 0,
+          pending_applications: stats.pending_applications || 0,
+          approved_applications: stats.approved_applications || 0,
+          total_employees: stats.total_employees || 0,
+          active_employees: stats.active_employees || 0
         }
       })
 
-      const statsResults = await Promise.all(statsPromises)
-      const statsMap: Record<string, PropertyStats> = {}
-      statsResults.forEach(result => {
-        statsMap[result.propertyId] = result.stats
-      })
       setPropertyStats(statsMap)
+      console.log(`✅ Loaded stats for ${Object.keys(statsMap).length} properties in 1 request (optimized)`)
     } catch (error) {
       console.error('Error fetching property stats:', error)
+      // Fallback to empty stats on error
+      setPropertyStats({})
     }
   }
 

@@ -504,18 +504,21 @@ export default function DigitalSignatureCapture({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0 pt-6">
-        <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto min-h-[48px]">
+      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-6">
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          className="w-full sm:w-auto min-h-[48px] sm:min-h-[44px] text-sm sm:text-base px-4"
+        >
           {t('cancel')}
         </Button>
 
         <Button
           onClick={handleSubmitSignature}
           disabled={!canSign}
-          size="lg"
-          className="w-full sm:w-auto min-h-[48px] px-8"
+          className="w-full sm:w-auto min-h-[48px] sm:min-h-[44px] text-sm sm:text-base px-6 sm:px-8"
         >
-          <Check className="h-5 w-5 mr-2" />
+          <Check className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
           {submitButtonText || t('sign_document')}
         </Button>
       </div>

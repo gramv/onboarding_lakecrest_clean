@@ -9,7 +9,7 @@ from typing import Dict, Any
 from app.main_enhanced import app
 from app.models import User, Property, JobApplication, OnboardingSession, UserRole
 from app.auth import create_token
-from app.supabase_service_enhanced import SupabaseService
+from app.supabase_service_enhanced import EnhancedSupabaseService
 
 
 @pytest.fixture(scope="session")

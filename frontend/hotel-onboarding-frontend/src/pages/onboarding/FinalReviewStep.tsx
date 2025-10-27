@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import SignatureCanvas from 'react-signature-canvas'
 import { CheckCircle, FileText, Users, Shield, Clock, Pen, AlertCircle, Info } from 'lucide-react'
 import { StepProps } from '../../controllers/OnboardingFlowController'
@@ -11,6 +11,7 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useStepValidation } from '@/hooks/useStepValidation'
 import { finalReviewValidator } from '@/utils/stepValidators'
 import { Button } from '@/components/ui/button'
+import { MobileCheckbox } from '@/components/job-application/mobile-optimized/MobileCheckbox'
 import axios from 'axios'
 import { getApiUrl } from '@/config/api'
 
@@ -26,7 +27,8 @@ export default function FinalReviewStep({
   property,
   canProceedToNext: _canProceedToNext
 }: StepProps) {
-  
+
+  const navigate = useNavigate()
   const [isComplete, setIsComplete] = useState(false)
   const [finalAcknowledgments, setFinalAcknowledgments] = useState([false, false, false, false])
   const [signatureData, setSignatureData] = useState(null)
@@ -128,6 +130,12 @@ export default function FinalReviewStep({
           if (response.data?.success) {
             console.log('✅ Onboarding completed! Manager notification sent.')
             console.log('📧 Response data:', response.data)
+
+            // ✅ Redirect to completion page after 2 seconds
+            setTimeout(() => {
+              console.log('🔄 Redirecting to onboarding complete page...')
+              navigate('/onboarding-complete')
+            }, 2000)
           } else {
             console.error('❌ Backend returned success=false:', response.data)
           }
@@ -135,12 +143,22 @@ export default function FinalReviewStep({
           console.error('❌ Failed to send manager notification:', error)
           console.error('❌ Error details:', error.response?.data || error.message)
           // Continue anyway - step is marked complete
+          // Still redirect to completion page
+          setTimeout(() => {
+            console.log('🔄 Redirecting to onboarding complete page (after error)...')
+            navigate('/onboarding-complete')
+          }, 2000)
         }
       } else {
         console.warn('⚠️ Missing employee or property data:', {
           hasEmployee: !!employee?.id,
           hasProperty: !!property?.id
         })
+        // Still redirect to completion page
+        setTimeout(() => {
+          console.log('🔄 Redirecting to onboarding complete page (missing data)...')
+          navigate('/onboarding-complete')
+        }, 2000)
       }
     } else {
       console.error('❌ Validation failed:', validation.errors)
@@ -250,23 +268,23 @@ export default function FinalReviewStep({
   return (
     <StepContainer errors={errors} saveStatus={saveStatus}>
       <StepContentWrapper>
-        <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+        <div className="space-y-[clamp(1rem,3vw,1.5rem)]">
       {/* Step Header */}
       <div className="text-center">
-        <div className="flex items-center justify-center space-x-2 mb-3 sm:mb-4">
-          <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{t.title}</h1>
+        <div className="flex items-center justify-center gap-[clamp(0.5rem,1.5vw,0.75rem)] mb-[clamp(0.75rem,2vw,1rem)]">
+          <FileText className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-blue-600 flex-shrink-0" />
+          <h1 className="text-[clamp(1.25rem,4vw,1.875rem)] font-bold text-gray-900">{t.title}</h1>
         </div>
-        <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto px-4">
+        <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 max-w-3xl mx-auto px-[clamp(1rem,3vw,1.5rem)]">
           {t.description}
         </p>
       </div>
 
       {/* Progress Indicator */}
       {isComplete && (
-        <Alert className="bg-green-50 border-green-200 p-3 sm:p-4">
-          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
-          <AlertDescription className="text-sm sm:text-base text-green-800">
+        <Alert className="bg-green-50 border-green-200 p-[clamp(0.75rem,2vw,1rem)]">
+          <CheckCircle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-green-600 flex-shrink-0" />
+          <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-green-800">
             {t.completedNotice}
           </AlertDescription>
         </Alert>
@@ -274,46 +292,46 @@ export default function FinalReviewStep({
 
       {/* Onboarding Summary */}
       <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+        <CardHeader className="p-[clamp(1rem,3vw,1.5rem)]">
+          <CardTitle className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(1rem,2.5vw,1.125rem)]">
+            <Users className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-blue-600 flex-shrink-0" />
             <span>{t.reviewSummary}</span>
           </CardTitle>
-          <p className="text-xs sm:text-sm text-gray-600">{t.reviewSummaryDesc}</p>
+          <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-600">{t.reviewSummaryDesc}</p>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="space-y-3 sm:space-y-4">
+        <CardContent className="p-[clamp(1rem,3vw,1.5rem)]">
+          <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
             {/* Overall Progress */}
-            <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm sm:text-base font-medium text-blue-900">{t.overallProgress}</span>
-                <span className="text-base sm:text-lg font-bold text-blue-600">{completionPercentage}%</span>
+            <div className="bg-blue-50 rounded-lg p-[clamp(0.75rem,2vw,1rem)]">
+              <div className="flex items-center justify-between mb-[clamp(0.5rem,1.5vw,0.75rem)]">
+                <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium text-blue-900">{t.overallProgress}</span>
+                <span className="text-[clamp(1rem,2.5vw,1.125rem)] font-bold text-blue-600">{completionPercentage}%</span>
               </div>
-              <div className="w-full bg-blue-200 rounded-full h-2 sm:h-3">
+              <div className="w-full bg-blue-200 rounded-full h-[clamp(0.5rem,1.5vw,0.75rem)]">
                 <div
-                  className="bg-blue-600 h-2 sm:h-3 rounded-full transition-all duration-300"
+                  className="bg-blue-600 h-[clamp(0.5rem,1.5vw,0.75rem)] rounded-full transition-all duration-300"
                   style={{ width: `${completionPercentage}%` }}
                 />
               </div>
-              <p className="text-xs sm:text-sm text-blue-700 mt-2">
+              <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-blue-700 mt-[clamp(0.5rem,1.5vw,0.75rem)]">
                 {completedStepsList.length} of {totalSteps} {t.stepsCompleted}
               </p>
             </div>
 
             {/* Step by Step Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[clamp(0.5rem,1.5vw,0.75rem)]">
               {Object.entries(t.stepStatuses).map(([stepId, stepTitle]) => {
                 const isCompleted = getStepStatus(stepId)
                 return (
-                  <div key={stepId} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
-                    <span className="text-xs sm:text-sm font-medium text-gray-700 truncate pr-2">{stepTitle}</span>
-                    <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                  <div key={stepId} className="flex items-center justify-between p-[clamp(0.5rem,1.5vw,0.75rem)] bg-gray-50 rounded-lg">
+                    <span className="text-[clamp(0.75rem,2vw,0.875rem)] font-medium text-gray-700 truncate pr-[clamp(0.5rem,1.5vw,0.75rem)]">{stepTitle}</span>
+                    <div className="flex items-center gap-[clamp(0.25rem,1vw,0.5rem)] flex-shrink-0">
                       {isCompleted ? (
-                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
+                        <CheckCircle className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)] text-green-600 flex-shrink-0" />
                       ) : (
-                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                        <Clock className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)] text-gray-400 flex-shrink-0" />
                       )}
-                      <span className="text-xs sm:text-sm font-medium">
+                      <span className="text-[clamp(0.75rem,2vw,0.875rem)] font-medium">
                         {isCompleted ? t.complete : t.pending}
                       </span>
                     </div>
@@ -327,98 +345,88 @@ export default function FinalReviewStep({
 
       {/* Final Acknowledgments */}
       <Card className="border-orange-200 bg-orange-50">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg flex items-center space-x-2 text-orange-800">
-            <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+        <CardHeader className="p-[clamp(1rem,3vw,1.5rem)]">
+          <CardTitle className="text-[clamp(1rem,2.5vw,1.125rem)] flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-orange-800">
+            <Shield className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] flex-shrink-0" />
             <span>{t.finalAcknowledgments}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+        <CardContent className="space-y-[clamp(0.75rem,2vw,1rem)] p-[clamp(1rem,3vw,1.5rem)]">
           {[t.acknowledgment1, t.acknowledgment2, t.acknowledgment3, t.acknowledgment4].map((acknowledgment, index) => (
-            <div key={index} className="flex items-start space-x-2 sm:space-x-3">
-              <Checkbox
-                id={`acknowledgment-${index}`}
-                checked={finalAcknowledgments[index]}
-                onCheckedChange={(checked) => handleAcknowledgmentChange(index, checked as boolean)}
-                className="mt-0.5 sm:mt-1 h-5 w-5 sm:h-4 sm:w-4"
-              />
-              <label
-                htmlFor={`acknowledgment-${index}`}
-                className="text-xs sm:text-sm text-orange-800 leading-relaxed cursor-pointer"
-              >
-                {acknowledgment}
-              </label>
-            </div>
+            <MobileCheckbox
+              key={index}
+              id={`acknowledgment-${index}`}
+              label={acknowledgment}
+              checked={finalAcknowledgments[index]}
+              onCheckedChange={(checked) => handleAcknowledgmentChange(index, checked as boolean)}
+            />
           ))}
         </CardContent>
       </Card>
 
       {/* Final Signature */}
       <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-            <Pen className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+        <CardHeader className="p-[clamp(1rem,3vw,1.5rem)]">
+          <CardTitle className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(1rem,2.5vw,1.125rem)]">
+            <Pen className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-blue-600 flex-shrink-0" />
             <span>{t.finalSignature}</span>
           </CardTitle>
-          <p className="text-xs sm:text-sm text-gray-600">{t.signatureDesc}</p>
+          <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-600">{t.signatureDesc}</p>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 space-y-6">
-          <p className="text-gray-600 text-sm">Please sign in the box below using your mouse or touch screen</p>
-          
+        <CardContent className="p-[clamp(1rem,3vw,1.5rem)] pb-[clamp(1.5rem,4vw,2rem)] space-y-[clamp(1.5rem,4vw,2rem)]">
+          <p className="text-gray-600 text-[clamp(0.875rem,2.5vw,1rem)]">Please sign in the box below using your mouse or touch screen</p>
+
           {/* Signature Canvas */}
           <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white">
             <SignatureCanvas
               ref={signatureRef}
               canvasProps={{
-                className: 'w-full h-48'
+                className: 'w-full h-[clamp(12rem,30vw,15rem)]'
               }}
               backgroundColor="rgba(255,255,255,1)"
               penColor="black"
             />
           </div>
-          
+
           {/* Electronic Signature Legal Notice */}
-          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-xs text-blue-800 flex items-start">
-              <Info className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
-              {language === 'es' 
-                ? 'Las firmas electrónicas tienen el mismo nivel de autenticidad y validez legal que las firmas físicas según la Ley ESIGN y UETA.'
-                : 'Electronic signatures have the same level of authenticity and legal validity as physical signatures under the ESIGN Act and UETA.'}
+          <div className="mt-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-blue-800 flex items-start gap-[clamp(0.25rem,1vw,0.5rem)]">
+              <Info className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)] mt-[clamp(0.125rem,0.5vw,0.25rem)] flex-shrink-0" />
+              <span>
+                {language === 'es'
+                  ? 'Las firmas electrónicas tienen el mismo nivel de autenticidad y validez legal que las firmas físicas según la Ley ESIGN y UETA.'
+                  : 'Electronic signatures have the same level of authenticity and legal validity as physical signatures under the ESIGN Act and UETA.'}
+              </span>
             </p>
           </div>
 
           {/* Agreement Checkbox */}
-          <div className="space-y-3">
-            <label className="flex items-start space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hasAgreed}
-                onChange={(e) => {
-                  setHasAgreed(e.target.checked)
-                  setSignatureError('')
-                }}
-                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">
-                {language === 'es'
-                  ? 'Certifico que toda la información proporcionada es verdadera, precisa y completa'
-                  : 'By signing above, I confirm all acknowledgements checked in the previous section and certify that all information provided is true and accurate'}
-              </span>
-            </label>
+          <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
+            <MobileCheckbox
+              id="final-agreement"
+              label={language === 'es'
+                ? 'Certifico que toda la información proporcionada es verdadera, precisa y completa'
+                : 'By signing above, I confirm all acknowledgements checked in the previous section and certify that all information provided is true and accurate'}
+              checked={hasAgreed}
+              onCheckedChange={(checked) => {
+                setHasAgreed(!!checked)
+                setSignatureError('')
+              }}
+            />
           </div>
 
           {/* Error Message */}
           {signatureError && (
-            <Alert className="bg-red-50 border-red-200">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+            <Alert className="bg-red-50 border-red-200 p-[clamp(0.75rem,2vw,1rem)]">
+              <AlertCircle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-red-600" />
+              <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-800">
                 {signatureError}
               </AlertDescription>
             </Alert>
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-[clamp(0.75rem,2vw,1rem)] w-full">
             <Button
               type="button"
               variant="outline"
@@ -429,7 +437,7 @@ export default function FinalReviewStep({
                   setSignatureError('')
                 }
               }}
-              className="flex-1"
+              className="w-full sm:flex-1 h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
             >
               {language === 'es' ? 'Borrar' : 'Clear Signature'}
             </Button>
@@ -453,10 +461,10 @@ export default function FinalReviewStep({
                   }
                 }
               }}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
               disabled={isAdvancing}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
+              <CheckCircle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
               {isAdvancing ? (language === 'es' ? 'Procesando...' : 'Processing...') : t.submitButton}
             </Button>
           </div>
@@ -465,21 +473,21 @@ export default function FinalReviewStep({
 
       {/* Completion Status */}
       {isComplete && (
-        <div className="bg-green-50 rounded-lg p-4 sm:p-6 text-center">
-          <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-600 mx-auto mb-2 sm:mb-3" />
-          <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-2">Onboarding Completed</h3>
-          <p className="text-sm sm:text-base text-green-700">{t.completedNotice}</p>
+        <div className="bg-green-50 rounded-lg p-[clamp(1rem,3vw,1.5rem)] text-center">
+          <CheckCircle className="h-[clamp(2.5rem,6vw,3rem)] w-[clamp(2.5rem,6vw,3rem)] text-green-600 mx-auto mb-[clamp(0.5rem,1.5vw,0.75rem)]" />
+          <h3 className="text-[clamp(1rem,2.5vw,1.125rem)] font-semibold text-green-800 mb-[clamp(0.5rem,1.5vw,0.75rem)]">Onboarding Completed</h3>
+          <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-green-700">{t.completedNotice}</p>
         </div>
       )}
 
         {/* Legal Notice */}
-        <div className="text-[10px] sm:text-xs text-gray-500 border-t pt-3 sm:pt-4 px-2 sm:px-0">
-          <p className="mb-2"><strong>{t.legalNoticeTitle}</strong> {t.legalNoticeMessage}</p>
+        <div className="text-[clamp(0.625rem,1.5vw,0.75rem)] text-gray-500 border-t pt-[clamp(0.75rem,2vw,1rem)] px-[clamp(0.5rem,1.5vw,0rem)]">
+          <p className="mb-[clamp(0.5rem,1.5vw,0.75rem)]"><strong>{t.legalNoticeTitle}</strong> {t.legalNoticeMessage}</p>
           <p>{t.complianceMessage}</p>
         </div>
 
       {/* Estimated Time */}
-      <div className="text-center text-xs sm:text-sm text-gray-500">
+      <div className="text-center text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500">
         <p>{t.estimatedTime}</p>
       </div>
       </div>

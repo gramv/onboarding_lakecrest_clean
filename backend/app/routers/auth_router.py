@@ -32,7 +32,7 @@ from ..auth import (
 from fastapi.security import HTTPAuthorizationCredentials
 
 # Import services
-from ..supabase_service_enhanced import EnhancedSupabaseService
+from ..supabase_service_enhanced import get_enhanced_supabase_service
 from ..email_service import email_service
 
 # Configure logging
@@ -41,8 +41,9 @@ logger = logging.getLogger(__name__)
 # Initialize router with prefix
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
-# Initialize Supabase service
-supabase_service = EnhancedSupabaseService()
+# Get the singleton supabase service instance
+# This ensures we use the same instance that gets initialized in the startup event
+supabase_service = get_enhanced_supabase_service()
 
 @router.post("/login", response_model=LoginResponse)
 async def login(request: Request):
@@ -79,8 +80,8 @@ async def login(request: Request):
                 detail="Both email and password fields must be provided"
             )
         
-        # Find user in Supabase
-        existing_user = supabase_service.get_user_by_email_sync(email)
+        # Find user in Supabase (use async method since this endpoint is async)
+        existing_user = await supabase_service.get_user_by_email(email)
         if not existing_user:
             # Log failed login attempt
             await audit_logger.log_action(
@@ -120,7 +121,7 @@ async def login(request: Request):
         # Generate token
         if existing_user.role == "manager":
             # Get manager properties from property_managers table (single source of truth)
-            manager_properties = supabase_service.get_manager_properties_sync(existing_user.id)
+            manager_properties = await supabase_service.get_manager_properties(existing_user.id)
             if not manager_properties:
                 return error_response(
                     message="Manager not configured",
@@ -346,25 +347,25 @@ async def request_password_reset(request: Request):
                 status_code=400
             )
         
-        # Find user in Supabase
-        user = supabase_service.get_user_by_email_sync(email)
-        
+        # Find user in Supabase (use async method)
+        user = await supabase_service.get_user_by_email(email)
+
         # Always return success to prevent email enumeration
         if not user:
             logger.info(f"Password reset requested for non-existent email: {email}")
             return success_response(
                 message="If an account exists with this email, you will receive a password reset link."
             )
-        
+
         # Check if user is manager or HR (not employees)
         if user.role not in ["manager", "hr"]:
             logger.info(f"Password reset attempted for non-authorized role: {user.role}")
             return success_response(
                 message="If an account exists with this email, you will receive a password reset link."
             )
-        
-        # Check rate limiting
-        rate_limit_ok = supabase_service.check_password_reset_rate_limit_sync(user.id)
+
+        # Check rate limiting (use async method)
+        rate_limit_ok = await supabase_service.check_password_reset_rate_limit(user.id)
         if not rate_limit_ok:
             logger.warning(f"Rate limit exceeded for password reset: {user.id}")
             return error_response(
@@ -382,15 +383,37 @@ async def request_password_reset(request: Request):
             "token": reset_token,
             "expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
         }
-        
-        result = supabase_service.client.table("password_reset_tokens").insert(token_data).execute()
-        if not result.data:
-            logger.error(f"Failed to create password reset token for user: {user.id}")
-            return error_response(
-                message="Failed to process password reset request",
-                error_code=ErrorCode.INTERNAL_SERVER_ERROR,
-                status_code=500
-            )
+
+        # Try RDS first
+        if supabase_service.use_direct_postgres and supabase_service.db_pool:
+            try:
+                async with supabase_service.db_pool.acquire() as conn:
+                    await conn.execute(
+                        """
+                        INSERT INTO password_reset_tokens (user_id, token, expires_at, used, created_at)
+                        VALUES ($1, $2, $3, FALSE, NOW())
+                        """,
+                        user.id, reset_token, datetime.now(timezone.utc) + timedelta(hours=1)
+                    )
+                    logger.info(f"✅ RDS: Created password reset token for user {user.id}")
+            except Exception as e:
+                logger.error(f"Failed to create password reset token (RDS): {e}")
+                return error_response(
+                    message="Failed to process password reset request",
+                    error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+                    status_code=500
+                )
+        else:
+            # Fallback to Supabase
+            result = supabase_service.client.table("password_reset_tokens").insert(token_data).execute()
+            if not result.data:
+                logger.error(f"Failed to create password reset token for user: {user.id}")
+                return error_response(
+                    message="Failed to process password reset request",
+                    error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+                    status_code=500
+                )
+            logger.info(f"✅ Supabase: Created password reset token for user {user.id}")
         
         # Send password reset email
         user_name = f"{user.first_name} {user.last_name}".strip() or user.email
@@ -543,8 +566,8 @@ async def reset_password(request: Request):
             # Log but don't fail if password_history tracking fails
             logger.warning(f"Failed to store password history: {e}")
         
-        # Get user details for email
-        user = supabase_service.get_user_by_id_sync(token_data['user_id'])
+        # Get user details for email (use async method)
+        user = await supabase_service.get_user_by_id(token_data['user_id'])
         if user:
             user_name = f"{user.first_name} {user.last_name}".strip() or user.email
             # Send confirmation email
@@ -588,8 +611,8 @@ async def change_password(request: Request, current_user: User = Depends(get_cur
                 status_code=400
             )
         
-        # Get current user's password hash
-        user = supabase_service.get_user_by_id_sync(current_user.id)
+        # Get current user's password hash (use async method)
+        user = await supabase_service.get_user_by_id(current_user.id)
         if not user or not user.password_hash:
             return error_response(
                 message="User not found",
@@ -654,8 +677,8 @@ async def change_password(request: Request, current_user: User = Depends(get_cur
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information with enhanced property resolution"""
     try:
-        # Get fresh user data from Supabase
-        user = supabase_service.get_user_by_id_sync(current_user.id)
+        # Get fresh user data from Supabase (use async method)
+        user = await supabase_service.get_user_by_id(current_user.id)
         if not user:
             return error_response(
                 message="User not found",
@@ -680,7 +703,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         if user.role == "manager":
             try:
                 # Get manager properties from property_managers table (single source of truth)
-                manager_properties = supabase_service.get_manager_properties_sync(user.id)
+                manager_properties = await supabase_service.get_manager_properties(user.id)
 
                 if manager_properties:
                     # Extract property IDs
@@ -693,7 +716,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
                         user_data["property_ids"] = property_ids
 
                         # Get property details for primary property
-                        property_data = supabase_service.get_property_by_id_sync(primary_property_id)
+                        property_data = await supabase_service.get_property_by_id(primary_property_id)
                         if property_data:
                             # Handle both dict and object cases
                             if isinstance(property_data, dict):

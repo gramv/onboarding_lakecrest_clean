@@ -63,9 +63,10 @@ class BulkOperationConfig:
 
 class BulkOperationService:
     """Enhanced service for handling bulk operations with progress tracking"""
-    
+
     def __init__(self):
-        self.supabase = EnhancedSupabaseService()
+        from .supabase_service_enhanced import get_enhanced_supabase_service
+        self.supabase = get_enhanced_supabase_service()
         self.notification_service = NotificationService()
         self.executor = ThreadPoolExecutor(max_workers=5)
         self.active_operations: Dict[str, Any] = {}
@@ -903,7 +904,8 @@ class BulkApplicationOperations:
     
     def __init__(self):
         self.bulk_service = BulkOperationService()
-        self.supabase = EnhancedSupabaseService()
+        from .supabase_service_enhanced import get_enhanced_supabase_service
+        self.supabase = get_enhanced_supabase_service()
     
     async def bulk_approve(
         self,
@@ -971,10 +973,11 @@ class BulkApplicationOperations:
 
 class BulkEmployeeOperations:
     """Specialized bulk operations for employee management"""
-    
+
     def __init__(self):
         self.bulk_service = BulkOperationService()
-        self.supabase = EnhancedSupabaseService()
+        from .supabase_service_enhanced import get_enhanced_supabase_service
+        self.supabase = get_enhanced_supabase_service()
     
     async def bulk_onboard(
         self,
@@ -1149,9 +1152,10 @@ class BulkCommunicationService:
 
 class BulkOperationAuditService:
     """Service for bulk operation audit logging and compliance"""
-    
+
     def __init__(self):
-        self.supabase = EnhancedSupabaseService()
+        from .supabase_service_enhanced import get_enhanced_supabase_service
+        self.supabase = get_enhanced_supabase_service()
     
     async def log_operation_created(
         self,

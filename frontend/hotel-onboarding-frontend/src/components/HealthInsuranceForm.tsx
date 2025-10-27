@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Shield, Users, DollarSign, Info, Plus, Trash2, AlertTriangle } from 'lucide-react'
+// Standard UI components (still needed for custom RadioGroup implementations in plan selection)
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+// Mobile-optimized components
+import { MobileInput } from '@/components/job-application/mobile-optimized/MobileInput'
+import { MobileLabel } from '@/components/job-application/mobile-optimized/MobileLabel'
+import { MobileSelect, MobileSelectItem } from '@/components/job-application/mobile-optimized/MobileSelect'
+import { MobileRadioGroup } from '@/components/job-application/mobile-optimized/MobileRadioGroup'
+import { MobileCheckbox } from '@/components/job-application/mobile-optimized/MobileCheckbox'
 
 interface Dependent {
   firstName: string
@@ -479,77 +483,68 @@ export default function HealthInsuranceForm({
 
   if (formData.isWaived) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-[clamp(2rem,5vw,3rem)]">
         {/* Waiver Header - Enhanced */}
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
-            <Shield className="h-10 w-10 text-white" />
+        <div className="text-center space-y-[clamp(1rem,3vw,1.5rem)]">
+          <div className="inline-flex items-center justify-center w-[clamp(5rem,12vw,6rem)] h-[clamp(5rem,12vw,6rem)] rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
+            <Shield className="h-[clamp(2.5rem,6vw,3rem)] w-[clamp(2.5rem,6vw,3rem)] text-white" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">{t('health_insurance')}</h2>
-            <p className="text-lg text-red-600 font-medium mt-2">Coverage Waiver</p>
+            <h2 className="text-[clamp(1.875rem,5vw,2.5rem)] font-bold text-gray-900">{t('health_insurance')}</h2>
+            <p className="text-[clamp(1.125rem,3vw,1.5rem)] text-red-600 font-medium mt-[clamp(0.5rem,1.5vw,0.75rem)]">Coverage Waiver</p>
           </div>
 
           {/* Professional divider */}
-          <div className="flex items-center justify-center space-x-4 py-3">
-            <div className="h-px w-20 bg-gradient-to-r from-transparent to-red-300"></div>
-            <Shield className="h-4 w-4 text-red-500" />
-            <div className="h-px w-20 bg-gradient-to-l from-transparent to-red-300"></div>
+          <div className="flex items-center justify-center gap-[clamp(1rem,3vw,1.5rem)] py-[clamp(0.75rem,2vw,1rem)]">
+            <div className="h-px w-[clamp(5rem,12vw,6rem)] bg-gradient-to-r from-transparent to-red-300"></div>
+            <Shield className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-red-500" />
+            <div className="h-px w-[clamp(5rem,12vw,6rem)] bg-gradient-to-l from-transparent to-red-300"></div>
           </div>
         </div>
 
         <Card className="border-l-4 border-l-red-500 shadow-lg max-w-3xl mx-auto">
-          <CardHeader className="bg-gradient-to-r from-red-50 to-white">
-            <CardTitle className="text-red-700 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+          <CardHeader className="bg-gradient-to-r from-red-50 to-white p-[clamp(1rem,3vw,1.5rem)]">
+            <CardTitle className="text-red-700 flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(1.125rem,3vw,1.25rem)]">
+              <AlertTriangle className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)]" />
               Coverage Waiver
             </CardTitle>
-            <CardDescription className="text-red-600">
+            <CardDescription className="text-red-600 text-[clamp(0.875rem,2.5vw,1rem)]">
               You have chosen to decline health insurance coverage.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-[clamp(1.5rem,4vw,2rem)] pt-[clamp(1.5rem,4vw,2rem)] p-[clamp(1rem,3vw,1.5rem)]">
             <div>
-              <Label>Reason for declining coverage</Label>
-              <RadioGroup 
-                value={formData.waiveReason} 
+              <MobileLabel>Reason for declining coverage</MobileLabel>
+              <MobileRadioGroup
+                value={formData.waiveReason}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, waiveReason: value }))}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no_coverage_preference" id="no_coverage_preference" />
-                  <Label htmlFor="no_coverage_preference">{t('no_coverage_preference')}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="spouse_coverage" id="spouse_coverage" />
-                  <Label htmlFor="spouse_coverage">{t('spouse_coverage')}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="other_coverage" id="other_coverage" />
-                  <Label htmlFor="other_coverage">{t('other_coverage')}</Label>
-                </div>
-              </RadioGroup>
+                options={[
+                  { value: 'no_coverage_preference', label: t('no_coverage_preference') },
+                  { value: 'spouse_coverage', label: t('spouse_coverage') },
+                  { value: 'other_coverage', label: t('other_coverage') }
+                ]}
+              />
             </div>
 
             {formData.waiveReason === 'other_coverage' && (
-              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)] bg-gray-50 rounded-lg">
                 <div>
-                  <Label>{t('other_coverage_type')}</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                  <MobileLabel>{t('other_coverage_type')}</MobileLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.5rem,1.5vw,0.75rem)] mt-[clamp(0.5rem,1.5vw,0.75rem)]">
                     {['employer_group', 'individual_policy', 'medicare', 'cobra', 'tricare', 'medicaid'].map(type => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={type}
-                          checked={formData.otherCoverageType.includes(type)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setFormData(prev => ({ ...prev, otherCoverageType: prev.otherCoverageType + ' ' + type }))
-                            } else {
-                              setFormData(prev => ({ ...prev, otherCoverageType: prev.otherCoverageType.replace(type, '').trim() }))
-                            }
-                          }}
-                        />
-                        <Label htmlFor={type}>{t(type)}</Label>
-                      </div>
+                      <MobileCheckbox
+                        key={type}
+                        id={type}
+                        label={t(type)}
+                        checked={formData.otherCoverageType.includes(type)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData(prev => ({ ...prev, otherCoverageType: prev.otherCoverageType + ' ' + type }))
+                          } else {
+                            setFormData(prev => ({ ...prev, otherCoverageType: prev.otherCoverageType.replace(type, '').trim() }))
+                          }
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
@@ -560,8 +555,8 @@ export default function HealthInsuranceForm({
               variant="outline"
               onClick={() => {
                 console.log('HealthInsuranceForm - Switching back to plan selection, clearing waive data')
-                setFormData(prev => ({ 
-                  ...prev, 
+                setFormData(prev => ({
+                  ...prev,
                   isWaived: false,
                   waiveReason: '',
                   otherCoverageType: '',
@@ -569,7 +564,7 @@ export default function HealthInsuranceForm({
                 }))
                 setIsDirty(true)
               }}
-              className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+              className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
             >
               Change Mind - Select Coverage
             </Button>
@@ -577,17 +572,17 @@ export default function HealthInsuranceForm({
         </Card>
 
         {/* Navigation - Enhanced */}
-        <div className="flex justify-between items-center pt-4 max-w-3xl mx-auto border-t border-gray-200">
+        <div className="flex justify-between items-center pt-[clamp(1rem,3vw,1.5rem)] max-w-3xl mx-auto border-t border-gray-200">
           <Button
             variant="outline"
             onClick={onBack}
-            className="px-6"
+            className="px-[clamp(1.5rem,4vw,2rem)] h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
           >
             {t('back')}
           </Button>
           <Button
             onClick={handleSubmit}
-            className="px-8 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-md"
+            className="px-[clamp(2rem,5vw,3rem)] bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-md h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
           >
             {t('save_continue')}
           </Button>
@@ -597,19 +592,19 @@ export default function HealthInsuranceForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[clamp(1.5rem,4vw,2rem)]">
       {/* Validation Errors Alert */}
       {showErrors && validationErrors.length > 0 && (
-        <Alert className="bg-red-50 border-red-300 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-              <AlertTriangle className="h-5 w-5 text-white" />
+        <Alert className="bg-red-50 border-red-300 shadow-sm p-[clamp(1rem,3vw,1.5rem)]">
+          <div className="flex items-start gap-[clamp(0.75rem,2vw,1rem)]">
+            <div className="flex-shrink-0 w-[clamp(2.5rem,6vw,3rem)] h-[clamp(2.5rem,6vw,3rem)] rounded-full bg-red-500 flex items-center justify-center">
+              <AlertTriangle className="h-[clamp(1.25rem,3vw,1.5rem)] w-[clamp(1.25rem,3vw,1.5rem)] text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-red-900 mb-2">Please complete the following:</h3>
-              <ul className="list-disc list-inside space-y-1">
+              <h3 className="font-semibold text-red-900 mb-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(0.875rem,2.5vw,1rem)]">Please complete the following:</h3>
+              <ul className="list-disc list-inside space-y-[clamp(0.25rem,1vw,0.5rem)]">
                 {validationErrors.map((error, index) => (
-                  <li key={index} className="text-sm text-red-800">{error}</li>
+                  <li key={index} className="text-[clamp(0.875rem,2.5vw,1rem)] text-red-800">{error}</li>
                 ))}
               </ul>
             </div>
@@ -619,43 +614,43 @@ export default function HealthInsuranceForm({
 
       {/* Medical Coverage - Enhanced */}
       <Card className="border-l-4 border-l-blue-500 shadow-md">
-        <CardHeader className="pb-4 bg-gradient-to-r from-blue-50/50 to-transparent">
-          <CardTitle className="flex items-center space-x-2 text-lg">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Shield className="h-4 w-4 text-blue-600" />
+        <CardHeader className="pb-[clamp(1rem,3vw,1.5rem)] bg-gradient-to-r from-blue-50/50 to-transparent p-[clamp(1rem,3vw,1.5rem)]">
+          <CardTitle className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(1.125rem,3vw,1.5rem)]">
+            <div className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] rounded-lg bg-blue-100 flex items-center justify-center">
+              <Shield className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-blue-600" />
             </div>
             <span>{t('medical_coverage')}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)]">
           {/* Two-column grid for UHC and ACI sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)] mb-[clamp(1rem,3vw,1.5rem)]">
             {/* UHC Medical Section */}
             <Card className={`border-2 transition-all ${
               formData.medicalPlan && Object.keys(MEDICAL_PLAN_CATEGORIES.uhc_medical.plans).includes(formData.medicalPlan)
-                ? 'border-blue-500 shadow-md' 
+                ? 'border-blue-500 shadow-md'
                 : 'border-gray-200 hover:border-blue-300'
             }`}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base sm:text-lg text-blue-700">
+              <CardHeader className="pb-[clamp(0.75rem,2vw,1rem)] p-[clamp(1rem,3vw,1.5rem)]">
+                <CardTitle className="text-[clamp(1rem,2.5vw,1.125rem)] text-blue-700">
                   {MEDICAL_PLAN_CATEGORIES.uhc_medical.label}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-[clamp(1rem,3vw,1.5rem)]">
                 <RadioGroup value={formData.medicalPlan} onValueChange={handlePlanChange}>
-                  <div className="space-y-3">
+                  <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
                     {Object.entries(MEDICAL_PLAN_CATEGORIES.uhc_medical.plans).map(([key, plan]) => (
-                      <div key={key} className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
-                        formData.medicalPlan === key 
-                          ? 'bg-blue-50 border-blue-300' 
+                      <div key={key} className={`flex items-start gap-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] rounded-lg border transition-colors ${
+                        formData.medicalPlan === key
+                          ? 'bg-blue-50 border-blue-300'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}>
-                        <RadioGroupItem value={key} id={key} className="mt-1" />
+                        <RadioGroupItem value={key} id={key} className="mt-[clamp(0.25rem,1vw,0.375rem)]" />
                         <Label htmlFor={key} className="flex-1 cursor-pointer">
                           <div className="flex justify-between items-start">
-                            <span className="text-sm font-medium">{plan.name}</span>
+                            <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium">{plan.name}</span>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-600 mt-[clamp(0.25rem,1vw,0.375rem)]">
                             ${plan.costs.employee} bi-weekly
                           </div>
                         </Label>
@@ -669,29 +664,29 @@ export default function HealthInsuranceForm({
             {/* ACI Limited Benefits Section */}
             <Card className={`border-2 transition-all ${
               formData.medicalPlan && Object.keys(MEDICAL_PLAN_CATEGORIES.aci_limited.plans).includes(formData.medicalPlan)
-                ? 'border-purple-500 shadow-md' 
+                ? 'border-purple-500 shadow-md'
                 : 'border-gray-200 hover:border-purple-300'
             }`}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base sm:text-lg text-purple-700">
+              <CardHeader className="pb-[clamp(0.75rem,2vw,1rem)] p-[clamp(1rem,3vw,1.5rem)]">
+                <CardTitle className="text-[clamp(1rem,2.5vw,1.125rem)] text-purple-700">
                   {MEDICAL_PLAN_CATEGORIES.aci_limited.label}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-[clamp(1rem,3vw,1.5rem)]">
                 <RadioGroup value={formData.medicalPlan} onValueChange={handlePlanChange}>
-                  <div className="space-y-3">
+                  <div className="space-y-[clamp(0.75rem,2vw,1rem)]">
                     {Object.entries(MEDICAL_PLAN_CATEGORIES.aci_limited.plans).map(([key, plan]) => (
-                      <div key={key} className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
-                        formData.medicalPlan === key 
-                          ? 'bg-purple-50 border-purple-300' 
+                      <div key={key} className={`flex items-start gap-[clamp(0.75rem,2vw,1rem)] p-[clamp(0.75rem,2vw,1rem)] rounded-lg border transition-colors ${
+                        formData.medicalPlan === key
+                          ? 'bg-purple-50 border-purple-300'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}>
-                        <RadioGroupItem value={key} id={key} className="mt-1" />
+                        <RadioGroupItem value={key} id={key} className="mt-[clamp(0.25rem,1vw,0.375rem)]" />
                         <Label htmlFor={key} className="flex-1 cursor-pointer">
                           <div className="flex justify-between items-start">
-                            <span className="text-sm font-medium">{plan.name}</span>
+                            <span className="text-[clamp(0.875rem,2.5vw,1rem)] font-medium">{plan.name}</span>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-600 mt-[clamp(0.25rem,1vw,0.375rem)]">
                             ${plan.costs.employee} bi-weekly
                           </div>
                         </Label>
@@ -704,33 +699,24 @@ export default function HealthInsuranceForm({
           </div>
 
           {/* Coverage Tier Selection */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,2vw,1rem)]">
             <div>
-              <Label className="text-sm">{t('select_tier')}</Label>
-              <Select 
-                value={formData.medicalTier} 
+              <MobileLabel>{t('select_tier')}</MobileLabel>
+              <MobileSelect
+                value={formData.medicalTier}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, medicalTier: value }))}
+                placeholder="Select coverage tier"
               >
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="Select coverage tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIER_OPTIONS.map(tier => {
-                    const selectedPlan = MEDICAL_PLANS[formData.medicalPlan as keyof typeof MEDICAL_PLANS];
-                    const cost = selectedPlan?.costs[tier.value as keyof typeof selectedPlan.costs] || 0;
-                    return (
-                      <SelectItem key={tier.value} value={tier.value}>
-                        <div className="flex justify-between items-center w-full">
-                          <span className="text-sm">{language === 'es' ? tier.labelEs : tier.label}</span>
-                          <span className="ml-2 text-xs text-gray-500">
-                            ${cost}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+                {TIER_OPTIONS.map(tier => {
+                  const selectedPlan = MEDICAL_PLANS[formData.medicalPlan as keyof typeof MEDICAL_PLANS];
+                  const cost = selectedPlan?.costs[tier.value as keyof typeof selectedPlan.costs] || 0;
+                  return (
+                    <MobileSelectItem key={tier.value} value={tier.value}>
+                      {language === 'es' ? tier.labelEs : tier.label} - ${cost}
+                    </MobileSelectItem>
+                  );
+                })}
+              </MobileSelect>
             </div>
           </div>
         </CardContent>
@@ -738,76 +724,60 @@ export default function HealthInsuranceForm({
 
       {/* Additional Coverage - Enhanced */}
       <Card className="border-l-4 border-l-purple-500 shadow-md">
-        <CardHeader className="pb-4 bg-gradient-to-r from-purple-50/50 to-transparent">
-          <CardTitle className="text-lg">{t('additional_coverage')}</CardTitle>
+        <CardHeader className="pb-[clamp(1rem,3vw,1.5rem)] bg-gradient-to-r from-purple-50/50 to-transparent p-[clamp(1rem,3vw,1.5rem)]">
+          <CardTitle className="text-[clamp(1.125rem,3vw,1.5rem)]">{t('additional_coverage')}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(1rem,3vw,1.5rem)]">
             {/* Dental Coverage */}
-            <div className="border rounded p-3">
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium">{t('dental_coverage')}</Label>
-                <Checkbox
-                  checked={formData.dentalCoverage}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, dentalCoverage: !!checked }))}
-                />
-              </div>
-              
+            <div className="border rounded p-[clamp(0.75rem,2vw,1rem)]">
+              <MobileCheckbox
+                id="dental-coverage"
+                label={t('dental_coverage')}
+                checked={formData.dentalCoverage}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, dentalCoverage: !!checked }))}
+              />
+
               {formData.dentalCoverage && (
-                <Select 
-                  value={formData.dentalTier} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, dentalTier: value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select dental tier" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <div className="mt-[clamp(0.75rem,2vw,1rem)]">
+                  <MobileSelect
+                    value={formData.dentalTier}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, dentalTier: value }))}
+                    placeholder="Select dental tier"
+                  >
                     {TIER_OPTIONS.map(tier => (
-                      <SelectItem key={tier.value} value={tier.value}>
-                        <div className="flex justify-between items-center w-full">
-                          <span className="text-sm">{language === 'es' ? tier.labelEs : tier.label}</span>
-                          <span className="ml-2 text-xs text-gray-500">
-                            ${DENTAL_COSTS[tier.value as keyof typeof DENTAL_COSTS]}
-                          </span>
-                        </div>
-                      </SelectItem>
+                      <MobileSelectItem key={tier.value} value={tier.value}>
+                        {language === 'es' ? tier.labelEs : tier.label} - ${DENTAL_COSTS[tier.value as keyof typeof DENTAL_COSTS]}
+                      </MobileSelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MobileSelect>
+                </div>
               )}
             </div>
 
             {/* Vision Coverage */}
-            <div className="border rounded p-3">
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium">{t('vision_coverage')}</Label>
-                <Checkbox
-                  checked={formData.visionCoverage}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, visionCoverage: !!checked }))}
-                />
-              </div>
-              
+            <div className="border rounded p-[clamp(0.75rem,2vw,1rem)]">
+              <MobileCheckbox
+                id="vision-coverage"
+                label={t('vision_coverage')}
+                checked={formData.visionCoverage}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, visionCoverage: !!checked }))}
+              />
+
               {formData.visionCoverage && (
-                <Select 
-                  value={formData.visionTier} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, visionTier: value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select vision tier" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <div className="mt-[clamp(0.75rem,2vw,1rem)]">
+                  <MobileSelect
+                    value={formData.visionTier}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, visionTier: value }))}
+                    placeholder="Select vision tier"
+                  >
                     {TIER_OPTIONS.map(tier => (
-                      <SelectItem key={tier.value} value={tier.value}>
-                        <div className="flex justify-between items-center w-full">
-                          <span className="text-sm">{language === 'es' ? tier.labelEs : tier.label}</span>
-                          <span className="ml-2 text-xs text-gray-500">
-                            ${VISION_COSTS[tier.value as keyof typeof VISION_COSTS]}
-                          </span>
-                        </div>
-                      </SelectItem>
+                      <MobileSelectItem key={tier.value} value={tier.value}>
+                        {language === 'es' ? tier.labelEs : tier.label} - ${VISION_COSTS[tier.value as keyof typeof VISION_COSTS]}
+                      </MobileSelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MobileSelect>
+                </div>
               )}
             </div>
           </div>
@@ -817,260 +787,217 @@ export default function HealthInsuranceForm({
       {/* Dependents Section - Enhanced */}
       {requiresDependents() && (
         <Card className="border-l-4 border-l-green-500 shadow-md">
-          <CardHeader className="pb-4 bg-gradient-to-r from-green-50/50 to-transparent">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-green-600" />
+          <CardHeader className="pb-[clamp(1rem,3vw,1.5rem)] bg-gradient-to-r from-green-50/50 to-transparent p-[clamp(1rem,3vw,1.5rem)]">
+            <CardTitle className="flex items-center justify-between text-[clamp(1.125rem,3vw,1.5rem)]">
+              <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+                <div className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] rounded-lg bg-green-100 flex items-center justify-center">
+                  <Users className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-green-600" />
                 </div>
                 <span>{t('dependents_info')}</span>
               </div>
-              <Badge variant="destructive" className="text-xs">Required</Badge>
+              <Badge variant="destructive" className="text-[clamp(0.75rem,2vw,0.875rem)]">Required</Badge>
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-[clamp(0.875rem,2.5vw,1rem)] text-gray-600 mt-[clamp(0.5rem,1.5vw,0.75rem)]">
               Your selected coverage tier requires dependent information. Please add at least one dependent below.
             </p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)]">
             {formData.dependents.map((dependent, index) => (
-              <div key={index} className="p-3 border rounded space-y-2">
+              <div key={index} className="p-[clamp(0.75rem,2vw,1rem)] border rounded space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-medium text-sm">Dependent {index + 1}</h4>
+                  <h4 className="font-medium text-[clamp(0.875rem,2.5vw,1rem)]">Dependent {index + 1}</h4>
                   <Button
                     variant="outline"
-                    size="xs"
+                    size="sm"
                     onClick={() => removeDependent(index)}
+                    className="h-[clamp(2rem,5vw,2.5rem)] px-[clamp(0.75rem,2vw,1rem)]"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(0.75rem,2vw,1rem)]" />
                   </Button>
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-[clamp(0.5rem,1.5vw,0.75rem)]">
                   <div>
-                    <Label className="text-sm">
-                      {t('first_name')} <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
+                    <MobileLabel required>
+                      {t('first_name')}
+                    </MobileLabel>
+                    <MobileInput
                       value={dependent.firstName}
                       onChange={(e) => updateDependent(index, 'firstName', e.target.value)}
                       onBlur={() => handleFieldBlur(`dependent.${index}.firstName`)}
-                      size="xs"
                       placeholder=""
                     />
                   </div>
                   <div>
-                    <Label className="text-sm">
-                      {t('last_name')} <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
+                    <MobileLabel required>
+                      {t('last_name')}
+                    </MobileLabel>
+                    <MobileInput
                       value={dependent.lastName}
                       onChange={(e) => updateDependent(index, 'lastName', e.target.value)}
                       onBlur={() => handleFieldBlur(`dependent.${index}.lastName`)}
-                      size="xs"
                       placeholder=""
                     />
                   </div>
                   <div>
-                    <Label className="text-sm">
-                      {t('relationship')} <span className="text-red-500">*</span>
-                    </Label>
-                    <Select 
-                      value={dependent.relationship} 
+                    <MobileLabel required>
+                      {t('relationship')}
+                    </MobileLabel>
+                    <MobileSelect
+                      value={dependent.relationship}
                       onValueChange={(value) => updateDependent(index, 'relationship', value)}
+                      placeholder="Select"
                     >
-                      <SelectTrigger className="h-6">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {RELATIONSHIP_OPTIONS.map(rel => (
-                          <SelectItem key={rel} value={rel}>{rel}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      {RELATIONSHIP_OPTIONS.map(rel => (
+                        <MobileSelectItem key={rel} value={rel}>{rel}</MobileSelectItem>
+                      ))}
+                    </MobileSelect>
                   </div>
                   <div>
-                    <Label className="text-sm">
-                      {t('date_of_birth')} <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
+                    <MobileLabel required>
+                      {t('date_of_birth')}
+                    </MobileLabel>
+                    <MobileInput
                       type="date"
                       value={dependent.dateOfBirth}
                       onChange={(e) => updateDependent(index, 'dateOfBirth', e.target.value)}
                       onBlur={() => handleFieldBlur(`dependent.${index}.dateOfBirth`)}
-                      size="xs"
+                      mobileKeyboard="numeric"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.5rem,1.5vw,0.75rem)]">
                   <div>
-                    <Label className="text-sm">{t('ssn')}</Label>
-                    <Input
+                    <MobileLabel>{t('ssn')}</MobileLabel>
+                    <MobileInput
                       value={dependent.ssn}
                       onChange={(e) => updateDependent(index, 'ssn', e.target.value)}
                       onBlur={() => handleFieldBlur(`dependent.${index}.ssn`)}
-                      placeholder=""
-                      size="xs"
+                      placeholder="XXX-XX-XXXX"
+                      mobileKeyboard="numeric"
                     />
                   </div>
                   <div>
-                    <Label className="text-sm">{t('gender')}</Label>
-                    <Select 
-                      value={dependent.gender} 
+                    <MobileLabel>{t('gender')}</MobileLabel>
+                    <MobileSelect
+                      value={dependent.gender}
                       onValueChange={(value) => updateDependent(index, 'gender', value as 'M' | 'F')}
+                      placeholder="Select"
                     >
-                      <SelectTrigger className="h-6">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="M">{t('male')}</SelectItem>
-                        <SelectItem value="F">{t('female')}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <MobileSelectItem value="M">{t('male')}</MobileSelectItem>
+                      <MobileSelectItem value="F">{t('female')}</MobileSelectItem>
+                    </MobileSelect>
                   </div>
                 </div>
               </div>
             ))}
 
             {formData.dependents.length === 0 && (
-              <Alert className="bg-blue-50 border-blue-200">
-                <Info className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-sm text-blue-900">
+              <Alert className="bg-blue-50 border-blue-200 p-[clamp(1rem,3vw,1.5rem)]">
+                <Info className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-blue-600" />
+                <AlertDescription className="text-[clamp(0.875rem,2.5vw,1rem)] text-blue-900">
                   Click "Add Dependent" below to add spouse, children, or other eligible dependents to your coverage.
                 </AlertDescription>
               </Alert>
             )}
 
-            <Button 
-              variant="outline" 
-              onClick={addDependent} 
-              size="default"
-              className="w-full border-green-500 text-green-700 hover:bg-green-50 hover:border-green-600"
+            <Button
+              variant="outline"
+              onClick={addDependent}
+              className="w-full border-green-500 text-green-700 hover:bg-green-50 hover:border-green-600 h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)]" />
               {t('add_dependent')}
             </Button>
 
             {/* Compact Questions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,2vw,1rem)] pt-[clamp(0.5rem,1.5vw,0.75rem)] border-t">
               <div>
-                <Label className="text-sm font-medium">{t('stepchildren_question')}</Label>
-                <div className="flex space-x-3 mt-1">
-                  <label className="flex items-center space-x-1">
-                    <input 
-                      type="radio" 
-                      name="stepchildren" 
-                      checked={formData.hasStepchildren} 
-                      onChange={() => setFormData(prev => ({ ...prev, hasStepchildren: true }))}
-                      className="w-3 h-3"
-                    />
-                    <span className="text-sm">{t('yes')}</span>
-                  </label>
-                  <label className="flex items-center space-x-1">
-                    <input 
-                      type="radio" 
-                      name="stepchildren" 
-                      checked={!formData.hasStepchildren} 
-                      onChange={() => setFormData(prev => ({ ...prev, hasStepchildren: false }))}
-                      className="w-3 h-3"
-                    />
-                    <span className="text-sm">{t('no')}</span>
-                  </label>
-                </div>
+                <MobileLabel>{t('stepchildren_question')}</MobileLabel>
+                <MobileRadioGroup
+                  value={formData.hasStepchildren ? 'yes' : 'no'}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, hasStepchildren: value === 'yes' }))}
+                  options={[
+                    { value: 'yes', label: t('yes') },
+                    { value: 'no', label: t('no') }
+                  ]}
+                />
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium">{t('support_question')}</Label>
-                <div className="flex space-x-3 mt-1">
-                  <label className="flex items-center space-x-1">
-                    <input 
-                      type="radio" 
-                      name="support" 
-                      checked={formData.dependentsSupported} 
-                      onChange={() => setFormData(prev => ({ ...prev, dependentsSupported: true }))}
-                      className="w-3 h-3"
-                    />
-                    <span className="text-sm">{t('yes')}</span>
-                  </label>
-                  <label className="flex items-center space-x-1">
-                    <input 
-                      type="radio" 
-                      name="support" 
-                      checked={!formData.dependentsSupported} 
-                      onChange={() => setFormData(prev => ({ ...prev, dependentsSupported: false }))}
-                      className="w-3 h-3"
-                    />
-                    <span className="text-sm">{t('no')}</span>
-                  </label>
-                </div>
+                <MobileLabel>{t('support_question')}</MobileLabel>
+                <MobileRadioGroup
+                  value={formData.dependentsSupported ? 'yes' : 'no'}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, dependentsSupported: value === 'yes' }))}
+                  options={[
+                    { value: 'yes', label: t('yes') },
+                    { value: 'no', label: t('no') }
+                  ]}
+                />
               </div>
             </div>
 
             {formData.hasStepchildren && (
               <div>
-                <Label className="text-sm">{t('stepchildren_names')}</Label>
-                <Input
+                <MobileLabel>{t('stepchildren_names')}</MobileLabel>
+                <MobileInput
                   value={formData.stepchildrenNames}
                   onChange={(e) => setFormData(prev => ({ ...prev, stepchildrenNames: e.target.value }))}
                   onBlur={() => handleFieldBlur('stepchildrenNames')}
                   placeholder=""
-                  size="xs"
                 />
               </div>
             )}
 
-            <div className="flex items-start space-x-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
-              <Checkbox
+            <div className="flex items-start gap-[clamp(0.75rem,2vw,1rem)] p-[clamp(1rem,3vw,1.5rem)] bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+              <MobileCheckbox
                 id="irs_confirmation"
+                label={`Required: ${t('irs_confirmation')}`}
                 checked={formData.irsDependentConfirmation}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, irsDependentConfirmation: !!checked }))}
-                className="w-5 h-5 mt-0.5"
               />
-              <Label htmlFor="irs_confirmation" className="text-sm leading-relaxed cursor-pointer">
-                <span className="font-semibold text-yellow-900">Required:</span>{' '}
-                {t('irs_confirmation')}
-              </Label>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Cost Summary & Options - Enhanced */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-[clamp(1.5rem,4vw,2rem)]">
         {/* Cost Summary Card */}
         <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-white shadow-md">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-2 text-lg">
-              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                <DollarSign className="h-4 w-4 text-white" />
+          <CardHeader className="pb-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)]">
+            <CardTitle className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(1.125rem,3vw,1.5rem)]">
+              <div className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] rounded-lg bg-blue-500 flex items-center justify-center">
+                <DollarSign className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-white" />
               </div>
               <span className="text-blue-900">{t('cost_summary')}</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+          <CardContent className="p-[clamp(1rem,3vw,1.5rem)]">
+            <div className="space-y-[clamp(0.5rem,1.5vw,0.75rem)]">
+              <div className="flex justify-between text-[clamp(0.875rem,2.5vw,1rem)]">
                 <span>{t('medical')}:</span>
                 <span className="font-medium">${formData.medicalCost.toFixed(2)}</span>
               </div>
               {formData.dentalCoverage && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[clamp(0.875rem,2.5vw,1rem)]">
                   <span>{t('dental')}:</span>
                   <span className="font-medium">${formData.dentalCost.toFixed(2)}</span>
                 </div>
               )}
               {formData.visionCoverage && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[clamp(0.875rem,2.5vw,1rem)]">
                   <span>{t('vision')}:</span>
                   <span className="font-medium">${formData.visionCost.toFixed(2)}</span>
                 </div>
               )}
               <Separator />
-              <div className="flex justify-between font-bold">
+              <div className="flex justify-between font-bold text-[clamp(1rem,2.5vw,1.125rem)]">
                 <span>{t('total')}:</span>
                 <span>${formData.totalBiweeklyCost.toFixed(2)}</span>
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-600">
                 Bi-weekly payroll deduction
               </p>
             </div>
@@ -1079,33 +1006,29 @@ export default function HealthInsuranceForm({
 
         {/* Waiver Options Card */}
         <Card className="border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-white shadow-md">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-2 text-lg">
-              <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center">
-                <AlertTriangle className="h-4 w-4 text-white" />
+          <CardHeader className="pb-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)]">
+            <CardTitle className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] text-[clamp(1.125rem,3vw,1.5rem)]">
+              <div className="w-[clamp(2rem,5vw,2.5rem)] h-[clamp(2rem,5vw,2.5rem)] rounded-lg bg-red-500 flex items-center justify-center">
+                <AlertTriangle className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-white" />
               </div>
               <span className="text-red-900">Coverage Options</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="decline_coverage"
-                checked={formData.isWaived}
-                onCheckedChange={(checked) => {
-                  setFormData(prev => ({ ...prev, isWaived: !!checked }))
-                  setIsDirty(true)
-                }}
-              />
-              <Label htmlFor="decline_coverage" className="text-red-600 font-medium text-sm">
-                {t('decline_coverage')}
-              </Label>
-            </div>
-            
-            <Alert className="bg-blue-50 border-blue-200">
-              <div className="flex gap-2">
-                <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                <AlertDescription className="text-xs text-blue-900">
+          <CardContent className="space-y-[clamp(1rem,3vw,1.5rem)] p-[clamp(1rem,3vw,1.5rem)]">
+            <MobileCheckbox
+              id="decline_coverage"
+              label={t('decline_coverage')}
+              checked={formData.isWaived}
+              onCheckedChange={(checked) => {
+                setFormData(prev => ({ ...prev, isWaived: !!checked }))
+                setIsDirty(true)
+              }}
+            />
+
+            <Alert className="bg-blue-50 border-blue-200 p-[clamp(0.75rem,2vw,1rem)]">
+              <div className="flex gap-[clamp(0.5rem,1.5vw,0.75rem)]">
+                <Info className="h-[clamp(1rem,2.5vw,1.25rem)] w-[clamp(1rem,2.5vw,1.25rem)] text-blue-600 flex-shrink-0 mt-[clamp(0.125rem,0.5vw,0.25rem)]" />
+                <AlertDescription className="text-[clamp(0.75rem,2vw,0.875rem)] text-blue-900">
                   <strong>{t('special_enrollment')}</strong><br />
                   <span className="text-blue-800">{t('enrollment_notice')}</span>
                 </AlertDescription>
@@ -1116,19 +1039,17 @@ export default function HealthInsuranceForm({
       </div>
 
       {/* Navigation - Enhanced */}
-      <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+      <div className="flex justify-between items-center pt-[clamp(1.5rem,4vw,2rem)] border-t border-gray-200">
         <Button
           variant="outline"
           onClick={onBack}
-          size="default"
-          className="px-6"
+          className="px-[clamp(1.5rem,4vw,2rem)] h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
         >
           {t('back')}
         </Button>
         <Button
           onClick={handleSubmit}
-          className="px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md"
-          size="default"
+          className="px-[clamp(2rem,5vw,3rem)] bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md h-[clamp(2.75rem,6vw,3rem)] text-[clamp(0.875rem,2.5vw,1rem)] flex items-center justify-center"
         >
           {t('save_continue')}
         </Button>
