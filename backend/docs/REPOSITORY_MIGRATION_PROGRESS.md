@@ -1,8 +1,8 @@
 # Repository Pattern Migration Progress
 
-**Date Started:** October 26, 2025  
-**Status:** IN PROGRESS  
-**Current Progress:** 17/160 endpoints migrated (10.6%)
+**Date Started:** October 26, 2025
+**Status:** IN PROGRESS
+**Current Progress:** 19/160 endpoints migrated (11.9%)
 
 ---
 
@@ -75,8 +75,17 @@ async def endpoint(repo: DatabaseRepository = Depends(get_repository)):
 |----------|--------|--------|-------------|-------|
 | `/api/hr/users` | GET | ✅ Migrated | ~132 lines | Optimized JOIN query |
 
-**Total Lines Removed:** ~132 lines  
+**Total Lines Removed:** ~132 lines
 **Code Reduction:** 93% (from 142 lines to 10 lines!)
+
+### Group 5: Application & Employee Detail (2 endpoints) ✅
+| Endpoint | Method | Status | Lines Saved | Notes |
+|----------|--------|--------|-------------|-------|
+| `/api/hr/applications/{app_id}/approve` | POST | ✅ Migrated | ~25 lines | Audit trail preserved |
+| `/api/hr/employees/{id}` | GET | ✅ Migrated | ~15 lines | Property lookup optimized |
+
+**Total Lines Removed:** ~40 lines
+**Code Reduction:** 85%
 
 ---
 
@@ -84,11 +93,11 @@ async def endpoint(repo: DatabaseRepository = Depends(get_repository)):
 
 | Metric | Value |
 |--------|-------|
-| **Endpoints Migrated** | 17 / 160 |
-| **Progress** | 10.6% |
-| **Total Lines Removed** | ~885 lines |
-| **Average Code Reduction** | 89% |
-| **Repository Methods Added** | 20 methods |
+| **Endpoints Migrated** | 19 / 160 |
+| **Progress** | 11.9% |
+| **Total Lines Removed** | ~925 lines |
+| **Average Code Reduction** | 88% |
+| **Repository Methods Added** | 21 methods |
 | **Files Modified** | 3 files |
 
 ---
@@ -120,17 +129,19 @@ async def endpoint(repo: DatabaseRepository = Depends(get_repository)):
 
 ### Employee & Application Management
 - `get_all_employees()` - Get all employees
+- `get_employee_by_id(employee_id)` - Get employee by ID
 - `get_employees_by_property(property_id)` - Get employees for property
 - `get_all_applications()` - Get all applications
+- `get_application_by_id(application_id)` - Get application by ID
 - `get_applications_by_property(property_id)` - Get applications for property
+- `update_application_status_with_audit(application_id, status, reviewed_by, reason, notes)` - Update application status with audit trail
 - `get_dashboard_stats()` - Get aggregated dashboard statistics
 
 ---
 
 ## 🚧 Remaining Work
 
-### Group 5: Application Management (~15 endpoints)
-- [ ] `/api/hr/applications/{app_id}/approve` - POST
+### Group 6: Application Management (~13 endpoints)
 - [ ] `/api/hr/applications/{app_id}/reject` - POST
 - [ ] `/api/manager/applications/{app_id}/approve` - POST
 - [ ] `/api/manager/applications/{app_id}/reject` - POST
@@ -139,45 +150,45 @@ async def endpoint(repo: DatabaseRepository = Depends(get_repository)):
 - [ ] `/api/applications/{id}` - DELETE
 - [ ] And more...
 
-### Group 6: Onboarding Session Management (~20 endpoints)
+### Group 7: Onboarding Session Management (~20 endpoints)
 - [ ] `/api/onboarding/sessions` - GET, POST
 - [ ] `/api/onboarding/sessions/{id}` - GET, PUT, DELETE
 - [ ] `/api/onboarding/sessions/{id}/progress` - GET, POST
 - [ ] `/api/onboarding/sessions/{id}/steps` - GET, POST
 - [ ] And more...
 
-### Group 7: Document Management (~25 endpoints)
+### Group 8: Document Management (~25 endpoints)
 - [ ] `/api/documents/upload` - POST
 - [ ] `/api/documents/{id}` - GET, DELETE
 - [ ] `/api/documents/{id}/download` - GET
 - [ ] `/api/documents/{id}/verify` - POST
 - [ ] And more...
 
-### Group 8: Analytics & Reporting (~15 endpoints)
+### Group 9: Analytics & Reporting (~15 endpoints)
 - [ ] `/api/analytics/dashboard` - GET
 - [ ] `/api/analytics/reports` - GET, POST
 - [ ] `/api/analytics/metrics` - GET
 - [ ] And more...
 
-### Group 9: Audit & Compliance (~10 endpoints)
+### Group 10: Audit & Compliance (~10 endpoints)
 - [ ] `/api/audit/logs` - GET
 - [ ] `/api/audit/logs/{id}` - GET
 - [ ] `/api/compliance/reports` - GET
 - [ ] And more...
 
-### Group 10: Notifications (~10 endpoints)
+### Group 11: Notifications (~10 endpoints)
 - [ ] `/api/notifications` - GET
 - [ ] `/api/notifications/{id}` - GET, PUT
 - [ ] `/api/notifications/mark-read` - POST
 - [ ] And more...
 
-### Group 11: Miscellaneous (~50 endpoints)
+### Group 12: Miscellaneous (~50 endpoints)
 - [ ] Various utility endpoints
 - [ ] Health checks
 - [ ] Configuration endpoints
 - [ ] And more...
 
-**Total Remaining:** ~145 endpoints
+**Total Remaining:** ~141 endpoints
 
 ---
 

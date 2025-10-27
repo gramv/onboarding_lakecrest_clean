@@ -5304,17 +5304,19 @@ async def get_hr_employees(
 @app.get("/api/hr/employees/{id}")
 async def get_hr_employee_detail(
     id: str,
-    current_user: User = Depends(require_hr_role)
+    current_user: User = Depends(require_hr_role),
+    repo: DatabaseRepository = Depends(get_repository)
 ):
-    """Get detailed employee information for HR using Supabase"""
+    """Get detailed employee information for HR - Uses Repository Pattern"""
     try:
-        employee = await supabase_service.get_employee_by_id(id)
+        # Get employee via repository
+        employee = await repo.get_employee_by_id(id)
         if not employee:
             raise HTTPException(status_code=404, detail="Employee not found")
-        
-        # Get property info
-        property_obj = supabase_service.get_property_by_id_sync(employee.property_id)
-        
+
+        # Get property info via repository
+        property_obj = await repo.get_property_by_id(employee.property_id)
+
         return {
             "id": employee.id,
             "property_id": employee.property_id,
@@ -5327,7 +5329,7 @@ async def get_hr_employee_detail(
             "employment_status": employee.employment_status,
             "onboarding_status": employee.onboarding_status.value if employee.onboarding_status else "not_started"
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -5607,26 +5609,27 @@ async def get_hr_applications(
 async def approve_application_hr(
     app_id: str,
     request: Dict = Body(...),
-    current_user: User = Depends(require_hr_role)
+    current_user: User = Depends(require_hr_role),
+    repo: DatabaseRepository = Depends(get_repository)
 ):
-    """HR can approve any application from any property"""
+    """HR can approve any application from any property - Uses Repository Pattern"""
     try:
-        # Get the application
-        application = await supabase_service.get_application_by_id(app_id)
+        # Get the application via repository
+        application = await repo.get_application_by_id(app_id)
         if not application:
             raise HTTPException(status_code=404, detail="Application not found")
-        
-        # Update application status with audit
-        await supabase_service.update_application_status_with_audit(
-            app_id, 
+
+        # Update application status with audit via repository
+        await repo.update_application_status_with_audit(
+            app_id,
             "approved",
             current_user.id,
-            request.get("manager_notes")
+            notes=request.get("manager_notes")
         )
-        
+
         # Broadcast WebSocket event for HR approval
         from .websocket_manager import websocket_manager, BroadcastEvent
-        
+
         event = BroadcastEvent(
             type="application_approved",
             data={
@@ -5644,17 +5647,19 @@ async def approve_application_hr(
                 "manager_notes": request.get("manager_notes")
             }
         )
-        
+
         # Send to property-specific room for managers and global room for HR
         # TEMPORARILY DISABLED: WebSocket broadcasting to fix connection issues
         # await websocket_manager.broadcast_to_room(f"property-{application.property_id}", event)
         # await websocket_manager.broadcast_to_room("global", event)
-        
+
+        logger.info(f"✅ Application {app_id} approved by HR user {current_user.id} (repository pattern)")
+
         return success_response(
             data={"application_id": app_id, "status": "approved"},
             message="Application approved successfully"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:

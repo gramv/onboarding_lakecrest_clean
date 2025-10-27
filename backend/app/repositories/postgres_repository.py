@@ -14,6 +14,7 @@ Benefits:
 """
 
 import logging
+import json
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timezone, date
 import asyncpg
@@ -1021,6 +1022,109 @@ class PostgresRepository(DatabaseRepository):
                 return self._row_to_application(row) if row else None
         except Exception as e:
             logger.error(f"Error rejecting application {application_id}: {e}")
+            raise
+
+    async def update_application_status_with_audit(
+        self,
+        application_id: str,
+        new_status: str,
+        reviewed_by: Optional[str] = None,
+        reason: Optional[str] = None,
+        notes: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Update application status with comprehensive audit trail"""
+        try:
+            async with self.db_pool.acquire() as conn:
+                async with conn.transaction():
+                    # Get current application
+                    current_row = await conn.fetchrow(
+                        "SELECT * FROM job_applications WHERE id = $1",
+                        uuid.UUID(application_id)
+                    )
+
+                    if not current_row:
+                        raise ValueError(f"Application {application_id} not found")
+
+                    old_status = current_row['status']
+
+                    # Prepare update data
+                    update_query = """
+                        UPDATE job_applications
+                        SET status = $1, updated_at = CURRENT_TIMESTAMP
+                    """
+                    params = [new_status]
+                    param_count = 1
+
+                    if reviewed_by:
+                        param_count += 1
+                        update_query += f", reviewed_by = ${param_count}"
+                        params.append(uuid.UUID(reviewed_by))
+                        param_count += 1
+                        update_query += f", reviewed_at = ${param_count}"
+                        params.append(datetime.now(timezone.utc))
+
+                    if reason:
+                        param_count += 1
+                        update_query += f", rejection_reason = ${param_count}"
+                        params.append(reason)
+
+                    if new_status == 'talent_pool':
+                        param_count += 1
+                        update_query += f", talent_pool_date = ${param_count}"
+                        params.append(datetime.now(timezone.utc))
+
+                    param_count += 1
+                    update_query += f" WHERE id = ${param_count} RETURNING *"
+                    params.append(uuid.UUID(application_id))
+
+                    # Update application
+                    updated_row = await conn.fetchrow(update_query, *params)
+
+                    if updated_row:
+                        # Add to status history (if table exists)
+                        try:
+                            await conn.execute(
+                                """
+                                INSERT INTO application_status_history
+                                (application_id, old_status, new_status, changed_by, reason, notes, changed_at)
+                                VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+                                """,
+                                uuid.UUID(application_id),
+                                old_status,
+                                new_status,
+                                uuid.UUID(reviewed_by) if reviewed_by else None,
+                                reason,
+                                notes
+                            )
+                        except Exception as history_error:
+                            logger.warning(f"Failed to add status history: {history_error}")
+
+                        # Log audit event (if table exists)
+                        try:
+                            await conn.execute(
+                                """
+                                INSERT INTO audit_logs
+                                (table_name, record_id, action, old_values, new_values, user_id, compliance_event, created_at)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+                                """,
+                                'job_applications',
+                                uuid.UUID(application_id),
+                                'UPDATE',
+                                json.dumps(dict(current_row)),
+                                json.dumps(dict(updated_row)),
+                                uuid.UUID(reviewed_by) if reviewed_by else None,
+                                True
+                            )
+                        except Exception as audit_error:
+                            logger.warning(f"Failed to log audit event: {audit_error}")
+
+                        logger.info(f"Application {application_id} status updated: {old_status} -> {new_status}")
+
+                    # Convert row to dict for return
+                    return dict(updated_row) if updated_row else None
+
+        except Exception as e:
+            logger.error(f"Error updating application status: {e}")
             raise
 
     # ============================================================================
